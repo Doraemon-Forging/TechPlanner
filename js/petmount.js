@@ -482,13 +482,14 @@ function updatePetMount() {
             if (base && lvl > 0) {
                 const levelMult = Math.pow(1.01, lvl - 1); 
                 
-                const rawHp = (base.hp * typeMult.hp) * levelMult * ascMult;
-                const rawDmg = (base.dmg * typeMult.dmg) * levelMult * ascMult;
+                const baseRawHp = (base.hp * typeMult.hp) * levelMult;
+                const baseRawDmg = (base.dmg * typeMult.dmg) * levelMult;
 
-                const finalHpCur = Math.round(rawHp * curMultHP);
-                const finalHpProj = Math.round(rawHp * projMultHP);
-                const finalDmgCur = Math.round(rawDmg * curMultDmg);
-                const finalDmgProj = Math.round(rawDmg * projMultDmg);
+                // Game bug/quirk: Mastery % applies ONLY to the Ascension 0 stat value
+                const finalHpCur = Math.round(baseRawHp * (ascMult + curMultHP - 1));
+                const finalHpProj = Math.round(baseRawHp * (ascMult + projMultHP - 1));
+                const finalDmgCur = Math.round(baseRawDmg * (ascMult + curMultDmg - 1));
+                const finalDmgProj = Math.round(baseRawDmg * (ascMult + projMultDmg - 1));
 
                 totalHpCur += finalHpCur;
                 totalHpProj += finalHpProj;
@@ -639,14 +640,15 @@ function updateMergeResult() {
     if (base && newLvl > 0) {
         const levelMult = Math.pow(1.01, newLvl - 1); 
         
-        const rawHp = (base.hp * typeMult.hp) * levelMult * ascMult;
-        const rawDmg = (base.dmg * typeMult.dmg) * levelMult * ascMult;
+        const baseRawHp = (base.hp * typeMult.hp) * levelMult;
+        const baseRawDmg = (base.dmg * typeMult.dmg) * levelMult;
        
-        finalHp = Math.round(rawHp * curMultHP);
-        finalDmg = Math.round(rawDmg * curMultDmg);
+        // Game bug/quirk: Mastery % applies ONLY to the Ascension 0 stat value
+        finalHp = Math.round(baseRawHp * (ascMult + curMultHP - 1));
+        finalDmg = Math.round(baseRawDmg * (ascMult + curMultDmg - 1));
 
-        finalHpProj = Math.round(rawHp * projMultHP);
-        finalDmgProj = Math.round(rawDmg * projMultDmg);
+        finalHpProj = Math.round(baseRawHp * (ascMult + projMultHP - 1));
+        finalDmgProj = Math.round(baseRawDmg * (ascMult + projMultDmg - 1));
     }
 
     const resName = document.getElementById('merge-res-name');
@@ -890,18 +892,21 @@ function updateMountMergeResult() {
 
     if (baseMount && newLvlBefore > 0) {
         const levelMultB = Math.pow(1.006, newLvlBefore - 1);
-        const rawHpB = baseMount.hp * levelMultB * ascMult;
-        const rawDmgB = baseMount.dmg * levelMultB * ascMult;
-        finalHp = Math.round(rawHpB * curMultHP);
-        finalDmg = Math.round(rawDmgB * curMultDmg);
+        const baseRawHpB = baseMount.hp * levelMultB;
+        const baseRawDmgB = baseMount.dmg * levelMultB;
+        
+        // Game bug/quirk: Mastery % applies ONLY to the Ascension 0 stat value
+        finalHp = Math.round(baseRawHpB * (ascMult + curMultHP - 1));
+        finalDmg = Math.round(baseRawDmgB * (ascMult + curMultDmg - 1));
     }
 
     if (baseMount && newLvl > 0) {
         const levelMultA = Math.pow(1.006, newLvl - 1);
-        const rawHpA = baseMount.hp * levelMultA * ascMult;
-        const rawDmgA = baseMount.dmg * levelMultA * ascMult;
-        finalHpProj = Math.round(rawHpA * projMultHP);
-        finalDmgProj = Math.round(rawDmgA * projMultDmg);
+        const baseRawHpA = baseMount.hp * levelMultA;
+        const baseRawDmgA = baseMount.dmg * levelMultA;
+        
+        finalHpProj = Math.round(baseRawHpA * (ascMult + projMultHP - 1));
+        finalDmgProj = Math.round(baseRawDmgA * (ascMult + projMultDmg - 1));
     }
 
     const resName = document.getElementById('mount-merge-res-name');
@@ -1347,3 +1352,43 @@ function getRequirementsToLevel(startLv, startExp, targetLv, keyCost, extraChanc
 
     return { pulls: pullsNeeded, keys: keysNeeded };
 }
+
+/**
+ * GLOBAL MOUNT SUMMON SYNC
+ */
+document.addEventListener('input', function(e) {
+    const mountLevelIDs = ['pet-mount-summon-lvl', 'wc-mount-lv', 'asc-mount-lv', 'sum-mount-lvl'];
+    const mountExpIDs = ['pet-mount-summon-exp', 'wc-mount-exp', 'asc-mount-exp', 'sum-mount-exp'];
+
+    if (mountLevelIDs.includes(e.target.id) && !e.target.dataset.isSyncing) {
+        const newValue = e.target.value;
+        
+        mountLevelIDs.forEach(id => {
+            if (id !== e.target.id) {
+                const el = document.getElementById(id);
+                if (el && el.value !== newValue) {
+                    el.dataset.isSyncing = "true"; // Stops an infinite loop
+                    el.value = newValue;           // Copies the number
+                    el.dispatchEvent(new Event('input', { bubbles: true })); // Forces the math to update
+                    delete el.dataset.isSyncing;
+                }
+            }
+        });
+    }
+
+    if (mountExpIDs.includes(e.target.id) && !e.target.dataset.isSyncing) {
+        const newValue = e.target.value;
+        
+        mountExpIDs.forEach(id => {
+            if (id !== e.target.id) {
+                const el = document.getElementById(id);
+                if (el && el.value !== newValue) {
+                    el.dataset.isSyncing = "true"; // Stops an infinite loop
+                    el.value = newValue;           // Copies the number
+                    el.dispatchEvent(new Event('input', { bubbles: true })); // Forces the math to update
+                    delete el.dataset.isSyncing;
+                }
+            }
+        });
+    }
+});

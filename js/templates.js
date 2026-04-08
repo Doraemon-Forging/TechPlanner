@@ -462,54 +462,6 @@ const HTML_PET = `
             
             <div class="daily-card" style="margin: 0 0 15px 0;">
                 <div class="daily-card-header strip-blue">
-                    <div class="daily-header-title">Mount Summoning Calculator</div>
-                </div>
-                <div class="daily-card-body" style="padding: 12px 15px;">
-                    <div class="pet-block" style="border: none; padding: 0;">
-                        <div class="calc-row-input">
-                            <label>Summon Lv:</label>
-                            <input type="number" id="pet-mount-summon-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updatePetMountExpCap(); updateMountMergeResult()">
-                        </div>
-                        <div class="calc-row-input">
-                            <label>Summon Exp:</label>
-                            <div class="pet-flex-center">
-                                <input type="number" id="pet-mount-summon-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updatePetMountExpCap(); updateMountMergeResult()">
-                                <span class="calc-label pet-label-sub">/ <span id="pet-mount-summon-max">2</span></span>
-                            </div>
-                        </div>
-                        <div class="calc-row-input">
-                            <label>Mount Key:</label>
-                            <input type="text" id="pet-mount-key" class="calc-input-chunky" style="width: 100px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateMountMergeResult()" oninput="cleanInput(this); updateMountMergeResult()">
-                        </div>
-                    </div>
-                    
-                    <hr class="pet-hr" style="margin: 15px 0;">
-                    
-                    <div class="merge-res-row" style="margin-bottom: 8px;">
-                        <span class="merge-res-label">
-                            Summon Lv&nbsp;
-                        </span>
-                        <div class="merge-res-val" id="mount-res-lv">-</div>
-                    </div>
-                    <div class="merge-res-row" style="margin-bottom: 8px;">
-                        <span class="merge-res-label">Summon Exp</span>
-                        <div class="merge-res-val" id="mount-res-exp">-</div>
-                    </div>
-                    <div class="merge-res-row" style="margin-bottom: 8px;">
-                        <span class="merge-res-label">Mount Summoned</span>
-                        <div class="merge-res-val" id="mount-res-pulls">-</div>
-                    </div>
-                    <div class="merge-res-row" style="margin-bottom: 0;">
-                        <span class="merge-res-label">
-                            Exp from Mount Summoned&nbsp;<button class="btn-info" onclick="openMountExpModal()" style="vertical-align: middle; margin-bottom: 2px;">i</button>
-                        </span>
-                        <div class="merge-res-val" id="mount-res-mexp">-</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="daily-card" style="margin: 15px 0;">
-                <div class="daily-card-header strip-blue">
                     <div class="daily-header-title">Mount Merge Calculator</div>
                 </div>
                 <div class="daily-card-body">
@@ -579,6 +531,26 @@ const HTML_PET = `
                         </div>
                     </div>
                     
+                    <hr class="pet-hr">
+
+                    <div class="pet-block">
+                        <div class="calc-row-input">
+                            <label>Summon Lv:</label>
+                            <input type="number" id="pet-mount-summon-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updatePetMountExpCap(); updateMountMergeResult()">
+                        </div>
+                        <div class="calc-row-input">
+                            <label>Summon Exp:</label>
+                            <div class="pet-flex-center">
+                                <input type="number" id="pet-mount-summon-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updatePetMountExpCap(); updateMountMergeResult()">
+                                <span class="calc-label pet-label-sub">/ <span id="pet-mount-summon-max">2</span></span>
+                            </div>
+                        </div>
+                        <div class="calc-row-input">
+                            <label>Mount Key:</label>
+                            <input type="text" id="pet-mount-key" class="calc-input-chunky" style="width: 100px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateMountMergeResult()" oninput="cleanInput(this); updateMountMergeResult()">
+                        </div>
+                    </div>
+
                     <hr class="pet-hr" style="margin: 15px 0;">
                     
                     <div class="merge-section-title">Enter quantity to merge for each tier:</div>
@@ -641,10 +613,6 @@ const HTML_PET = `
                     
                     <hr class="pet-hr" style="margin: 15px 0;">
                     
-                    <div style="text-align: left; font-size: 0.8rem; color: #000000; -webkit-text-stroke: 0px #000000; margin-bottom: 15px; font-weight: 500;">
-                        Includes EXP from the Mount Summoning calculation above.
-                    </div>
-                    
                     <div class="merge-result-title">New Merged Mount</div>
                     <div style="background-color: #ecf0f1; border-radius: 8px; padding: 8px; margin-bottom: 8px; border: 2px solid #bdc3c7;">
                         <div class="merge-res-row" style="justify-content: center; background: transparent; border: none; padding: 0; margin: 0;">
@@ -683,6 +651,10 @@ const HTML_PET = `
                     </div>
 
                     <div style="display: none;">
+                        <div id="mount-res-lv"></div>
+                        <div id="mount-res-exp"></div>
+                        <div id="mount-res-pulls"></div>
+
                         <div class="merge-res-row" style="margin-bottom: 8px;">
                             <span class="merge-res-label">Exp to Next Lv</span>
                             <div class="merge-res-val" id="mount-merge-res-next">-</div>
@@ -695,6 +667,13 @@ const HTML_PET = `
                             <span class="merge-res-label">Exp to Max Lv</span>
                             <div class="merge-res-val" id="mount-merge-res-max">-</div>
                         </div>
+                    </div>
+
+                    <div class="merge-res-row" style="margin-bottom: 8px;">
+                        <span class="merge-res-label">
+                            Exp from Mount Summoned&nbsp;<button class="btn-info" onclick="openMountExpModal()" style="vertical-align: middle; margin-bottom: 2px;">i</button>
+                        </span>
+                        <div class="merge-res-val" id="mount-res-mexp">-</div>
                     </div>
 
                     <div class="merge-res-row" style="margin-bottom: 0;">
