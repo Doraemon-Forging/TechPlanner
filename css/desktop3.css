@@ -1,0 +1,175 @@
+/* css/desktop3.css */
+/* PET & MOUNT + DAILY/WEEKLY TAB STYLES */
+
+/* ==========================================================================
+   01. PET & MOUNT CALCULATOR
+   ========================================================================== */
+
+/* --- A. Shared Utilities --- */
+.pet-flex-end { display: flex; gap: 6px; width: auto; justify-content: flex-end; }
+.pet-flex-center { display: flex; align-items: center; gap: 5px; }
+.pet-hr { border: 0; border-top: 2px solid #ecf0f1; margin: 12px 0; }
+.pet-label-sub { width: auto; margin: 0 0 0 5px; }
+.pet-spacer { height: 60px; }
+
+/* --- B. Main Pet Stats Grid --- */
+.pet-stat-header { display: flex; justify-content: space-between; margin-bottom: 10px; padding-left: 60px; }
+.pet-stat-header-col { flex: 1; display: flex; justify-content: center; }
+.pet-stat-icon { width: 28px; height: 28px; object-fit: contain; }
+
+.pet-stat-row { display: flex; align-items: center; margin-bottom: 8px; }
+.pet-stat-row:last-child { margin-bottom: 0; }
+.pet-row-label { width: 55px; font-family: 'Fredoka', sans-serif; font-weight: 600 !important; -webkit-text-stroke: 0px transparent !important; color: #000; font-size: 1rem; }
+
+.pet-val-box { flex: 1; background-color: #ecf0f1; border-radius: 8px; padding: 6px; text-align: center; margin-right: 8px; font-family: 'Fredoka', sans-serif; font-weight: 600 !important; -webkit-text-stroke: 0px transparent !important; font-size: 1rem; color: #000; }
+.pet-val-box:last-child { margin-right: 0; }
+
+.pet-exp-header { display: flex; align-items: center; margin-bottom: 8px; }
+.pet-exp-title { flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 700 !important; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px transparent !important; }
+.pet-exp-title.wide, .pet-val-box.wide { flex: 1.2; }
+
+/* --- C. Pet Progress Bar --- */
+.pet-progress-wrapper { width: 100%; height: 28px; background-color: #434c5e; border: 2px solid #000000; border-radius: 8px; position: relative; overflow: hidden; margin-left: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); box-sizing: border-box; }
+.pet-progress-fill { height: 100%; background-color: #00b0ff; width: 0%; transition: width 0.3s ease; }
+.pet-progress-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-family: 'Fredoka', sans-serif; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.5px; -webkit-text-stroke: 2px #000000; paint-order: stroke fill; z-index: 2; }
+
+
+/* ==========================================================================
+   02. MERGE CALCULATOR
+   ========================================================================== */
+.merge-card-transparent { margin-top: 15px; background: transparent; box-shadow: none; border: none; }
+.merge-input-area { margin-bottom: 0; padding: 0; background: transparent; border: none; }
+.merge-header { background-color: #3498db; color: #ffffff; font-family: 'Fredoka', sans-serif; font-weight: 700 !important; font-size: 1.1rem; text-align: center; padding: 10px; border: 2px solid #000000; border-bottom: none; border-radius: 12px 12px 0 0; -webkit-text-stroke: 1.5px #000; text-transform: uppercase; letter-spacing: 0.5px; }
+.merge-body { background-color: #fff; border: 2px solid #000000; border-radius: 0 0 12px 12px; padding: 15px; }
+
+.merge-label-long { width: 120px; }
+.merge-section-title { margin-bottom: 10px; font-family: 'Fredoka', sans-serif; font-weight: 600 !important; color: #000 !important; font-size: 1rem; -webkit-text-stroke: 0px transparent !important; }
+.merge-result-title { margin-bottom: 5px; font-family: 'Fredoka', sans-serif; font-weight: 700 !important; font-size: 1rem; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; }
+
+.bulk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bulk-item { background-color: #ecf0f1; border-radius: 8px; padding: 5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.bulk-icon { width: 28px; height: auto; }
+.bulk-input { width: 50px; height: 28px; font-size: 0.9rem; text-align: center; }
+
+.merge-res-name { font-family: 'Fredoka', sans-serif; font-weight: 600 !important; color: #000; font-size: 1.1rem; -webkit-text-stroke: 0px transparent !important; margin-bottom: 8px; padding-left: 5px; }
+.merge-res-row { background-color: #ecf0f1; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.merge-res-row:last-child { margin-bottom: 0; }
+.merge-res-label { font-family: 'Fredoka', sans-serif; font-weight: 600 !important; color: #000; font-size: 1rem; -webkit-text-stroke: 0px transparent !important; }
+.merge-res-val { font-family: 'Fredoka', sans-serif; font-weight: 600 !important; color: #000; font-size: 0.95rem; -webkit-text-stroke: 0px transparent !important; display: flex; align-items: center; gap: 5px; }
+
+
+/* ==========================================================================
+   03. DAILY & WEEKLY TABS (LAYOUT & CARDS)
+   ========================================================================== */
+#panel-daily, #panel-weekly { padding-top: 0 !important; height: 100%; display: flex; flex-direction: column; }
+.daily-card { background: #ffffff; border: 2px solid #000000; border-radius: 16px; margin: 0 15px 20px 15px; box-shadow: 3px 3px 0 rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; padding: 0 !important; }
+.daily-card-body { padding: 15px; display: flex; flex-direction: column; gap: 0px; }
+.daily-card.card-compact .daily-card-body { padding-bottom: 10px; }
+
+.daily-card-header { width: 100%; padding: 8px; text-align: center; border-bottom: 2px solid #000000; box-sizing: border-box; }
+.daily-header-title { color: #ffffff; font-family: 'Fredoka', sans-serif; font-size: 1.1rem; letter-spacing: 1px; font-weight: 700; -webkit-text-stroke: 2.5px #000000; paint-order: stroke fill; text-transform: uppercase; }
+.strip-orange, .strip-blue, .strip-green, .strip-purple, .strip-red { background-color: #3498db; }
+
+.daily-input-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; min-height: 36px; }
+.daily-input-row.pad-bottom { padding: 0 10px 10px 10px; }
+.daily-label { font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 1rem; color: #ffffff; -webkit-text-stroke: 3px #000000; paint-order: stroke fill; letter-spacing: 0.5px; }
+.daily-input { width: 80px; height: 32px; background: #ffffff; border: 2px solid #000000; border-radius: 8px; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 650; font-size: 1rem; outline: none !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+
+.war-select-group.flex-center { align-items: center; gap: 4px; }
+.select-mini { width: 45px; height: 32px !important; }
+.select-small { width: 60px; height: 32px !important; }
+.dash-span { font-family: 'Fredoka One'; margin: 0 2px; }
+
+
+/* ==========================================================================
+   04. REWARDS & CALCULATION ROWS
+   ========================================================================== */
+#panel-daily .calc-line, #panel-weekly .calc-line { margin-bottom: 8px !important; padding: 10px 15px !important; min-height: auto; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
+#panel-daily .calc-line:last-child, #panel-weekly .calc-line:last-child { margin-bottom: 0 !important; }
+
+.calc-line-green { background-color: #e8fdf0; border: 2px solid #2ecc71; }
+.calc-label-green { color: #27ae60 !important; font-weight: 800 !important; }
+.calc-line-purple { background-color: #f5eef8; border: 2px solid #9b59b6; }
+.calc-label-purple { color: #8e44ad !important; font-weight: 800 !important; }
+.calc-label-flex { display: flex; align-items: center; }
+
+.calc-val-group { display: grid; grid-template-columns: 1fr 24px 1fr; width: 170px; align-items: center; }
+.calc-val-group.single-val { display: flex; justify-content: flex-end !important; width: 170px !important; grid-template-columns: none; }
+.calc-val-before { grid-column: 1; text-align: right; white-space: nowrap; }
+.calc-val-after { grid-column: 3; text-align: left; white-space: nowrap; }
+.calc-arrow { grid-column: 2; text-align: center; display: inline-block; transform: translateY(-2px); font-family: 'Fredoka One', cursive !important; color: #ffffff !important; -webkit-text-stroke: 1.5px #000000; paint-order: stroke fill; font-size: 1.1rem; font-weight: normal; }
+
+.calc-val-group:not(:has(.calc-val-after)) .calc-val-before, .calc-val-group .calc-val-before:only-child { grid-column: 1 / -1 !important; text-align: right !important; }
+
+@media (min-width: 769px) {
+    .daily-card-body .calc-line .calc-val-group { display: flex !important; flex-wrap: nowrap !important; justify-content: flex-end !important; align-items: center !important; width: auto !important; margin-left: auto !important; gap: 0 !important; }
+    .daily-card-body .calc-line .calc-val-group .calc-val-before, .daily-card-body .calc-line .calc-val-group .calc-val-after { display: inline-flex !important; align-items: center !important; min-width: 0 !important; width: auto !important; justify-content: flex-end !important; white-space: nowrap !important; }
+    .daily-card-body .calc-line .calc-val-group .calc-val-before { justify-content: flex-end !important; }
+    .daily-card-body .calc-line .calc-val-group .calc-val-after { justify-content: flex-start !important; }
+    .daily-card-body .calc-line .calc-val-group .calc-val-before.single-val { min-width: auto !important; }
+}
+
+
+/* ==========================================================================
+   05. RARITY CAPSULE & TABLES
+   ========================================================================== */
+.rarity-section { background-color: transparent; border: none; padding: 0; margin-top: 15px; display: flex; flex-direction: column; }
+.rarity-capsule { align-self: center; background-color: #ffffff; color: #ffffff; border: 2px solid #000000; border-radius: 50px; padding: 6px 20px; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 10px; letter-spacing: 1px; }
+
+.rarity-header { display: flex; justify-content: center; align-items: center; margin-bottom: 6px; padding: 0; gap: 8px; width: 100%; box-sizing: border-box; }
+.rarity-header-item { flex: 1; display: flex; justify-content: center; align-items: center; }
+.rarity-icon { height: 32px; object-fit: contain; }
+
+.rarity-table { display: flex; flex-direction: column; gap: 6px; }
+.rarity-table .calc-val-group { display: flex !important; justify-content: center !important; width: 100% !important; gap: 6px; }
+.rarity-table .calc-val-before, .rarity-table .calc-val-after { text-align: center !important; color: #000000 !important; text-shadow: none !important; -webkit-text-stroke: 0px transparent !important; font-weight: 700; }
+.rarity-table .calc-arrow { color: #ffffff !important; -webkit-text-stroke: 1.5px #000000 !important; }
+
+.rarity-row { display: flex; align-items: center; padding: 0; min-height: 32px; background: transparent !important; gap: 8px; }
+.rarity-col { flex: 1; display: flex; justify-content: center; border-radius: 8px; padding: 6px 0; height: 100%; align-items: center; }
+
+.bg-c .rarity-col { background: #f1f2f6; } .bg-r .rarity-col { background: #5cd8fe; } .bg-e .rarity-col { background: #5dfe8a; } .bg-l .rarity-col { background: #fcfe5d; } .bg-u .rarity-col { background: #ff5c5d; } .bg-m .rarity-col { background: #d55cff; }
+
+
+/* ==========================================================================
+   06. PILLS & COMPACT GRIDS (WEEKLY REWARDS)
+   ========================================================================== */
+.rewards-grid-container { background-color: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0; overflow: hidden; margin-bottom: 6px; }
+.calc-grid-row-merged { display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; background-color: transparent; }
+.grid-row-divider { height: 1px; background-color: #dfe6e9; width: 100%; margin: 0; }
+.calc-grid-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #dfe6e9; }
+.calc-grid-item:last-child { border-right: none; }
+.calc-val-mini { display: flex; align-items: center; justify-content: center; height: 30px; width: 100%; }
+
+.rewards-pill-container { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; padding: 0 5px; }
+.rewards-pill-row { display: flex; justify-content: center; gap: 12px; }
+.res-pill { background-color: #a8b9ca; border-radius: 12px; padding: 5px 10px; min-width: 95px; height: 28px; display: flex; align-items: center; justify-content: center; }
+.res-pill .daily-res-value { color: #ffffff !important; font-family: 'Fredoka', sans-serif; -webkit-text-stroke: 2.5px #000000 !important; font-size: 1rem !important; font-weight: 650 !important; margin-bottom: 0 !important; text-shadow: none !important; }
+.res-pill img { width: 22px !important; height: 22px !important; margin-right: 6px !important; }
+
+.weekly-pill-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; box-sizing: border-box; }
+.weekly-pill-grid .res-pill { background-color: #cdd6e0; border-radius: 12px; padding: 6px 2px; display: flex; align-items: center; justify-content: center; }
+.weekly-pill-grid .daily-res-value { font-size: 1rem !important; display: flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap; letter-spacing: -0.3px; }
+.weekly-pill-grid .calc-icon-left { width: 18px !important; height: 18px !important; margin-right: 4px !important; }
+
+.weekly-toggle-wrapper .new-mode-switch { display: flex !important; width: 100% !important; max-width: 280px !important; height: 52px !important; }
+.weekly-toggle-wrapper .seg-btn { line-height: 1.2 !important; padding: 6px 0 !important; transition: font-size 0.1s ease; }
+
+
+/* ==========================================================================
+   07. TEXT UTILITIES & MISC
+   ========================================================================== */
+.btn-info-green { background-color: #27ae60; border-color: #27ae60; padding: 0 6px; height: 20px; line-height: 1; margin-left: 5px; }
+.btn-info-purple { background-color: #9b59b6; border-color: #9b59b6; margin-left: 8px; padding: 0 6px; height: 20px; line-height: 1; }
+
+.daily-res-value { font-family: 'Fredoka One', sans-serif; font-size: 1.1rem; color: #27ae60; -webkit-text-stroke: 1px #000000; paint-order: stroke fill; display: flex; align-items: center; gap: 5px; }
+.daily-icon { width: 20px; height: 20px; object-fit: contain; }
+.spacer-60 { height: 60px; }
+.mt-15 { margin-top: 15px; }
+
+.text-clean-black { color: #000000 !important; -webkit-text-stroke: 0px transparent !important; font-weight: 600 !important; font-family: 'Fredoka', sans-serif; font-size: 1rem !important; text-align: left; text-shadow: none !important; }
+.text-disclaimer { font-size: 0.7rem !important; line-height: 1.3; opacity: 0.8; }
+.daily-sub-desc { font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 800; color: #ffffff; -webkit-text-stroke: 1.5px #000000; paint-order: stroke fill; margin-bottom: 10px; text-align: left; }
+.daily-disclaimer { font-family: 'Fredoka', sans-serif; font-size: 0.7rem; color: #95a5a6; margin-top: 5px; text-align: center; padding: 0 5px; line-height: 1.2; }
+.white-text-no-stroke { -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; font-size: 0.95rem !important; margin-bottom: 5px !important; }
+

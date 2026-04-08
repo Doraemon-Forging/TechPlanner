@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tech Tree Planner</title>
+    
+    <link rel="icon" type="image/png" href="icons/app-icon.png">
+
+    <link rel="stylesheet" href="css/desktop.css">
+    <link rel="stylesheet" href="css/desktop2.css">
+    <link rel="stylesheet" href="css/desktop3.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/modal.css">
+</head>
+
+<body class="view-planner">
+
+    <input type="file" id="file-upload" style="display:none" onchange="uploadData(this)" accept=".json">
+
+    <div id="mobile-tree-nav" class="mobile-only tree-sticky-nav">
+        <div class="tn-row-1" style="justify-content: center !important;">
+            <div class="segmented-control" style="margin: 0; width: 200px; height: 32px;">
+                <button class="seg-btn active" id="btn-setup-mobile-new" onclick="setMode('setup')">SETUP</button>
+                <button class="seg-btn" id="btn-plan-mobile-new" onclick="setMode('plan')">PLAN</button>
+            </div>
+        </div>
+        <div class="tn-row-2" style="padding: 5px 10px !important; margin-top: 10px !important;">
+            <div class="segmented-control" style="margin: 0 10px; width: 100%; height: 32px;">
+                <button class="tree-seg-btn forge active" id="mtab-forge" onclick="selectTree('forge')">
+                    <img src="icons/tree_forge.png"> FORGE
+                </button>
+                <button class="tree-seg-btn spt" id="mtab-spt" onclick="selectTree('spt')">
+                    <img src="icons/tree_SPT.png"> SPT
+                </button>
+                <button class="tree-seg-btn power" id="mtab-power" onclick="selectTree('power')">
+                    <img src="icons/tree_power.png"> POWER
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="desktop-workspace">
+        
+        <div class="pane dashboard-pane desktop-only">
+            
+            <div class="floating-header-container" style="position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%); width: max-content; z-index: 500;">
+                <div class="fhc-circle">
+                    <span>
+                        <img src="icons/Doraemon.png" alt="Icon">
+                    </span>
+                </div>
+                <div class="fhc-pill main-banner-pill">
+                    <img src="icons/banner.png" class="pill-banner" alt="Tech Planner">
+                </div>
+            </div>
+
+            <div class="dashboard-scroll-wrapper">
+                <div class="dashboard-capsule" style="position: relative !important; bottom: auto !important; left: auto !important; transform: none !important; margin: 0 auto 15px auto !important; display: flex !important;">
+                    <button class="sys-btn" onclick="downloadData()" title="Save Data">
+                        <img src="icons/icon_save.png" class="sys-icon">
+                    </button>
+                    <button class="sys-btn" onclick="document.getElementById('file-upload').click()" title="Load Data">
+                        <img src="icons/icon_load.png" class="sys-icon">
+                    </button>
+                    <button class="sys-btn" onclick="switchMobileView('help')" title="Help">
+                        <img src="icons/icon_help.png" class="sys-icon">
+                    </button>
+                </div>
+
+                <div class="tools-group-box">
+                    <button class="dash-btn" id="btn-logs" onclick="setSidebarPanel('logs')">
+                        <img src="icons/icon_timeline.png" class="dash-icon">Schedule
+                    </button>
+                    <button class="dash-btn" id="btn-stats" onclick="setSidebarPanel('stats')">
+                        <img src="icons/icon_stats.png" class="dash-icon">Stats
+                    </button>
+                    <button class="dash-btn" id="btn-daily" onclick="setSidebarPanel('daily')">
+                        <img src="icons/icon_daily.png" class="dash-icon">Daily Gain
+                    </button>
+                    <button class="dash-btn" id="btn-weekly" onclick="setSidebarPanel('weekly')">
+                        <img src="icons/icon_weekly.png" class="dash-icon">Weekly Gain
+                    </button>
+                    <button class="dash-btn" id="btn-equip" onclick="setSidebarPanel('equipment')">
+                        <img src="icons/equipment.png" class="dash-icon">Equipment
+                    </button>
+                    <button class="dash-btn" id="btn-summon" onclick="setSidebarPanel('summon')">
+                        <img src="icons/summon.png" class="dash-icon">Summon Calc
+                    </button>
+                    <button class="dash-btn" id="btn-calc" onclick="setSidebarPanel('calc')">
+                        <img src="icons/anvil.png" class="dash-icon">Forge Calc
+                    </button>
+                    <button class="dash-btn" id="btn-war" onclick="setSidebarPanel('war')">
+                        <img src="icons/warcalc.png" class="dash-icon">War Calc
+                    </button>
+                    <button class="dash-btn" id="btn-egg" onclick="setSidebarPanel('egg')">
+                        <img src="icons/icon_eggplan.png" class="dash-icon">Egg Planner
+                    </button>
+                    <button class="dash-btn" id="btn-pet" onclick="setSidebarPanel('pet')">
+                        <img src="icons/petmount.png" class="dash-icon">Pet & Mount
+                    </button>
+                    <button class="dash-btn" id="btn-battlesim" onclick="window.open('https://doraemon-forging.github.io/BattleSim/', '_blank')">
+                        <img src="icons/battlesim.png" class="dash-icon">Battle Sim
+                    </button>
+                </div>
+            </div>
+
+            <div id="dash-toggle-container">
+                <button id="btn-toggle-dash" onclick="toggleDashboard()">
+                    <span id="dash-toggle-icon">◀</span>
+                </button>
+            </div>
+            
+        </div> 
+
+        <div class="dynamic-island-nav">
+            <div class="island-visible-content">
+                
+                <div class="island-handle">
+                    <img id="island-active-icon" src="icons/icon_more.png" alt="Tools">
+                </div>
+                
+                <div class="island-tools">
+                    <button class="island-btn" onclick="setSidebarPanel('logs')" data-tooltip="Schedule"><img src="icons/icon_timeline.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('stats')" data-tooltip="Stats"><img src="icons/icon_stats.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('daily')" data-tooltip="Daily Gain"><img src="icons/icon_daily.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('weekly')" data-tooltip="Weekly Gain"><img src="icons/icon_weekly.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('equipment')" data-tooltip="Equipment"><img src="icons/equipment.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('summon')" data-tooltip="Summon Calc"><img src="icons/summon.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('calc')" data-tooltip="Forge Calc"><img src="icons/anvil.png"></button>         
+                    <button class="island-btn" onclick="setSidebarPanel('war')" data-tooltip="War Calc"><img src="icons/warcalc.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('egg')" data-tooltip="Egg Planner"><img src="icons/icon_eggplan.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('pet')" data-tooltip="Pet & Mount"><img src="icons/petmount.png"></button>
+                    <button class="island-btn" onclick="window.open('https://doraemon-forging.github.io/BattleSim/', '_blank')" data-tooltip="Battle Sim"><img src="icons/battlesim.png"></button>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="workspace-card">
+            
+            <div class="pane left-pane"> 
+                
+                <canvas id="ambient-canvas"></canvas>
+
+                <div class="new-header-container desktop-only">
+                    <div class="new-mode-switch">
+                        <button class="seg-btn active" id="btn-setup" onclick="setMode('setup')">SETUP</button>
+                        <button class="seg-btn" id="btn-plan" onclick="setMode('plan')">PLAN</button>
+                    </div>
+                </div>
+
+                <div class="d-header-row row-tabs desktop-only" style="margin-top: 10px;">
+                    <div class="segmented-control" style="margin: 0; width: 400px; height: 40px;">
+                        <button class="tree-seg-btn forge active" id="tab-forge" onclick="selectTree('forge')">
+                            <img src="icons/tree_forge.png"> FORGE
+                        </button>
+                        <button class="tree-seg-btn spt" id="tab-spt" onclick="selectTree('spt')">
+                            <img src="icons/tree_SPT.png"> SPT
+                        </button>
+                        <button class="tree-seg-btn power" id="tab-power" onclick="selectTree('power')">
+                            <img src="icons/tree_power.png"> POWER
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tree-container" id="tree-container">
+                    <div class="tree-canvas" id="canvas">
+                        <svg class="connections-layer" id="svg-layer"></svg>
+                        <div class="physical-spacer"></div>
+                    </div>
+                </div>
+
+                <div class="control-capsule bottom-capsule desktop-only">
+                    <button class="btn-reset-text" onclick="resetCurrentTree()" title="Reset Tree"></button>
+                    <button id="btn-undo-desktop" onclick="undo()" disabled title="Undo"></button>
+                    <button id="btn-redo-desktop" onclick="redo()" disabled title="Redo"></button>
+                </div>
+            </div>
+
+            <div class="pane right-pane-wrapper">
+                
+                <div class="floating-header-container">
+                    <div class="fhc-circle"><span id="fh-icon">📜</span></div>
+                    <div class="fhc-pill"><span id="fh-title">SCHEDULE</span></div>
+                </div>
+
+                <div class="pane-visual">
+                    <div class="sidebar-scroll-wrapper">
+                        
+                        <div id="panel-logs" class="sidebar-panel">
+                            <div class="log-container">
+                                
+                                <div class="config-card">
+                                    <div class="war-setup-row">
+                                        <label class="drs-label">War Start:</label>
+                                        <div class="war-select-group">
+                                            <select id="war-day" class="war-select" onchange="updateWarConfig()">
+                                                <option value="1">Mon</option>
+                                                <option value="2" selected>Tue</option>
+                                            </select>
+                                           <select id="war-hour" class="war-select" onchange="updateWarConfig()">
+                                                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                                                <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+                                                <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12" selected>12</option>
+                                            </select>
+                                            <span class="cd-sep" style="position: relative; top: 5px;">:</span>
+                                            <select id="war-min" class="war-select" onchange="updateWarConfig()">
+                                                <option value="0" selected>00</option>
+                                                <option value="15">15</option>
+                                                <option value="30">30</option>
+                                                <option value="45">45</option>
+                                            </select>
+                                            <select id="war-ampm" class="war-select" onchange="updateWarConfig()">
+                                                <option value="AM" selected>AM</option>
+                                                <option value="PM">PM</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="date-row-styled">
+                                        <label class="drs-label">Start:</label>
+                                        <input type="datetime-local" id="start-date" class="drs-input desktop-only" lang="en-GB" onchange="updateCalculations(); safeSyncDropdowns(this.value, 'dm')">
+                                        
+                                        <div id="mobile-custom-date" class="mobile-only custom-date-group">
+                                            <select id="dm-month" class="cd-select cd-month" onchange="updateFromDropdowns()"></select>
+                                            <select id="dm-day" class="cd-select cd-day" onchange="updateFromDropdowns()"></select>
+                                            <select id="dm-hour" class="cd-select cd-time" onchange="updateFromDropdowns()"></select>
+                                            <span class="cd-sep">:</span>
+                                            <select id="dm-min" class="cd-select cd-time" onchange="updateFromDropdowns()"></select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stats-box-row">
+                                    <div class="sb-item type-res"><span class="sb-value" style="color:#e74c3c" id="res-val-desktop">0</span></div>
+                                    <div class="sb-item type-time"><span class="sb-value" style="color:#f39c12" id="time-val-desktop">0m</span></div>
+                                </div>
+
+                                <div id="log-list"></div>
+                                <div class="physical-spacer" style="height: 60px;"></div>
+                            </div>
+                        </div>
+
+                        <div id="panel-stats" class="sidebar-panel" style="display:none;">
+                            <div class="stats-container" id="stats-container">
+                                <div id="stats-content"></div> 
+                            </div>
+                        </div>
+
+                        <div id="container-calc"></div>
+                        <div id="container-war"></div>
+                        <div id="container-pet"></div>
+                        <div id="container-egg"></div>
+                        <div id="container-daily"></div>
+                        <div id="container-weekly"></div>
+                        <div id="container-equipment"></div>
+                        <div id="container-summon"></div>
+                        <div id="container-help"></div>
+                    </div>
+                </div>
+
+                <div id="capsule-logs" class="control-capsule bottom-capsule desktop-only">
+                    <button class="btn-reset-text" onclick="clearPlan()" title="Clear Plan"></button>
+                    <button id="btn-undo-log" onclick="undo()" disabled title="Undo"></button>
+                    <button id="btn-redo-log" onclick="redo()" disabled title="Redo"></button>
+
+                    <button class="btn-move-action btn-move-cancel floating-cancel-btn" onclick="cancelMove()">
+                        <img src="icons/icon_cancel.png" class="btn-icon"> CANCEL
+                    </button>
+                </div>
+
+                <div id="capsule-egg" class="control-capsule bottom-capsule desktop-only" style="display:none;">
+                    <button class="btn-reset-text" onclick="clearEggPlan()" title="Clear Egg Plan"></button>
+                    <button id="btn-undo-egg" onclick="undoEgg()" disabled title="Undo"></button>
+                    <button id="btn-redo-egg" onclick="redoEgg()" disabled title="Redo"></button>
+                </div>
+            </div>
+        </div> 
+    </div> 
+
+    <div id="float-tree" class="mobile-floating-container mobile-only">
+        <div class="control-capsule">
+            <button class="tn-action-btn reset-neutral" onclick="resetCurrentTree()"></button>
+            <button class="tn-action-btn" id="btn-undo-mobile-tree" onclick="undo()" disabled></button>
+            <button class="tn-action-btn" id="btn-redo-mobile-tree" onclick="redo()" disabled></button>
+        </div>
+    </div>
+
+    <div id="float-logs" class="mobile-floating-container mobile-only">
+        <div class="control-capsule">
+            <button class="tn-action-btn reset-neutral" onclick="clearPlan()"></button>
+            <button class="tn-action-btn" id="btn-undo-mobile-log" onclick="undo()" disabled></button>
+            <button class="tn-action-btn" id="btn-redo-mobile-log" onclick="redo()" disabled></button>
+
+            <button class="btn-move-action btn-move-cancel floating-cancel-btn" onclick="cancelMove()">
+                <img src="icons/icon_cancel.png" class="btn-icon"> CANCEL
+            </button>
+        </div>
+    </div>
+
+    <div id="float-egg" class="mobile-floating-container mobile-only">
+        <div class="control-capsule">
+            <button class="tn-action-btn reset-neutral" onclick="clearEggPlan()"></button>
+            <button class="tn-action-btn" id="btn-undo-mobile-egg" onclick="undoEgg()" disabled></button>
+            <button class="tn-action-btn" id="btn-redo-mobile-egg" onclick="redoEgg()" disabled></button>
+        </div>
+    </div>
+
+    <div id="mobile-more-view" class="more-view-container mobile-only">
+        <div class="bento-wrapper">
+            
+            <div class="mobile-banner-container">
+                <img src="icons/banner.png" class="main-banner-img" alt="Tech Planner">
+            </div>
+            
+            <div class="sys-btn-row">
+                <button class="btn-sys" onclick="downloadData()">
+                    <img src="icons/icon_save.png"><span>Save</span>
+                </button>
+                <button class="btn-sys" onclick="document.getElementById('file-upload').click()">
+                    <img src="icons/icon_load.png"><span>Load</span>
+                </button>
+                <button class="btn-sys" onclick="switchMobileView('help')">
+                    <img src="icons/icon_help.png"><span>Help</span>
+                </button>
+            </div>
+
+            <div class="zone-vip">
+                <button class="bento-btn btn-vip tech" id="btn-tree" onclick="switchMobileView('tree')">
+                    <img src="icons/icon_techtree.png">
+                    <span>Tech Tree</span>
+                </button>
+                <button class="bento-btn btn-vip sched" id="btn-logs" onclick="switchMobileView('logs')">
+                    <img src="icons/icon_timeline.png">
+                    <span>Schedule</span>
+                </button>
+            </div>
+
+            <div>
+                <div class="zone-title">Summary</div>
+                <div class="zone-trackers">
+                    
+                    <button class="bento-btn btn-tracker" id="btn-stats" onclick="switchMobileView('stats')">
+                        <img src="icons/icon_stats.png"><span>Stats</span>
+                    </button>
+                    <button class="bento-btn btn-tracker" id="btn-equipment" onclick="switchMobileView('equipment')">
+                        <img src="icons/equipment.png"><span>Equipment</span>
+                    </button>
+                    
+                    <button class="bento-btn btn-tracker" id="btn-daily" onclick="switchMobileView('daily')">
+                        <img src="icons/icon_daily.png"><span>Daily<br>Gain</span>
+                    </button>
+                    <button class="bento-btn btn-tracker" id="btn-weekly" onclick="switchMobileView('weekly')">
+                        <img src="icons/icon_weekly.png"><span>Weekly<br>Gain</span>
+                    </button>
+                    
+                </div>
+            </div>
+
+            <div>
+                <div class="zone-title">Other Tools</div>
+                
+                <div class="zone-calcs">
+                    <button class="bento-btn btn-calc" id="btn-battlesim" onclick="window.open('https://doraemon-forging.github.io/BattleSim/', '_blank')">
+                        <div class="calc-icon-circle"><img src="icons/battlesim.png"></div>
+                        <span>Battle Sim</span>
+                    </button>
+                    <button class="bento-btn btn-calc" id="btn-summon" onclick="switchMobileView('summon')">
+                        <div class="calc-icon-circle"><img src="icons/summon.png"></div>
+                        <span>Summon Calc</span>
+                    </button>
+                    <button class="bento-btn btn-calc" id="btn-calc" onclick="switchMobileView('calc')">
+                        <div class="calc-icon-circle"><img src="icons/anvil.png"></div>
+                        <span>Forge Calc</span>
+                    </button>
+                    <button class="bento-btn btn-calc" id="btn-war" onclick="switchMobileView('war')">
+                        <div class="calc-icon-circle"><img src="icons/warcalc.png"></div>
+                        <span>War Calc</span>
+                    </button>
+                    <button class="bento-btn btn-calc" id="btn-egg" onclick="switchMobileView('egg')">
+                        <div class="calc-icon-circle"><img src="icons/icon_eggplan.png"></div>
+                        <span>Egg Planner</span>
+                    </button>
+                    <button class="bento-btn btn-calc" id="btn-pet" onclick="switchMobileView('pet')">
+                        <div class="calc-icon-circle"><img src="icons/petmount.png"></div>
+                        <span>Pet & Mount</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <nav class="bottom-nav mobile-only">
+        <button class="b-nav-item active" data-target="more" onclick="switchMobileView('more')">
+            <img src="icons/icon_more.png" class="b-icon">
+            <span class="b-label">Home</span>
+        </button>
+        <button class="b-nav-item" data-target="tree" onclick="switchMobileView('tree')">
+            <img src="icons/icon_techtree.png" class="b-icon">
+            <span class="b-label">Tree</span>
+        </button>
+        <button class="b-nav-item" data-target="logs" onclick="switchMobileView('logs')">
+            <img src="icons/icon_timeline.png" class="b-icon">
+            <span class="b-label">Schedule</span>
+        </button>
+        <button class="b-nav-item" data-target="war" onclick="switchMobileView('war')">
+            <img src="icons/warcalc.png" class="b-icon">
+            <span class="b-label">War</span>
+        </button>
+        <button class="b-nav-item" data-target="weekly" onclick="switchMobileView('weekly')">
+            <img src="icons/icon_weekly.png" class="b-icon">
+            <span class="b-label">Weekly</span>
+        </button>
+    </nav>
+    <div id="tableModal" class="modal">
+        <div class="modal-content"></div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/modal.js"></script>
+    <script src="js/tech-planner.js"></script>
+    <script src="js/tools.js"></script>
+    
+    <script src="js/daily.js"></script>
+    <script src="js/weekly.js"></script>
+    <script src="js/warcalc.js"></script>
+    <script src="js/petmount.js"></script> 
+    <script src="js/equipment.js"></script> 
+    
+    <script src="js/templates.js?v=2"></script> 
+    <script src="js/summon.js?v=2"></script>
+    <script src="js/main.js?v=2"></script>
+
+</body>
+</html>

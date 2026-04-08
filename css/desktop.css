@@ -1,0 +1,469 @@
+/* css/desktop.css */
+
+/* ==========================================================================
+   01. CORE STYLES & VARIABLES
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Balsamiq+Sans:ital,wght@0,400;0,700;1,400;1,700&family=Comfortaa:wght@300..700&family=Fredoka:wght@300..700&family=Fredoka+One&family=Itim&family=Jua&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Sniglet:wght@400;800&family=Varela+Round&display=swap');
+
+:root {
+    --bg-color: #ffffff; --panel-bg: #f4f4f4; --text-color: #ffffff;
+    --accent-blue: #4facfe; --accent-orange: #f39c12; --accent-purple: #9b59b6;
+    --accent-red: #e74c3c; --accent-green: #2ecc71; --locked-color: #bdc3c7;
+    --line-color: #000000; --tree-bg: #ffffff; --node-bg-locked: #ecf0f1;
+    --node-border-locked: #bdc3c7; --node-bg-unlocked: #cbaac3;
+    --node-border-unlocked: #a67c52; --pipe-color: #000000;
+    --font-main: 'Fredoka', sans-serif; --base-size: 16px; 
+}
+
+html { font-size: var(--base-size); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+    font-family: var(--font-main); font-weight: 700; color: var(--text-color);
+    -webkit-text-stroke: 2.5px #000000; letter-spacing: 1px; paint-order: stroke fill;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility;
+    background-color: var(--bg-color); margin: 0; height: 100vh; height: 100dvh; 
+    display: flex; flex-direction: column; overflow: hidden; user-select: none;
+}
+@keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ==========================================================================
+   02. SCROLLBARS
+   ========================================================================== */
+.tree-container, .dashboard-scroll-wrapper, .modal-body-scroll, .sidebar-scroll-wrapper, .more-menu {
+    overflow-y: auto !important; overflow-x: auto !important; 
+    scrollbar-width: thin !important; scrollbar-color: #bdc3c7 transparent !important;
+}
+::-webkit-scrollbar { width: 8px !important; height: 8px !important; }
+::-webkit-scrollbar-track { background: transparent !important; border-radius: 4px; margin: 4px 0; }
+::-webkit-scrollbar-thumb { background-color: #bdc3c7 !important; border-radius: 4px !important; border: 2px solid transparent !important; background-clip: content-box !important; }
+::-webkit-scrollbar-thumb:hover { background-color: #7f8c8d !important; border: 1px solid transparent !important; }
+::-webkit-scrollbar-corner { background: transparent !important; }
+
+/* ==========================================================================
+   03. MAIN WORKSPACE LAYOUT (Desktop >= 769px)
+   ========================================================================== */
+@media (min-width: 769px) {
+    .mobile-only { display: none !important; }
+    .desktop-only { display: flex !important; }
+    body { overflow: hidden; }
+
+    .desktop-workspace { display: flex; gap: 20px; height: 100vh; width: 100vw; padding: 20px; background-color: #dbe4eb; box-sizing: border-box; }
+    
+    .dashboard-pane { 
+        position: relative !important; overflow: visible !important; height: calc(100vh - 75px) !important; margin-top: 25px !important;
+        flex: 0 0 25vw !important; width: 25vw !important; max-width: 260px !important; min-width: 160px !important; 
+        display: flex !important; flex-direction: column !important; align-items: stretch !important; background: #ffffff; 
+        border: 4px solid #2d3436 !important; border-radius: 24px !important; box-shadow: 8px 8px 0px rgba(0,0,0,0.15); 
+        padding: 0 !important; z-index: 100; transition: width 0.3s ease, min-width 0.3s ease, max-width 0.3s ease, flex 0.3s ease, border-width 0.3s ease, margin 0.3s ease !important;
+    }
+    
+    .workspace-card { flex: 1; min-width: 0; display: flex; background: transparent; border: none; box-shadow: none; gap: 25px; overflow: visible !important; margin-top: 25px; }
+    
+    /* ---------------------------------------------------
+       BASE LEFT PANE (Updated for Canvas)
+       --------------------------------------------------- */
+    .pane.left-pane { 
+        flex: 1; width: 50%; height: 100%; display: flex; flex-direction: column; 
+        border: 4px solid #2d3436; border-radius: 24px; box-shadow: 8px 8px 0px rgba(0,0,0,0.15); 
+        
+        /* Fallback background color */
+        background-color: #ffffff; 
+        
+        /* FIXED: Restored to visible so your overlapping header/footer buttons aren't cut off */
+        overflow: visible !important; 
+        position: relative; box-sizing: border-box; 
+    }
+
+    /* The canvas sits directly behind everything else */
+    #ambient-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0; 
+        pointer-events: none; /* Lets your mouse click through to the buttons underneath */
+        
+        /* FIXED: Curves the canvas corners mathematically perfectly to your 24px outer border (24px - 4px border width) */
+        border-radius: 20px; 
+        
+        /* If the particles occasionally clip the absolute edges, this keeps them clean */
+        overflow: hidden; 
+    }
+
+    /* Make sure your content sits above the canvas */
+    .pane.left-pane > *:not(#ambient-canvas) {
+        position: relative;
+        z-index: 10;
+    }
+
+    /* ---------------------------------------------------
+       THEME SKINS (Colors only, JS handles the shapes now)
+       --------------------------------------------------- */
+    .pane.left-pane.theme-forge { background-color: #fcffff; }
+    .pane.left-pane.theme-spt { background-color: #ffffff; }
+    .pane.left-pane.theme-power { background-color: #ffffff; }
+    /* =======================================
+       THE PARTICLE FALL ANIMATION ENGINE
+       ======================================= */
+    @keyframes particleFall {
+        0% { 
+            background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px; 
+        }
+        100% { 
+            /* Moving exactly the size of their grids so it loops invisibly */
+            background-position: -200px 200px, -200px 200px, -140px 140px, -140px 140px, -90px 90px, -90px 90px; 
+        }
+    }
+
+    /* ---------------------------------------------------
+       RIGHT PANE & EXTRAS
+       --------------------------------------------------- */
+    .pane.right-pane-wrapper { flex: 1; width: 50%; height: 100%; display: flex; flex-direction: column; position: relative; overflow: visible !important; box-sizing: border-box; border: none; background: transparent; box-shadow: none; }
+    
+    .pane-visual { width: 100%; height: 100%; display: flex; flex-direction: column; background: #fdfdfd; border: 4px solid #2d3436; border-radius: 24px; box-shadow: 8px 8px 0px rgba(0,0,0,0.15); overflow: hidden; box-sizing: border-box; padding-top: 20px; }
+    
+    .pane.left-pane .d-header-row, .row-controls { display: flex !important; flex-direction: row !important; justify-content: center !important; align-items: center !important; width: 100% !important; box-sizing: border-box; }
+}
+/* ==========================================================================
+   04. DASHBOARD COMPONENTS & FOCUS MODE
+   ========================================================================== */
+.dashboard-capsule, .tools-group-box { border: 2px solid #000000 !important; border-radius: 16px !important; box-sizing: border-box !important; margin-bottom: 15px !important; }
+.dashboard-capsule { background-color: #ffffff !important; width: 100% !important; display: flex !important; justify-content: space-between !important; gap: 10px !important; padding: 12px !important; height: auto !important; box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important; position: static !important; }
+.tools-group-box { padding: 12px; display: flex; flex-direction: column; gap: 10px; background-color: #F4F9FD !important; box-shadow: inset 0 4px 6px rgba(0,0,0,0.1) !important; margin-bottom: 0 !important; }
+.dashboard-scroll-wrapper { flex: 1; overflow-y: auto; width: 100%; padding-top: 40px; padding-bottom: 20px; padding-left: 15px; padding-right: 15px; box-sizing: border-box; }
+
+.sys-btn {
+    flex: 1 !important; width: auto !important; height: 55px !important; background-color: #c0eafa !important; 
+    border: 2px solid #000000 !important; border-radius: 12px !important; 
+    box-shadow: inset 0 -6px 0 0 #70abc0 !important; 
+    display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; margin: 0 !important; padding: 0 !important; transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+}
+.sys-btn:hover { transform: translateY(-2px) !important; box-shadow: inset 0 -6px 0 0 #70abc0 !important; }
+.sys-btn:active { transform: translateY(3px) !important; box-shadow: inset 0 -2px 0 0 #005d96 !important; }
+
+.sys-icon { width: 28px !important; height: 28px !important; object-fit: contain; transform: translateY(-4px) !important; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); }
+
+.tools-group-box .dash-btn {
+    width: 100% !important; height: 45px !important; margin-bottom: 0 !important; font-family: 'Fredoka One', sans-serif !important; font-size: 1rem !important; color: #ffffff !important; -webkit-text-stroke: 2.5px #000000; paint-order: stroke fill;          
+    background: #ffffff !important; border: 2px solid #000000 !important; border-radius: 10px !important; box-shadow: 0 4px 0 rgba(0,0,0,0.15) !important; transition: transform 0.1s ease, box-shadow 0.1s ease !important; cursor: pointer; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; display: flex !important; align-items: center !important; justify-content: flex-start !important; padding-left: 15px !important;          
+}
+.tools-group-box .dash-btn:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 0 rgba(0,0,0,0.15) !important; }
+.tools-group-box .dash-btn:active { transform: translateY(2px) !important; box-shadow: 0 2px 0 rgba(0,0,0,0.15) !important; }
+.dash-icon { width: 35px; height: 35px; object-fit: contain; margin-right: 5px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2)); }
+
+.dashboard-pane.minimized { flex: 0 0 0px !important; width: 0px !important; min-width: 0px !important; max-width: 0px !important; border-width: 0px !important; padding: 0 !important; margin-right: 15px !important; }
+.dashboard-pane > *:not(#dash-toggle-container) { transition: opacity 0.2s ease, transform 0.2s ease !important; }
+.dashboard-pane.minimized > *:not(#dash-toggle-container) { opacity: 0 !important; transform: translateX(-15px) !important; pointer-events: none !important; }
+
+#dash-toggle-container { position: absolute; bottom: 0px !important; left: 50%; transform: translate(-50%, 50%); z-index: 9999; pointer-events: none !important; transition: left 0.3s ease, transform 0.3s ease !important; }
+.dashboard-pane.minimized #dash-toggle-container { left: 35px !important; transform: translate(-50%, 50%) !important; }
+
+#btn-toggle-dash { pointer-events: auto !important; width: 38px !important; height: 38px !important; background-color: #00a3ff !important; border: 2px solid #000000 !important; border-radius: 8px !important; box-shadow: inset 0 -7px 0 0 #005d96 !important; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s, box-shadow 0.1s; margin: 0 !important; padding: 0 !important; }
+#btn-toggle-dash:active { transform: translateY(2px) !important; box-shadow: inset 0 -2px 0 0 #005d96 !important; }
+
+#dash-toggle-icon { color: #ffffff; font-size: 16px; font-family: 'Fredoka One', cursive; -webkit-text-stroke: 2.5px #000000; paint-order: stroke fill; margin-top: -7px; transition: transform 0.3s ease; }
+
+/* ==========================================================================
+   05. DYNAMIC ISLAND (Pill Rail for Minimized State)
+   ========================================================================== */
+.dynamic-island-nav {
+    position: fixed; top: 50%; left: 55px; width: 60px; height: max-content; padding: 15px 0; background: #ffffff; border: 3px solid #2d3436; border-radius: 40px;  
+    display: flex; flex-direction: column; align-items: center; z-index: 10000; opacity: 0; pointer-events: none; transform: translateY(-50%) translateX(-50%) scale(0.9); transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), opacity 0.3s ease;
+}
+.dashboard-pane.minimized ~ .dynamic-island-nav { opacity: 1; pointer-events: auto; transform: translateY(-50%) translateX(-50%) scale(1); }
+.island-handle { display: none !important; }
+.island-visible-content { position: relative; width: 100%; height: 100%; }
+.island-tools { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; opacity: 1; pointer-events: auto; }
+.island-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: all 0.1s ease; }
+.island-btn img { width: 80%; height: 80%; object-fit: contain; transition: transform 0.1s ease; filter: drop-shadow(0 2px 1px rgba(0,0,0,0.1)); }
+.island-btn:hover { background: #d0e4f5; border: 2px solid #2d3436; box-shadow: 2px 2px 0px rgba(0,0,0,0.15); transform: translateY(-2px); }
+.island-btn:active { transform: translateY(0px); box-shadow: 0px 0px 0px rgba(0,0,0,0); background: #d0e4f5; }
+
+@media (max-height: 800px) { .dynamic-island-nav { width: 55px; padding: 10px 0; } .island-tools { gap: 8px; } .island-btn { width: 40px; height: 40px; } }
+@media (max-height: 650px) { .dynamic-island-nav { width: 48px; padding: 8px 0; } .island-tools { gap: 4px; } .island-btn { width: 36px; height: 36px; border-radius: 36px; } .island-btn img { filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1)); } }
+/* ==========================================================================
+   DYNAMIC ISLAND TOOLTIPS
+   ========================================================================== */
+.island-btn {
+    position: relative;
+    z-index: 10; 
+}
+
+/* The Hidden Drawer */
+.island-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: 50%;
+    left: 100%; 
+    transform: translate(-15px, -50%) scale(0.6); 
+    background-color: #ffffff;
+    color: #ffffff;
+    font-family: 'Fredoka One', cursive; 
+    font-size: 0.9rem;
+    padding: 6px 16px; /* PERFECTLY CENTERED: Even padding on left and right */
+    border: 2px solid #2d3436;
+    border-radius: 25px; 
+    white-space: nowrap;
+    opacity: 0;
+    z-index: -1; 
+    pointer-events: none;
+    
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* The Hover Reveal */
+.island-btn:hover::after {
+    opacity: 1;
+    transform: translate(15px, -50%) scale(1); 
+    background-color: #dbe4eb; 
+}
+/* ==========================================================================
+   06. HEADER SYSTEM & CONTROLS (Mode Switch, Segmented controls)
+   ========================================================================== */
+.new-header-container { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: center !important; gap: 15px !important; width: 100%; padding: 0 20px; margin-top: -24px; z-index: 10 !important; position: relative; box-sizing: border-box; }
+.new-mode-switch { display: flex !important; align-items: center !important; background-color: #34495e; border: 2px solid #000000 !important; border-radius: 12px; height: 36px !important; width: 220px !important; flex: 0 0 220px !important; padding: 0; overflow: visible !important; position: relative; z-index: 10; box-sizing: border-box; }
+.new-mode-switch .seg-btn { border-right: 2px solid #000000 !important; }
+.new-mode-switch .seg-btn:last-child { border-right: none !important; }
+.seg-btn.active::before { border-width: 2px !important; height: 140% !important; }
+.new-mode-switch .seg-btn.active::before { height: 120% !important; }
+
+.segmented-control { background-color: #34495e; border: 1.5px solid #000000; border-radius: 12px; display: flex; align-items: center; width: 90%; max-width: 450px; margin: 15px auto; padding: 0; position: relative; z-index: 1; box-sizing: border-box; height: 32px; box-shadow: none; }
+div.segmented-control.nav-mode { margin: 0 !important; width: auto !important; max-width: 300px !important; min-width: 200px !important; height: 36px !important; flex: 0 0 auto !important; }
+.seg-btn { flex: 1; height: 100%; position: relative; background: transparent; border: none; border-right: 1.5px solid #000000; margin: 0; color: #ffffff; font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 0.9rem; letter-spacing: 0.5px; cursor: pointer; -webkit-text-stroke: 2px #000000; paint-order: stroke fill; text-shadow: none; display: flex; align-items: center; justify-content: center; z-index: 1; transition: transform 0.1s ease; outline: none;}
+.seg-btn:last-child { border-right: none; }
+.seg-btn.active { z-index: 50; border-right-color: transparent; color: #ffffff; font-size: 1.15rem; }
+.seg-btn.active::before { content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110%; height: 170%; background: #00b0ff; border: 2px solid #000000; border-radius: 10px; box-shadow: inset 0 -5px 0 0 #005680; z-index: -1; }
+#btn-plan, #btn-plan-mobile-new, #btn-setup, #btn-setup-mobile-new { text-transform: uppercase !important; }
+
+.new-tools-cluster { display: flex !important; align-items: center !important; justify-content: flex-start !important; flex: 0 0 auto !important; height: 44px !important; }
+.action-cluster { display: flex !important; justify-content: flex-start !important; align-items: center !important; padding: 0 !important; margin-left: 10px !important; flex: 0 0 auto !important; }
+.control-capsule { display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px !important; background-color: #ecf0f1; border: 2px solid #000000 !important; border-radius: 12px; padding: 0 6px; box-sizing: border-box; }
+.control-capsule button { height: 34px !important; width: 34px !important; border-radius: 8px !important; border-width: 2px !important; border-color: #000000 !important; border-style: solid !important; margin: 0 !important; padding: 0 !important; min-width: 0 !important; box-sizing: border-box; }
+
+#btn-undo-desktop, #btn-undo-log, #btn-undo-mobile-new, #btn-undo-egg, #btn-redo-desktop, #btn-redo-log, #btn-redo-mobile-new, #btn-redo-egg, .btn-reset-text, .tree-reset-btn, .tn-action-btn.reset-neutral, button[onclick="clearPlan()"], button[onclick="clearEggPlan()"] { 
+    width: 36px; height: 36px; border-radius: 10px; border: 3px solid #000000; padding: 0; margin: 0 2px; display: inline-flex; align-items: center; justify-content: center; position: relative; color: transparent; font-size: 0; cursor: pointer; background-image: none; box-sizing: border-box; transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+}
+#btn-undo-desktop:not(:disabled):hover, #btn-redo-desktop:not(:disabled):hover, #btn-undo-log:not(:disabled):hover, #btn-redo-log:not(:disabled):hover, #btn-undo-egg:not(:disabled):hover, #btn-redo-egg:not(:disabled):hover { transform: translateY(-2px) !important; box-shadow: inset 0 -6px 0 0 #005680 !important; }
+.btn-reset-text:hover, button[onclick="clearPlan()"]:hover, button[onclick="clearEggPlan()"]:hover { transform: translateY(-2px) !important; box-shadow: inset 0 -6px 0 0 #c0392b !important; }
+#btn-undo-desktop::after, #btn-undo-log::after, #btn-undo-mobile-new::after, #btn-undo-egg::after, #btn-redo-desktop::after, #btn-redo-log::after, #btn-redo-mobile-new::after, #btn-redo-egg::after, .btn-reset-text::after, .tree-reset-btn::after, .tn-action-btn.reset-neutral::after, button[onclick="clearPlan()"]::after, button[onclick="clearEggPlan()"]::after { content: ""; position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; background-repeat: no-repeat; background-position: center; background-size: contain; }
+.control-capsule button::after { width: 65% !important; height: 65% !important; }
+
+#btn-undo-desktop::after, #btn-undo-log::after, #btn-undo-mobile-new::after, #btn-undo-egg::after { background-image: url('../icons/button_undo.png'); }
+#btn-redo-desktop::after, #btn-redo-log::after, #btn-redo-mobile-new::after, #btn-redo-egg::after { background-image: url('../icons/button_redo.png'); }
+.btn-reset-text::after, .tree-reset-btn::after, .tn-action-btn.reset-neutral::after, button[onclick="clearPlan()"]::after, button[onclick="clearEggPlan()"]::after { background-image: url('../icons/button_reset.png'); }
+
+#btn-undo-desktop:not(:disabled), #btn-redo-desktop:not(:disabled), #btn-undo-log:not(:disabled), #btn-redo-log:not(:disabled), #btn-undo-mobile-new:not(:disabled), #btn-redo-mobile-new:not(:disabled), #btn-undo-egg:not(:disabled), #btn-redo-egg:not(:disabled) { background-color: #00b0ff !important; box-shadow: inset 0 -6px 0 0 #005680 !important; }
+#btn-undo-desktop:disabled, #btn-redo-desktop:disabled, #btn-undo-log:disabled, #btn-redo-log:disabled, #btn-undo-mobile-new:disabled, #btn-redo-mobile-new:disabled, #btn-undo-egg:disabled, #btn-redo-egg:disabled { background-color: #dcdcdc !important; cursor: default; box-shadow: inset 0 -6px 0 0 #7f8c8d !important; transform: none !important; }
+#btn-undo-desktop:disabled::after, #btn-redo-desktop:disabled::after, #btn-undo-log:disabled::after, #btn-redo-log:disabled::after, #btn-undo-mobile-new:disabled::after, #btn-redo-mobile-new:disabled::after, #btn-undo-egg:disabled::after, #btn-redo-egg:disabled::after { opacity: 0.3 !important; filter: grayscale(100%) !important; }
+.btn-reset-text, .tree-reset-btn, .tn-action-btn.reset-neutral, button[onclick="clearPlan()"], button[onclick="clearEggPlan()"] { background-color: #ff4757 !important; box-shadow: inset 0 -6px 0 0 #c0392b !important; }
+#btn-undo-desktop:not(:disabled):active, #btn-redo-desktop:not(:disabled):active, .btn-reset-text:active, .tree-reset-btn:active, .tn-action-btn.reset-neutral:active, button[onclick="clearPlan()"]:active, button[onclick="clearEggPlan()"]:active { transform: translateY(3px); box-shadow: inset 0 -2px 0 0 rgba(0,0,0,0.3) !important; }
+#btn-undo-desktop:not(:disabled):active::after, #btn-redo-desktop:not(:disabled):active::after, .btn-reset-text:active::after, .tree-reset-btn:active::after, .tn-action-btn.reset-neutral:active::after, button[onclick="clearPlan()"]:active::after, button[onclick="clearEggPlan()"]:active::after { transform: translate(-50%, -40%); }
+
+.pane.left-pane .d-header-row.row-tabs { display: flex !important; flex-direction: row !important; justify-content: center !important; width: 100% !important; padding: 0 20px; box-sizing: border-box; margin-top: 10px !important; z-index: 20 !important; position: relative; background-color: transparent !important; padding-top: 5px !important; margin-top: 15px !important; pointer-events: none; }
+.pane.left-pane .d-header-row.row-tabs > * { pointer-events: auto; }
+
+/* ==========================================================================
+   07. FLOATING HEADERS (Circle + Pill)
+   ========================================================================== */
+.floating-header-container { position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%) !important; z-index: 600; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.fhc-circle { position: relative !important; z-index: 10 !important; }
+.fhc-circle span { display: flex; width: 100%; height: 100%; justify-content: center; align-items: center; margin: 0; }
+.fhc-circle img { width: 80% !important; height: 80% !important; object-fit: contain; display: block; }
+.fhc-pill { min-width: 0 !important; width: auto !important; height: 40px !important; display: flex !important; align-items: center !important; z-index: 5 !important; border-radius: 0 20px 20px 0 !important; background: rgb(235, 242, 250) !important; border: 2px solid #000000 !important; border-left: none !important; box-shadow: 4px 4px 0 rgba(0,0,0,0.1) !important; padding-left: 20px !important; padding-right: 45px !important; margin-left: -18px !important; }
+.fhc-pill span { font-family: 'Fredoka One', cursive; font-size: 1.1rem; color: #ffffff; -webkit-text-stroke: 3px #000000; paint-order: stroke fill; margin-top: -2px; margin-left: 5px; }
+.pill-banner { height: 24px; width: auto; object-fit: contain; margin-left: 0px; margin-top: -2px; display: block; }
+.fhc-pill.main-banner-pill { background-color: #dbe4eb; padding-right: 15px !important; }
+
+/* ==========================================================================
+   08. TREE CANVAS, NODES & TIER HEADERS
+   ========================================================================== */
+.tree-container { flex: 1; overflow-y: auto !important; position: relative; display: block !important; padding: 0px 10px 20px 10px; background: transparent; z-index: 5; }
+.tree-canvas { position: relative; width: 100%; max-width: 800px; min-width: 280px; margin: 0 auto; padding-top: 5px; padding-bottom: 0px !important; display: block; opacity: 1 !important; visibility: visible !important; box-sizing: border-box; }
+.tier-block { width: 100%; max-width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 60px; }
+
+.node { width: 50px; height: 50px; background-color: #dcdcdc; border: 3px solid #7f8c8d; border-radius: 50%; position: relative; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; transition: transform 0.1s, border-color 0.2s, background-color 0.2s; -webkit-backface-visibility: hidden; backface-visibility: hidden; transform: translateZ(0); }
+.node:hover { transform: scale(1.15); z-index: 20; }
+.node .node-img { width: 80%; height: 80%; object-fit: contain; pointer-events: none; z-index: 5; filter: grayscale(100%); opacity: 0.5; transition: filter 0.2s, opacity 0.2s; }
+.node.unlocked { background-color: #ffffff; border-color: #2d3436; }
+.node.unlocked .node-img { filter: none; opacity: 1; }
+.tree-forge .node.active-setup, .tree-forge .node.active-plan { background-color: #5eff8b; border-color: #000000;}
+.tree-spt .node.active-setup, .tree-spt .node.active-plan { background-color: #fcfe5d; border-color: #000000;}
+.tree-power .node.active-setup, .tree-power .node.active-plan { background-color: #e17373; border-color: #000000;}
+
+.node::before { content: attr(data-name); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background-color: #ffffff; color: #000000; font-family: 'Fredoka', sans-serif; font-size: 0.8rem; padding: 6px 12px; border: 2px solid #000000; border-radius: 8px; white-space: nowrap; -webkit-text-stroke: 0px #000000; paint-order: stroke fill; opacity: 0; visibility: hidden; pointer-events: none; z-index: 100; transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s; }
+.node:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-5px); }
+.node-level { position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); color: #fff; font-family: 'Fredoka', cursive !important; font-size: 1rem !important; font-weight: 650 !important;-webkit-text-stroke: 3px #000; paint-order: stroke fill; white-space: nowrap; z-index: 10; pointer-events: none; }
+.node-tier-badge { display: flex; align-items: center; justify-content: center; position: absolute; top: -8px; left: -8px; width: 20px; height: 20px; background: #ebebeb; border: 2px solid #000000; border-radius: 50%; color: #ffffff; -webkit-text-stroke: 2.5px #000000; paint-order: stroke fill; font-size: 10px; font-weight: 900; font-family: sans-serif; z-index: 15; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.node:not(.unlocked) .node-tier-badge { background: #bdc3c7; border-color: #7f8c8d; }
+
+.connections-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.connector { fill: none; stroke-width: 4px; stroke: #2d3436; stroke-linecap: round; stroke-linejoin: round; }
+.connector.locked { stroke: #bdc3c7 !important; opacity: 0.5; }
+
+.tier-header { display: flex !important; align-items: center; justify-content: space-between; width: 100%; max-width: 600px; margin: 30px auto 15px auto; padding: 0 5px; position: relative; z-index: 5; box-sizing: border-box; }
+.tier-title { font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 1.5rem; color: #ffffff !important; -webkit-text-stroke: 2px #000000; background-color: #ffffff; border: 3px solid #000000; border-radius: 12px; padding: 6px 24px; box-shadow: 0 4px 0 rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; line-height: 1; }
+.tier-max-btn { display: flex !important; align-items: center; justify-content: center; height: 45px !important; width: 90px !important; font-family: 'Fredoka One', 'Fredoka', sans-serif !important; font-size: 1.0rem !important; color: #ffffff !important; text-transform: uppercase !important; -webkit-text-stroke: 1.5px #000000; background-color: #02a2ff !important; box-shadow: inset 0 -5px 0 0 #005d96 !important; border: 2px solid #000000 !important; border-radius: 12px !important; padding: 0px 20px 5px 20px !important; cursor: pointer; margin: 0 !important; min-height: 46px; box-sizing: border-box !important; z-index: 2; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease !important; }
+.tier-max-btn:hover { background-color: #33b5ff !important; transform: translateY(-2px) !important; box-shadow: inset 0 -5px 0 0 #005d96 !important; }
+.tier-max-btn:active { transform: translateY(3px) !important; box-shadow: inset 0 -2px 0 0 #005d96 !important; }
+body[data-mode="plan"] .tier-max-btn { visibility: hidden !important; pointer-events: none !important; }
+
+/* ==========================================================================
+   09. CONFIG CARDS & BOTTOM CAPSULES
+   ========================================================================== */
+.config-card { background-color: #ecf0f1; border: 3px solid #000000; border-radius: 12px; padding: 10px; margin: 0 15px 15px 15px; display: flex; flex-direction: column; gap: 5px; background-clip: padding-box; }
+.config-card .war-setup-row, .config-card .date-row-styled { margin: 0 !important; width: 100%; padding: 5px 0; }
+.bottom-capsule { 
+    position: absolute !important; 
+    bottom: 0 !important; 
+    left: 50% !important; 
+    transform: translate(-50%, 50%) !important; 
+    z-index: 500 !important; 
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)) !important; 
+    margin-bottom: 3px !important; 
+    
+    /* THE FIX: Forces the capsule to shrink-wrap tightly around the buttons */
+    width: max-content !important; 
+    min-width: 0 !important;
+}
+
+#capsule-logs, #capsule-egg { bottom: 4px !important; }
+/* ==========================================================================
+   ARCADE TOGGLE
+   ========================================================================== */
+
+/* 1. Container */
+.pane.left-pane .d-header-row.row-tabs .segmented-control {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 0 5px 0 !important;
+    height: auto !important;
+    gap: 8px !important; 
+    width: 95% !important;
+    max-width: 500px !important;
+    overflow: visible !important;
+}
+
+/* 2. The Keycap (Base / Inactive State - WIDE DESKTOP DEFAULT) */
+.tree-seg-btn {
+    flex: 1;
+    height: 48px !important;
+    border: 2px solid #000000 !important;
+    border-radius: 12px !important;
+    cursor: pointer !important; /* <-- FIXED: Restored the pointing finger cursor! */
+    
+    /* Typography */
+    color: rgba(0,0,0, 0.4) !important; 
+    font-family: 'Fredoka One', cursive !important;
+    font-size: 1rem !important; 
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    -webkit-text-stroke: 0px transparent !important;
+    
+    /* Strict 1-Row Layout Enforcement */
+    display: flex !important;
+    flex-direction: row !important; 
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important; 
+    overflow: hidden !important; 
+    
+    /* Physics */
+    transform: translateY(0);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* 3. Inactive Colors */
+.tree-seg-btn.forge { background-color: #5eff8b !important; box-shadow: inset 0 -6px 0 0 #27ae60 !important; }
+.tree-seg-btn.spt { background-color: #fcfe5d !important; box-shadow: inset 0 -6px 0 0 #c29d0b !important; }
+.tree-seg-btn.power { background-color: #e17373 !important; box-shadow: inset 0 -6px 0 0 #c0392b !important; }
+
+.tree-seg-btn:hover:not(.active) {
+    transform: translateY(-2px);
+    filter: brightness(1.1); 
+}
+
+/* 4. The Active "Pressed" State */
+.tree-seg-btn.active {
+    transform: translateY(4px) !important; 
+    z-index: 0;
+    color: #ffffff !important;
+    -webkit-text-stroke: 2.5px #000000 !important; 
+    animation: solidSnap 0.15s cubic-bezier(0.1, 2.5, 0.3, 1) forwards !important;
+}
+
+.tree-seg-btn.forge.active { background-color: #5eff8b !important; box-shadow: inset 0 -2px 0 0 #27ae60 !important; }
+.tree-seg-btn.spt.active { background-color: #fcfe5d !important; box-shadow: inset 0 -2px 0 0 #c29d0b !important; }
+.tree-seg-btn.power.active { background-color: #e17373 !important; box-shadow: inset 0 -2px 0 0 #c0392b !important; }
+.tree-seg-btn.active::before { display: none !important; }
+
+/* 5. Icons */
+.tree-seg-btn img {
+    height: 20px !important; 
+    width: auto !important;
+    filter: brightness(0) opacity(0.4) !important; 
+    transition: all 0.1s ease;
+    margin-right: 6px !important; 
+    margin-top: -2px;
+}
+
+.tree-seg-btn.active img {
+    filter: drop-shadow(0 2px 0 rgba(0,0,0,0.3)) !important;
+    transform: scale(1.15);
+    opacity: 1 !important;
+}
+
+/* =======================================
+   "POWER SURGE" FLASH EFFECTS (Desktop)
+   ======================================= */
+@keyframes solidSnap {
+    0%   { transform: translateY(0); }
+    50%  { transform: translateY(6px); } 
+    100% { transform: translateY(4px); } 
+}
+
+.tree-seg-btn::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ffffff;
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 5; 
+}
+
+.tree-seg-btn.active::after {
+    animation: whiteFlash 0.35s ease-out forwards;
+}
+
+@keyframes whiteFlash {
+    0%   { opacity: 0; }
+    10%  { opacity: 1; }   
+    100% { opacity: 0; }   
+}
+
+/* =======================================
+   RESPONSIVE NARROW DESKTOP FIX
+   ======================================= */
+@media (min-width: 769px) and (max-width: 950px) {
+    .tree-seg-btn {
+        font-size: 0.75rem !important; 
+        gap: 2px !important;
+    }
+    .tree-seg-btn.active {
+        -webkit-text-stroke: 1.5px #000000 !important; 
+    }
+    .tree-seg-btn img {
+        height: 16px !important; 
+        margin-right: 4px !important;
+    }
+}
+
+/* STRICT CAPSULE VISIBILITY LOCK */
+#capsule-logs:not(.show-capsule),
+#capsule-egg:not(.show-capsule) {
+    display: none !important;
+}
