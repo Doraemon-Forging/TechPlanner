@@ -7,152 +7,23 @@ function initWarCalc() {
     const container = document.getElementById('war-calc-inputs');
     if (!container) return;
 
+    // Hide the default card header if it exists
     const cardHeader = container.closest('.daily-card')?.querySelector('.daily-card-header');
     if (cardHeader) cardHeader.style.display = 'none';
 
-    const customStyles = `
-    <style>
-        .wc-scope { padding-top: 10px; }
-        
-        .wc-scope .wc-label, 
-        .wc-scope .wc-header-label,
-        .wc-scope span, 
-        .wc-scope div {
-            font-family: 'Fredoka', sans-serif !important;
-            font-weight: 600 !important;
-            color: #000000 !important;
-            -webkit-text-stroke: 0px !important;
-            text-shadow: none !important;
-            letter-spacing: 0.5px;
+    // Populate the Forge Level Dropdown dynamically
+    const forgeSelect = document.getElementById('wc-forge-lv');
+    if (forgeSelect && forgeSelect.options.length === 0) {
+        for (let i = 1; i <= 34; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.text = i;
+            if (i === 20) opt.selected = true; // Default to 20
+            forgeSelect.appendChild(opt);
         }
+    }
 
-        .wc-label { font-size: 1rem !important; }
-        .wc-header-label { font-size: 1rem !important; text-align: center; }
-
-        .wc-scope input, 
-        .wc-scope select {
-            background: #fff !important;
-            border: 2px solid #000 !important;
-            border-radius: 8px !important;
-            font-family: 'Fredoka', sans-serif !important;
-            font-weight: 600 !important;
-            font-size: 1rem !important;
-            color: #000 !important;
-            text-align: center;
-            height: 32px !important;
-            outline: none !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-        }
-        .wc-scope input:focus { background: #f9f9f9 !important; }
-
-        .wc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .wc-line { border-bottom: 2px solid #ccc; margin: 15px 0; opacity: 0.5; }
-    </style>
-    `;
-
-    const row = (label, inputHtml) => `
-        <div class="wc-row">
-            <div class="wc-label">${label}</div>
-            ${inputHtml}
-        </div>`;
-
-    let html = customStyles + '<div class="wc-scope">';
-
-    // 1. FORGE & DUNGEON
-    let forgeOpts = '';
-    for(let i=1; i<=34; i++) forgeOpts += `<option value="${i}" ${i===20 ? 'selected' : ''}>${i}</option>`;
-    html += row("Current Forge Lv:", `<select id="wc-forge-lv" style="width:80px;" onchange="updateWarForgeNodesCap(); updateWarCalc()">${forgeOpts}</select>`);
-    
-    html += `
-        <div class="wc-row">
-            <div class="wc-label">Forge Upgrade Nodes:</div>
-            <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
-                <input type="number" id="wc-forge-nodes" value="0" min="0" oninput="updateWarForgeNodesCap(); updateWarCalc()" style="width: 70px;">
-                <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-forge-nodes-max">10</span></span>
-            </div>
-        </div>
-    `;
-
-    html += row("Hammer:", `<input type="text" id="wc-hammer" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">`);
-    html += `<div class="wc-line"></div>`;
-    html += row("Dungeon Key:", `<input type="text" id="wc-dungeon-key" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">`);
-    html += `<div class="wc-line"></div>`;
-
-    // 2. TECH
-    const techTiers = ['I', 'II', 'III', 'IV', 'V'];
-    techTiers.forEach(t => {
-        html += row(`Tech Tier ${t}:`, `<input type="text" id="wc-tech-${t}" style="width:140px;" oninput="cleanInput(this); updateWarCalc()">`);
-    });
-    html += `<div class="wc-line"></div>`;
-
-    // 3. SKILL SUMMON
-    html += `
-        <div class="wc-row">
-            <div class="wc-label">Skill Summon Lv:&nbsp;<button class="btn-info" onclick="openSkillLevelsModal()" style="vertical-align: middle; margin-bottom: 2px;">i</button></div>
-            <input type="number" id="wc-skill-lv" value="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" style="width: 80px;">
-        </div>
-        <div class="wc-row">
-            <div class="wc-label">Skill Summon Exp:</div>
-            <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
-                <input type="number" id="wc-skill-exp" value="0" min="0" oninput="updateWarSkillExpCap(); updateWarCalc()" style="width: 70px;">
-                <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-skill-max">10</span></span>
-            </div>
-        </div>
-    `;
-    html += row("Green Ticket:", `<input type="text" id="wc-ticket" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">`);
-    html += `<div class="wc-line"></div>`;
-
-    // 5. MOUNT
-    html += row("Mount Key:", `<input type="text" id="wc-mount-key" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">`);
-
-    html += `
-        <div class="wc-row">
-            <div class="wc-label">Mount Summon Lv:</div>
-            <input type="number" id="wc-mount-lv" value="1" min="1" max="100" oninput="updateWarMountExpCap(); updateWarCalc()" style="width: 80px;">
-        </div>
-        <div class="wc-row">
-            <div class="wc-label">Mount Summon Exp:</div>
-            <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
-                <input type="number" id="wc-mount-exp" value="0" min="0" oninput="updateWarMountExpCap(); updateWarCalc()" style="width: 70px;">
-                <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-mount-max">2</span></span>
-            </div>
-        </div>
-    `;
-    html += `<div class="wc-line"></div>`;
-
-    // 6. COLOR TABLE
-    html += `
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 2px;">
-            <div style="width: 32%; display: flex; justify-content: center; align-items: center;" class="wc-header-label">Hatch Egg</div>
-            <div style="width: 32%; display: flex; justify-content: center; align-items: center;" class="wc-header-label">Merge Egg/Pet</div>
-            <div style="width: 32%; display: flex; justify-content: center; align-items: center;" class="wc-header-label">Merge Mount</div>
-        </div>`;
-
-    const colors = [
-        { bg: '#ecf0f1', id: 'common' }, { bg: '#5cd8fe', id: 'rare' }, { bg: '#5dfe8a', id: 'epic' },      
-        { bg: '#fcfe5d', id: 'legendary' }, { bg: '#ff5c5d', id: 'ultimate' }, { bg: '#d55cff', id: 'mythic' }     
-    ];
-
-    colors.forEach(c => {
-        html += `
-        <div style="background-color: ${c.bg}; padding: 4px; margin-bottom: 4px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.1);">
-            <div style="width: 32%; display: flex; justify-content: center;">
-                <input type="text" id="wc-hatch-${c.id}" style="width: 60px; height: 26px !important; font-size: 0.9rem !important; border: 2px solid #777 !important; background: rgba(255,255,255,0.5) !important;" oninput="cleanInput(this); updateWarCalc()">
-            </div>
-            <div style="width: 32%; display: flex; justify-content: center;">
-                <input type="text" id="wc-merge-pet-${c.id}" style="width: 60px; height: 26px !important; font-size: 0.9rem !important; border: 2px solid #777 !important; background: rgba(255,255,255,0.5) !important;" oninput="cleanInput(this); updateWarCalc()">
-            </div>
-            <div style="width: 32%; display: flex; justify-content: center;">
-                <input type="text" id="wc-merge-mount-${c.id}" style="width: 60px; height: 26px !important; font-size: 0.9rem !important; border: 2px solid #777 !important; background: rgba(255,255,255,0.5) !important;" oninput="cleanInput(this); updateWarCalc()">
-            </div>
-        </div>`;
-    });
-
-    html += '</div>';
-    container.innerHTML = html;
-    
-    // Initial update for the caps
+    // Trigger initial updates to set max caps
     updateWarForgeNodesCap();
     updateWarMountExpCap();
     updateWarSkillExpCap();
@@ -165,17 +36,14 @@ function updateWarForgeNodesCap() {
 
     if (lvEl && nodesEl && maxEl) {
         let lv = parseInt(lvEl.value) || 1;
-        // Default to 10 if data is missing, otherwise check index 2 (the 3rd value)
         let maxNodes = 10;
         if (typeof forgeLevelData !== 'undefined' && forgeLevelData[lv]) {
-            // Your data format is [Cost, Timer, MaxNodes]
             maxNodes = forgeLevelData[lv][2] || 1;
         }
 
         maxEl.innerText = maxNodes;
-        
-        let currentNodes = parseInt(nodesEl.value) || 0;
-        if (currentNodes > maxNodes) {
+
+        if (parseInt(nodesEl.value) > maxNodes) {
             nodesEl.value = maxNodes;
         }
     }
@@ -187,9 +55,11 @@ function updateWarMountExpCap() {
     const maxEl = document.getElementById('wc-mount-max');
     
     if (lvEl && maxEl && expEl) {
+
+        if (parseInt(lvEl.value) > 100) lvEl.value = 100;
+        
         let lv = parseInt(lvEl.value) || 1;
         if (lv < 1) lv = 1;
-        if (lv > 100) lv = 100; 
         
         let maxExp = 2;
         if (typeof MOUNT_LEVEL_DATA !== 'undefined' && MOUNT_LEVEL_DATA[lv]) {
@@ -198,13 +68,15 @@ function updateWarMountExpCap() {
         
         if (maxExp === "MAX" || maxExp === 0) {
             maxEl.innerText = "MAX";
-            expEl.value = 0;
+            expEl.value = ""; 
             expEl.disabled = true;
         } else {
             maxEl.innerText = maxExp;
             expEl.disabled = false;
-            let currentExp = parseInt(expEl.value) || 0;
-            if (currentExp >= maxExp) expEl.value = maxExp - 1;
+            
+            if (parseInt(expEl.value) >= maxExp) {
+                expEl.value = maxExp - 1;
+            }
         }
     }
 }
@@ -245,9 +117,11 @@ function updateWarSkillExpCap() {
     const maxEl = document.getElementById('wc-skill-max');
     
     if (lvEl && maxEl && expEl) {
+
+        if (parseInt(lvEl.value) > 100) lvEl.value = 100;
+        
         let lv = parseInt(lvEl.value) || 1;
         if (lv < 1) lv = 1;
-        if (lv > 100) lv = 100;
         
         let maxExp = 10;
         if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[lv]) {
@@ -256,13 +130,15 @@ function updateWarSkillExpCap() {
         
         if (maxExp === "MAX" || maxExp === 0) {
             maxEl.innerText = "MAX";
-            expEl.value = 0;
+            expEl.value = ""; 
             expEl.disabled = true;
         } else {
             maxEl.innerText = maxExp;
             expEl.disabled = false;
-            let currentExp = parseInt(expEl.value) || 0;
-            if (currentExp >= maxExp) expEl.value = maxExp - 1;
+            
+            if (parseInt(expEl.value) >= maxExp) {
+                expEl.value = maxExp - 1;
+            }
         }
     }
 }

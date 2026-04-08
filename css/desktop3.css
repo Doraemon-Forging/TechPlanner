@@ -1,5 +1,5 @@
 /* css/desktop3.css */
-/* PET & MOUNT + DAILY/WEEKLY TAB STYLES */
+/* PET & MOUNT + DAILY/WEEKLY TAB STYLES + WAR CALCULATOR */
 
 /* ==========================================================================
    01. PET & MOUNT CALCULATOR
@@ -173,3 +173,56 @@
 .daily-disclaimer { font-family: 'Fredoka', sans-serif; font-size: 0.7rem; color: #95a5a6; margin-top: 5px; text-align: center; padding: 0 5px; line-height: 1.2; }
 .white-text-no-stroke { -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; font-size: 0.95rem !important; margin-bottom: 5px !important; }
 
+
+/* ==========================================================================
+   08. WAR CALCULATOR
+   ========================================================================== */
+.wc-scope { padding-top: 10px; }
+        
+.wc-scope .wc-label, 
+.wc-scope .wc-header-label,
+.wc-scope span, 
+.wc-scope div {
+    font-family: 'Fredoka', sans-serif !important;
+    font-weight: 600 !important;
+    color: #000000 !important;
+    -webkit-text-stroke: 0px !important;
+    text-shadow: none !important;
+    letter-spacing: 0.5px;
+}
+
+.wc-label { font-size: 1rem !important; }
+.wc-header-label { font-size: 1rem !important; text-align: center; }
+
+.wc-scope input, 
+.wc-scope select {
+    background: #fff !important;
+    border: 2px solid #000 !important;
+    border-radius: 8px !important;
+    font-family: 'Fredoka', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    color: #000 !important;
+    text-align: center;
+    height: 32px !important;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+.wc-scope input:focus { background: #f9f9f9 !important; }
+
+.wc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.wc-line { border-bottom: 2px solid #ccc; margin: 15px 0; opacity: 0.5; }
+.wc-color-row { padding: 4px; margin-bottom: 4px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(0,0,0,0.1); }
+.wc-color-cell { width: 32%; display: flex; justify-content: center; }
+
+.wc-scope input.wc-color-input { 
+    width: 60px !important; 
+    height: 26px !important; 
+    font-size: 0.9rem !important; 
+    border: 2px solid rgba(0,0,0,0.3) !important; 
+    background: rgba(255,255,255,0.5) !important; 
+}
+.wc-scope input.wc-color-input:focus {
+    background: rgba(255,255,255,0.8) !important;
+}

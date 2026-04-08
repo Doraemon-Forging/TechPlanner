@@ -3,7 +3,6 @@
  * Forge Calculator, Stats Rendering, and Egg Planner
  */
 
-// Define Rates locally to ensure Calculator works standalone
 const CALC_FORGE_RATES = {
     1:  [100, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     2:  [99, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -166,15 +165,51 @@ function renderStats() {
 // ==========================================
 
 function populateForgeDropdown() {
-    const s = document.getElementById('calc-forge-lv'); if (!s) return;
-    s.innerHTML = ""; for (let i = 1; i <= 34; i++) s.add(new Option(i, i)); s.value = 20;
+    const s = document.getElementById('calc-forge-lv'); 
+    if (!s) return;
+    s.innerHTML = ""; 
+    // Now goes up to 35
+    for (let i = 1; i <= 35; i++) s.add(new Option(i, i)); 
+    s.value = 20;
+    
+    // Initialize the Target dropdown based on default value
+    syncTargetForgeDropdown();
+}
+
+function syncTargetForgeDropdown() {
+    const curEl = document.getElementById('calc-forge-lv');
+    const targetEl = document.getElementById('calc-target-forge-lv');
+    if (!curEl || !targetEl) return;
+    
+    let curVal = parseInt(curEl.value) || 1;
+    targetEl.innerHTML = "";
+  
+    if (curVal >= 35) {
+        targetEl.add(new Option("-", "-"));
+        targetEl.disabled = true;
+        targetEl.style.opacity = "0.5"; 
+    } else {
+        targetEl.disabled = false;
+        targetEl.style.opacity = "1";
+        
+        let currentTarget = parseInt(targetEl.value);
+        
+        for (let i = curVal + 1; i <= 35; i++) {
+            targetEl.add(new Option(i, i));
+        }
+        
+        if (isNaN(currentTarget) || currentTarget <= curVal) {
+            targetEl.value = curVal + 1;
+        } else {
+            targetEl.value = currentTarget;
+        }
+    }
 }
 
 function getTechBonuses(lvls) {
     let speed = 0, sell = 0, hBonus = 0, cBonus = 0, free = 0, offH = 0, offC = 0, forgeDisc = 0;
     const sumLvl = (id) => { let s = 0; for (let t = 1; t <= 5; t++) s += (lvls[`forge_T${t}_${id}`] || 0); return s; };
     
-    // Dynamic Value Lookup
     const getVal = (id, fallback) => {
         if (TREES && TREES.forge && TREES.forge.meta && TREES.forge.meta[id] && TREES.forge.meta[id].val !== undefined) return TREES.forge.meta[id].val;
         return fallback;
@@ -242,23 +277,32 @@ const renderCalcGroup = (valBefore, valAfter, iconName, type = 'standard') => {
 };
 
 function updateCalculator() {
-    const hammerEl = document.getElementById('calc-hammers'); const targetEl = document.getElementById('calc-target');
+    const hammerEl = document.getElementById('calc-hammers'); 
+    const targetEl = document.getElementById('calc-target');
     if (!hammerEl || !targetEl) return;
+
+    // Get Inputs
     const hIn = parseFloat(hammerEl.value.replace(/,/g, '')) || 0;
     const gTarget = parseFloat(targetEl.value.replace(/,/g, '')) || 0;
     const fLv = parseInt(document.getElementById('calc-forge-lv').value) || 1; 
 
+    // UX: Formatting Inputs
     if (document.activeElement !== hammerEl) hammerEl.value = hIn > 0 ? hIn.toLocaleString('en-US') : (hammerEl.value ? '0' : '');
     if (document.activeElement !== targetEl) targetEl.value = gTarget > 0 ? gTarget.toLocaleString('en-US') : (targetEl.value ? '0' : '');
     
-    const curStats = getTechBonuses(setupLevels); const projStats = getTechBonuses(calcState().levels);
+    // Fetch Player Stats
+    const curStats = getTechBonuses(setupLevels); 
+    const projStats = getTechBonuses(calcState().levels);
     
+    // Helper: Renderer
     const renderForgeGroup = (v1, v2, iconKey, type) => {
         const iconHtml = iconKey ? `<img src="icons/${iconKey}.png" class="calc-icon-left" style="margin-right: 4px;">` : '';
         
         let strB, strA;
-        if (type === 'date') { strB = v1; strA = v2; }
-        else {
+        if (type === 'date' || type === 'standard') { 
+            strB = v1; 
+            strA = v2; 
+        } else {
             const fmt = (v) => {
                  if (type === 'gold') return formatResourceValue(v, 'gold');
                  if (type === 'hammer') return formatResourceValue(v, 'hammer');
@@ -283,11 +327,15 @@ function updateCalculator() {
         }
     };
 
+    // Helper: Generate Line
     const genLine = (label, v1, v2, iconKey, type = 'standard', tooltip = "") => {
         const tt = tooltip ? `<span class="info-tooltip" title="${tooltip}" onclick="alert('${tooltip}')">(?)</span>` : '';
         return `<div class="calc-line"><div class="calc-label">${label} ${tt}</div>${renderForgeGroup(v1, v2, iconKey, type)}</div>`;
     };
 
+    // ==========================================
+    // 3rd CARD: HAMMER YIELD & GOLD CALC
+    // ==========================================
     let effH1 = hIn / (1 - curStats.free / 100); 
     let effH2 = hIn / (1 - projStats.free / 100);
     
@@ -307,25 +355,65 @@ function updateCalculator() {
         }
     }
     yieldHtml += `</div>`;
-    const res1 = document.getElementById('calc-res-1'); if (res1) res1.innerHTML = h1 + yieldHtml;
+    const res1 = document.getElementById('calc-res-1'); 
+    if (res1) res1.innerHTML = h1 + yieldHtml;
     
+    // ==========================================
+    // 4th CARD: TARGET GOLD CALC
+    // ==========================================
     const res2 = document.getElementById('calc-res-2');
     if (res2) res2.innerHTML = genLine('Hammer Needed', gTarget / curStats.avgGold * (1 - curStats.free / 100), gTarget / projStats.avgGold * (1 - projStats.free / 100), 'fm_hammer', 'hammer');
     
-    if (typeof forgeLevelData !== 'undefined' && forgeLevelData[fLv]) {
+    // ==========================================
+    // 1st & 2nd CARDS: FORGE UPGRADES
+    // ==========================================
+    const res5 = document.getElementById('calc-res-5');
+    const resTarget = document.getElementById('calc-res-target-forge');
+
+    // --- OVERRIDE FOR MAX LEVEL (35) ---
+    if (fLv >= 35 || typeof forgeLevelData === 'undefined' || !forgeLevelData[fLv]) {
+        
+        // 1st Card: Render Dashes
+        let h5 = genLine('Cost', '-', '-', 'fm_gold', 'standard');
+        h5 += genLine('Finish', '-', '-', null, 'standard');
+        h5 += genLine('Duration', '-', '-', null, 'standard');
+        if (res5) res5.innerHTML = h5;
+
+        // 2nd Card: Render Dashes
+        let hTarget = genLine('Total Gold', '-', '-', 'fm_gold', 'standard');
+        hTarget += genLine('Total Duration', '-', '-', null, 'standard');
+        if (resTarget) resTarget.innerHTML = hTarget;
+
+    } else {
+        
+        // --- 1st CARD LOGIC (Standard Math) ---
         const cRaw = forgeLevelData[fLv][0];
         let h5 = genLine('Cost', Math.round(cRaw * (1 - curStats.forgeDisc / 100)), Math.round(cRaw * (1 - projStats.forgeDisc / 100)), 'fm_gold', 'gold');
 
         const baseMins = forgeLevelData[fLv][1] * 60;
         const sDateVal = document.getElementById('calc-start-date').value;
         const mainStartTime = sDateVal ? new Date(sDateVal).getTime() : Date.now();
-        let speedBonusAtStart = curStats.speed; let runningTimeOffset = 0;
-        const planStartMs = document.getElementById('start-date').value ? new Date(document.getElementById('start-date').value).getTime() : Date.now();
-        const state = calcState();
-        state.history.forEach(h => { const stepDuration = (h.type === 'delay' ? h.mins : h.added); runningTimeOffset += stepDuration; if (h.tree === 'forge' && h.id && h.id.includes('timer')) { const techFinishTime = planStartMs + (runningTimeOffset * 60000); if (techFinishTime <= mainStartTime) { speedBonusAtStart += 4; } } });
+        let speedBonusAtStart = curStats.speed; 
+        let runningTimeOffset = 0;
         
-        const f1 = baseMins / (1 + curStats.speed / 100); const f2 = baseMins / (1 + speedBonusAtStart / 100);
-        const dFinish = new Date(mainStartTime + f1 * 60000); const dFinishProj = new Date(mainStartTime + f2 * 60000);
+        const planStartEl = document.getElementById('start-date');
+        const planStartMs = planStartEl && planStartEl.value ? new Date(planStartEl.value).getTime() : Date.now();
+        const state = calcState();
+        
+        // Time Travel Math (Checks overlapping Queues)
+        state.history.forEach(h => { 
+            const stepDuration = (h.type === 'delay' ? h.mins : h.added); 
+            runningTimeOffset += stepDuration; 
+            if (h.tree === 'forge' && h.id && h.id.includes('timer')) { 
+                const techFinishTime = planStartMs + (runningTimeOffset * 60000); 
+                if (techFinishTime <= mainStartTime) { speedBonusAtStart += 4; } 
+            } 
+        });
+        
+        const f1 = baseMins / (1 + curStats.speed / 100); 
+        const f2 = baseMins / (1 + speedBonusAtStart / 100);
+        const dFinish = new Date(mainStartTime + f1 * 60000); 
+        const dFinishProj = new Date(mainStartTime + f2 * 60000);
         
         const formatDT = (d) => {
             const dateStr = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
@@ -335,8 +423,34 @@ function updateCalculator() {
         
         h5 += `<div class="calc-line"><div class="calc-label">Finish</div>${renderForgeGroup(formatDT(dFinish), formatDT(dFinishProj), null, 'date')}</div>`;
         h5 += genLine('Duration', f1, f2, null, 'time');
+        
+        if (res5) res5.innerHTML = h5;
 
-        const res5 = document.getElementById('calc-res-5'); if (res5) res5.innerHTML = h5;
+        // --- 2nd CARD LOGIC: CUMULATIVE TARGET LEVEL ---
+        const tLv = parseInt(document.getElementById('calc-target-forge-lv').value) || (fLv + 1);
+        
+        let totalBaseCost = 0;
+        let totalBaseMins = 0;
+        
+        // Loop from Current Level up to Target Level - 1
+        for (let i = fLv; i < tLv; i++) {
+            if (forgeLevelData[i]) {
+                totalBaseCost += forgeLevelData[i][0];
+                totalBaseMins += forgeLevelData[i][1] * 60;
+            }
+        }
+        
+        // Apply flat snapshot discounts
+        const totalCostCur = Math.round(totalBaseCost * (1 - curStats.forgeDisc / 100));
+        const totalCostProj = Math.round(totalBaseCost * (1 - projStats.forgeDisc / 100));
+        
+        const totalMinsCur = totalBaseMins / (1 + curStats.speed / 100);
+        const totalMinsProj = totalBaseMins / (1 + projStats.speed / 100);
+        
+        let hTarget = genLine('Total Cost', totalCostCur, totalCostProj, 'fm_gold', 'gold');
+        hTarget += genLine('Total Duration', totalMinsCur, totalMinsProj, null, 'time');
+        
+        if (resTarget) resTarget.innerHTML = hTarget;
     }
 
     if (typeof saveToLocalStorage === 'function') saveToLocalStorage();

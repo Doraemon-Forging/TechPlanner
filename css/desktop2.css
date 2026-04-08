@@ -74,6 +74,8 @@ span.stat-arrow {
 .seg-btn.active::before { border-width: 2px !important; height: 140% !important; }
 .new-mode-switch .seg-btn.active::before { height: 120% !important; }
 
+#btn-weekly-total.active, #btn-weekly-league.active { font-size: 1rem !important; }
+
 .new-tools-cluster { display: flex !important; align-items: center !important; justify-content: flex-start !important; flex: 0 0 auto !important; height: 44px !important; }
 .control-capsule { display: flex; align-items: center; justify-content: center; gap: 8px; height: 44px !important; background-color: #ecf0f1; border: 2px solid #000000 !important; border-radius: 12px; padding: 0 6px; box-sizing: border-box; }
 .control-capsule button { height: 34px !important; width: 34px !important; border-radius: 8px !important; border: 2px solid #000000 !important; margin: 0 !important; padding: 0 !important; min-width: 0 !important; box-sizing: border-box; }

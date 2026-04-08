@@ -266,7 +266,15 @@ function captureFullState() {
         setupLevels: (typeof setupLevels !== 'undefined') ? JSON.parse(JSON.stringify(setupLevels)) : {},
         planQueue: (typeof planQueue !== 'undefined') ? JSON.parse(JSON.stringify(planQueue)) :[],
         startDate: getVal('start-date'),
-        calcData: { world: getVal('calc-world'), stage: getVal('calc-stage'), forgeLv: getVal('calc-forge-lv'), hammers: getVal('calc-hammers'), target: getVal('calc-target'), calcStart: getVal('calc-start-date') },
+        calcData: { 
+            world: getVal('calc-world'), 
+            stage: getVal('calc-stage'), 
+            forgeLv: getVal('calc-forge-lv'), 
+            targetForgeLv: getVal('calc-target-forge-lv'), 
+            hammers: getVal('calc-hammers'), 
+            target: getVal('calc-target'), 
+            calcStart: getVal('calc-start-date') 
+        },
         eggData: { queue: (typeof eggPlanQueue !== 'undefined') ? JSON.parse(JSON.stringify(eggPlanQueue)) :[], start: getVal('egg-date-desktop') },
         dailyData: { 
             thiefLvl: getVal('thief-lvl'), thiefSub: getVal('thief-sub'),
@@ -278,9 +286,9 @@ function captureFullState() {
             league: getVal('weekly-league'), rank: getVal('weekly-rank'),
             warTier: getVal('weekly-war-tier'), warWin: getVal('weekly-war-win'),
             indiv: getVal('weekly-indiv'),
-            ascSkillLv: getVal('asc-skill-lv'), ascSkillExp: getVal('asc-skill-exp'),
-            ascPetLv: getVal('asc-pet-lv'), ascPetExp: getVal('asc-pet-exp'),
-            ascMountLv: getVal('asc-mount-lv'), ascMountExp: getVal('asc-mount-exp')
+            ascSkillLv: getVal('asc-skill-lv'), ascSkillExp: getVal('asc-skill-exp'), ascSkillInv: getVal('asc-skill-inv'),
+            ascPetLv: getVal('asc-pet-lv'), ascPetExp: getVal('asc-pet-exp'), ascPetInv: getVal('asc-pet-inv'),
+            ascMountLv: getVal('asc-mount-lv'), ascMountExp: getVal('asc-mount-exp'), ascMountInv: getVal('asc-mount-inv')
         },
         warCalcData: {
             forgeLv: getVal('wc-forge-lv'), forgeNodes: getVal('wc-forge-nodes'), forgeBonus: getVal('wc-forge-bonus'),
@@ -346,7 +354,24 @@ function loadState(d) {
         safeSetVal('war-day', warConfig.day); safeSetVal('war-hour', warConfig.hour); safeSetVal('war-min', warConfig.min); safeSetVal('war-ampm', warConfig.ampm); 
     }
     
-    try { if (d.calcData) { safeSetVal('calc-world', d.calcData.world); safeSetVal('calc-stage', d.calcData.stage); safeSetVal('calc-forge-lv', d.calcData.forgeLv); safeSetVal('calc-hammers', d.calcData.hammers); safeSetVal('calc-target', d.calcData.target); if (d.calcData.calcStart) { safeSetVal('calc-start-date', d.calcData.calcStart); safeSyncDropdowns(d.calcData.calcStart, 'cm'); } } } catch (e) {}
+    try { 
+        if (d.calcData) { 
+            safeSetVal('calc-world', d.calcData.world); 
+            safeSetVal('calc-stage', d.calcData.stage); 
+            safeSetVal('calc-forge-lv', d.calcData.forgeLv); 
+            
+            if (typeof syncTargetForgeDropdown === 'function') syncTargetForgeDropdown();
+            safeSetVal('calc-target-forge-lv', d.calcData.targetForgeLv);
+            
+            safeSetVal('calc-hammers', d.calcData.hammers); 
+            safeSetVal('calc-target', d.calcData.target); 
+            if (d.calcData.calcStart) { 
+                safeSetVal('calc-start-date', d.calcData.calcStart); 
+                safeSyncDropdowns(d.calcData.calcStart, 'cm'); 
+            } 
+        } 
+    } catch (e) {}
+    
     try { if (typeof eggPlanQueue !== 'undefined' && d.eggData) { eggPlanQueue.length = 0; eggPlanQueue.push(...(d.eggData.queue ||[])); if (d.eggData.start) { safeSetVal('egg-date-desktop', d.eggData.start); safeSyncDropdowns(d.eggData.start, 'em'); } } } catch (e) {}
     
     try {
@@ -363,9 +388,9 @@ function loadState(d) {
             safeSetVal('weekly-league', d.weeklyData.league); safeSetVal('weekly-rank', d.weeklyData.rank);
             safeSetVal('weekly-war-tier', d.weeklyData.warTier); safeSetVal('weekly-war-win', d.weeklyData.warWin);
             safeSetVal('weekly-indiv', d.weeklyData.indiv);
-            safeSetVal('asc-skill-lv', d.weeklyData.ascSkillLv); safeSetVal('asc-skill-exp', d.weeklyData.ascSkillExp);
-            safeSetVal('asc-pet-lv', d.weeklyData.ascPetLv); safeSetVal('asc-pet-exp', d.weeklyData.ascPetExp);
-            safeSetVal('asc-mount-lv', d.weeklyData.ascMountLv); safeSetVal('asc-mount-exp', d.weeklyData.ascMountExp);
+            safeSetVal('asc-skill-lv', d.weeklyData.ascSkillLv); safeSetVal('asc-skill-exp', d.weeklyData.ascSkillExp); safeSetVal('asc-skill-inv', d.weeklyData.ascSkillInv);
+            safeSetVal('asc-pet-lv', d.weeklyData.ascPetLv); safeSetVal('asc-pet-exp', d.weeklyData.ascPetExp); safeSetVal('asc-pet-inv', d.weeklyData.ascPetInv);
+            safeSetVal('asc-mount-lv', d.weeklyData.ascMountLv); safeSetVal('asc-mount-exp', d.weeklyData.ascMountExp); safeSetVal('asc-mount-inv', d.weeklyData.ascMountInv);
         }
     } catch (e) {}
 
@@ -567,6 +592,77 @@ function init() {
 // =========================================
 // 5. EVENT LISTENERS
 // =========================================
+
+// --- Global Input Sync Engine ---
+let isSyncing = false;
+
+function syncSharedInputs(sourceEl) {
+    if (isSyncing) return;
+
+    // Define which IDs should mirror each other
+    // Notice wc-ticket and wc-mount-key are intentionally excluded
+    const syncMap = [
+        ['wc-skill-lv', 'asc-skill-lv', 'sum-skill-lvl'],
+        ['wc-skill-exp', 'asc-skill-exp', 'sum-skill-exp'],
+        ['wc-mount-lv', 'asc-mount-lv', 'sum-mount-lvl'],
+        ['wc-mount-exp', 'asc-mount-exp', 'sum-mount-exp'],
+        ['asc-pet-lv', 'sum-pet-lvl'],
+        ['asc-pet-exp', 'sum-pet-exp'],
+        ['asc-skill-inv', 'sum-skill-res'],
+        ['asc-pet-inv', 'sum-pet-res'],
+        ['asc-mount-inv', 'sum-mount-res']
+    ];
+
+    const sourceId = sourceEl.id;
+    const matchedGroup = syncMap.find(group => group.includes(sourceId));
+    
+    if (!matchedGroup) return;
+
+    isSyncing = true;
+    
+    const rawValue = sourceEl.value.replace(/,/g, '');
+
+    matchedGroup.forEach(targetId => {
+        if (targetId !== sourceId) {
+            const targetEl = document.getElementById(targetId);
+            
+            if (targetEl && targetEl.value !== rawValue) {
+                targetEl.value = rawValue;
+                
+                if (targetId.startsWith('wc-')) {
+                    if (targetId.includes('-lv') || targetId.includes('-exp')) {
+                        if (targetId.includes('skill') && typeof updateWarSkillExpCap === 'function') updateWarSkillExpCap();
+                        if (targetId.includes('mount') && typeof updateWarMountExpCap === 'function') updateWarMountExpCap();
+                    }
+                    if (typeof updateWarCalc === 'function') updateWarCalc();
+                } 
+                else if (targetId.startsWith('asc-')) {
+                    const type = targetId.includes('skill') ? 'skill' : (targetId.includes('pet') ? 'pet' : 'mount');
+                    if (targetId.includes('-lv') || targetId.includes('-exp')) {
+                        if (typeof updateAscensionCaps === 'function') updateAscensionCaps(type);
+                    }
+                    if (typeof updateWeekly === 'function') updateWeekly();
+                } 
+                else if (targetId.startsWith('sum-')) {
+                    const type = targetId.includes('skill') ? 'skill' : (targetId.includes('pet') ? 'pet' : 'mount');
+                    if (targetId.includes('-lvl') || targetId.includes('-exp')) {
+                        if (typeof updateSummonCap === 'function') updateSummonCap(type);
+                    }
+                    if (typeof updateSummonCalc === 'function') updateSummonCalc(type);
+                    
+                    // Re-apply commas if it's a resource box
+                    if (targetId.includes('-res') && typeof formatInput === 'function') {
+                        formatInput(targetEl); 
+                    }
+                }
+            }
+        }
+    });
+
+    isSyncing = false;
+}
+
+// --- Main Input Listeners ---
 window.addEventListener('click', function(event) {
     if (!event.target.matches('.nav-btn') && !event.target.matches('.tree-select-btn')) { 
         document.querySelectorAll(".dropdown-content").forEach(d => { if (d.classList.contains('show')) d.classList.remove('show'); }); 
@@ -590,6 +686,9 @@ window.addEventListener('keydown', (e) => {
 ['change', 'input'].forEach(evt => {
     document.addEventListener(evt, function(e) {
         if (e.target.matches('input, select, textarea')) {
+           
+            syncSharedInputs(e.target);
+            
             clearTimeout(saveTimeout);
             saveTimeout = setTimeout(saveToLocalStorage, 300);
         }

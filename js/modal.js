@@ -558,14 +558,68 @@ function showEqSellTable(cur, proj) {
     showTable("EQUIPMENT SELL PRICE", "icons/forge_sell.png", { label: "Bonus", before: `+${cur}%`, after: `+${proj}%` }, headers, allRows);
 }
 function showForgeTable(type, cur, proj) {
-    const isUpgrade = proj > cur; const isT = type === 'timer'; const title = isT ? "FORGE UPGRADE TIME" : "FORGE UPGRADE COST"; const iconSrc = isT ? "icons/forge_timer.png" : "icons/forge_disc.png"; const headers = ["Level", isT ? "Upgrade Duration" : "Upgrade Cost"]; const rows = [];
-    for (let i = 1; i <= 34; i++) {
-        if (!forgeLevelData[i]) continue;
-        const [cost, hours] = forgeLevelData[i];
-        let v1, v2; if (isT) { const mins = hours * 60; v1 = formatSmartTime(mins / (1 + cur / 100)); v2 = formatSmartTime(mins / (1 + proj / 100)); } else { v1 = formatForgeCost(Math.round(cost * (1 - cur / 100))); v2 = formatForgeCost(Math.round(cost * (1 - proj / 100))); }
-        let cellContent = v1; if (isUpgrade) cellContent += ` ➜ ${v2}`; rows.push([`${i} ➜ ${i + 1}`, cellContent]);
+    const isUpgrade = proj > cur; 
+    const isT = type === 'timer'; 
+    const title = isT ? "FORGE UPGRADE TIME" : "FORGE UPGRADE COST"; 
+    const iconSrc = isT ? "icons/forge_timer.png" : "icons/forge_disc.png"; 
+    const headers = ["Level", isT ? "Upgrade Duration" : "Upgrade Cost"]; 
+    const rows = [];
+
+    // 1. Setup accumulators for the totals
+    let totalValBefore = 0;
+    let totalValAfter = 0;
+
+    for (let i = 1; i <= 34; i++) {
+        if (!forgeLevelData[i]) continue;
+        const [cost, hours] = forgeLevelData[i];
+        let v1, v2; 
+        
+        if (isT) { 
+            const mins = hours * 60; 
+            const rawV1 = mins / (1 + cur / 100);
+            const rawV2 = mins / (1 + proj / 100);
+            
+            // Add raw minutes to total
+            totalValBefore += rawV1;
+            totalValAfter += rawV2;
+            
+            v1 = formatSmartTime(rawV1); 
+            v2 = formatSmartTime(rawV2); 
+        } else { 
+            const rawV1 = Math.round(cost * (1 - cur / 100));
+            const rawV2 = Math.round(cost * (1 - proj / 100));
+            
+            // Add raw cost to total
+            totalValBefore += rawV1;
+            totalValAfter += rawV2;
+            
+            v1 = formatForgeCost(rawV1); 
+            v2 = formatForgeCost(rawV2); 
+        }
+        
+        let cellContent = v1; 
+        if (isUpgrade) cellContent += ` ➜ ${v2}`; 
+        rows.push([`${i} ➜ ${i + 1}`, cellContent]);
+    }
+
+    // 2. Format the accumulated totals
+    let totalStrBefore, totalStrAfter;
+    if (isT) {
+        totalStrBefore = formatSmartTime(totalValBefore);
+        totalStrAfter = formatSmartTime(totalValAfter);
+    } else {
+        totalStrBefore = formatForgeCost(Math.round(totalValBefore));
+        totalStrAfter = formatForgeCost(Math.round(totalValAfter));
     }
-    showTable(title, iconSrc, isT ? { label: "Speed", before: `+${cur}%`, after: `+${proj}%` } : { label: "Discount", before: `-${cur}%`, after: `-${proj}%` }, headers, rows, 50);
+
+    // 3. Build the final "Total" row string
+    let totalCellContent = totalStrBefore;
+    if (isUpgrade) totalCellContent += ` ➜ ${totalStrAfter}`;
+    
+    // 4. Push the Total row to the end of the array
+    rows.push(["Total", totalCellContent]);
+
+    showTable(title, iconSrc, isT ? { label: "Speed", before: `+${cur}%`, after: `+${proj}%` } : { label: "Discount", before: `-${cur}%`, after: `-${proj}%` }, headers, rows, 50);
 }
 
 // --- EQUIPMENT MODALS ---

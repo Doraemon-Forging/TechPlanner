@@ -57,7 +57,7 @@ function updateAscensionCaps(type) {
             maxEl.innerText = maxExp.toLocaleString();
             expEl.disabled = false;
             let currentExp = parseFloat(expEl.value);
-            // Cap EXP if it exceeds the new level's max
+            
             if (!isNaN(currentExp) && currentExp >= maxExp) {
                 expEl.value = maxExp - 1; 
             }
@@ -248,10 +248,10 @@ function updateWeekly() {
     const calculateRemainingExp = (type, db) => {
         if (!db) return 0;
         let lv = parseInt(document.getElementById(`asc-${type}-lv`)?.value);
-        if (isNaN(lv) || lv < 1) lv = 1; // Default to 1 for math if blank
+        if (isNaN(lv) || lv < 1) lv = 1; 
         
         let exp = parseInt(document.getElementById(`asc-${type}-exp`)?.value);
-        if (isNaN(exp) || exp < 0) exp = 0; // Default to 0 for math if blank
+        if (isNaN(exp) || exp < 0) exp = 0; 
         
         if (lv >= 100) return 0; 
         
@@ -268,23 +268,55 @@ function updateWeekly() {
     const petRem = calculateRemainingExp('pet', typeof PET_LEVEL_DATA !== 'undefined' ? PET_LEVEL_DATA : null);
     const mountRem = calculateRemainingExp('mount', typeof MOUNT_LEVEL_DATA !== 'undefined' ? MOUNT_LEVEL_DATA : null);
     
-    const weeksSkillB = totalCardsB > 0 ? (skillRem / totalCardsB) : Infinity;
-    const weeksSkillA = totalCardsA > 0 ? (skillRem / totalCardsA) : Infinity;
-    
-    const weeksPetB = totalEggsB > 0 ? (petRem / totalEggsB) : Infinity;
-    const weeksPetA = totalEggsA > 0 ? (petRem / totalEggsA) : Infinity;
-    
-    const weeksMountB = leagueMYieldB > 0 ? (mountRem / leagueMYieldB) : Infinity;
-    const weeksMountA = leagueMYieldA > 0 ? (mountRem / leagueMYieldA) : Infinity;
+    const getInvVal = (id) => {
+        const el = document.getElementById(id);
+        return el && el.value ? parseFloat(el.value.replace(/,/g, '')) || 0 : 0;
+    };
+    const invSkill = getInvVal('asc-skill-inv');
+    const invPet = getInvVal('asc-pet-inv');
+    const invMount = getInvVal('asc-mount-inv');
 
-    const formatAsc = (wB, wA, rem) => {
-        if (rem <= 0) return `<span class="calc-val-before single-val">MAXED</span>`;
-        const fmt = v => {
-            if (!v || v === Infinity || isNaN(v)) return "∞";
+    const skillInvYieldB = Math.floor(invSkill / (costB <= 0 ? 200 : costB)) * 5;
+    const skillInvYieldA = Math.floor(invSkill / (costA <= 0 ? 200 : costA)) * 5;
+    
+    const petInvYieldB = Math.floor(invPet / 100) * luckyMultB;
+    const petInvYieldA = Math.floor(invPet / 100) * luckyMultA;
+    
+    const mountInvYieldB = Math.floor(invMount / safeCostB) * (1 + (techMountChance.before * 2) / 100);
+    const mountInvYieldA = Math.floor(invMount / safeCostA) * (1 + (techMountChance.after * 2) / 100);
+
+    const adjSkillRemB = Math.max(0, skillRem - skillInvYieldB);
+    const adjSkillRemA = Math.max(0, skillRem - skillInvYieldA);
+    
+    const adjPetRemB = Math.max(0, petRem - petInvYieldB);
+    const adjPetRemA = Math.max(0, petRem - petInvYieldA);
+    
+    const adjMountRemB = Math.max(0, mountRem - mountInvYieldB);
+    const adjMountRemA = Math.max(0, mountRem - mountInvYieldA);
+
+    const weeksSkillB = totalCardsB > 0 ? (adjSkillRemB / totalCardsB) : Infinity;
+    const weeksSkillA = totalCardsA > 0 ? (adjSkillRemA / totalCardsA) : Infinity;
+    
+    const weeksPetB = totalEggsB > 0 ? (adjPetRemB / totalEggsB) : Infinity;
+    const weeksPetA = totalEggsA > 0 ? (adjPetRemA / totalEggsA) : Infinity;
+    
+    const weeksMountB = leagueMYieldB > 0 ? (adjMountRemB / leagueMYieldB) : Infinity;
+    const weeksMountA = leagueMYieldA > 0 ? (adjMountRemA / leagueMYieldA) : Infinity;
+
+    const formatAsc = (wB, wA, remB, remA) => {
+        
+        if (remB <= 0 && remA <= 0) return `<span class="calc-val-before single-val">MAX</span>`;
+        
+        const fmt = (v, remainingExp) => {
+            if (remainingExp <= 0) return "MAX";
+            if (!v || v === Infinity || isNaN(v)) return "∞"; // Shows ∞ if weekly income is exactly 0
             if (v < 10) return v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             return v.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
         }
-        const sB = fmt(wB); const sA = fmt(wA);
+        
+        const sB = fmt(wB, remB); 
+        const sA = fmt(wA, remA);
+        
         if (sB === sA) {
             return `<span class="calc-val-before single-val">${sB}</span>`;
         } else {
@@ -296,9 +328,9 @@ function updateWeekly() {
     const elResPet = document.getElementById('asc-res-pet');
     const elResMount = document.getElementById('asc-res-mount');
 
-    if (elResSkill) elResSkill.innerHTML = formatAsc(weeksSkillB, weeksSkillA, skillRem);
-    if (elResPet) elResPet.innerHTML = formatAsc(weeksPetB, weeksPetA, petRem);
-    if (elResMount) elResMount.innerHTML = formatAsc(weeksMountB, weeksMountA, mountRem);
+    if (elResSkill) elResSkill.innerHTML = formatAsc(weeksSkillB, weeksSkillA, adjSkillRemB, adjSkillRemA);
+    if (elResPet) elResPet.innerHTML = formatAsc(weeksPetB, weeksPetA, adjPetRemB, adjPetRemA);
+    if (elResMount) elResMount.innerHTML = formatAsc(weeksMountB, weeksMountA, adjMountRemB, adjMountRemA);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

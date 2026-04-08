@@ -3,11 +3,12 @@
 const HTML_CALC = `
 <div id="panel-calc" class="sidebar-panel" style="display: none;">
     <div class="calc-container">
+        <!-- 1st Card: Current Upgrade -->
         <div class="calc-tool-card">
             <div class="calc-card-input-area">
                 <div class="calc-row-input">
                     <label>Current Forge Lv:</label>
-                    <select id="calc-forge-lv" class="calc-select-chunky" onchange="updateCalculator()"></select>
+                    <select id="calc-forge-lv" class="calc-select-chunky" onchange="syncTargetForgeDropdown(); updateCalculator()"></select>
                 </div>
                 <div class="calc-row-input">
                     <label>Upgrade Start:</label>
@@ -24,6 +25,18 @@ const HTML_CALC = `
             <div id="calc-res-5" class="calc-result-box"></div>
         </div>
 
+        <!-- 2nd Card: Cumulative Target Level -->
+        <div class="calc-tool-card">
+            <div class="calc-card-input-area">
+                <div class="calc-row-input">
+                    <label>Target Forge Lv:</label>
+                    <select id="calc-target-forge-lv" class="calc-select-chunky" onchange="updateCalculator()"></select>
+                </div>
+            </div>
+            <div id="calc-res-target-forge" class="calc-result-box"></div>
+        </div>
+
+        <!-- 3rd Card: Hammer Yield -->
         <div class="calc-tool-card">
             <div class="calc-card-input-area">
                 <div class="calc-row-input">
@@ -37,6 +50,7 @@ const HTML_CALC = `
             <div id="calc-res-1" class="calc-result-box"></div>
         </div>
 
+        <!-- 4th Card: Target Gold -->
         <div class="calc-tool-card">
             <div class="calc-card-input-area">
                 <div class="calc-row-input">
@@ -60,10 +74,112 @@ const HTML_WAR = `
             <div class="daily-card-header strip-red">
                 <div class="daily-header-title">WAR CONFIG</div>
             </div>
-            <div class="daily-card-body">
-                <div id="war-calc-inputs"></div>
+            <div class="daily-card-body" id="war-calc-inputs">
+                <div class="wc-scope">
+                    
+                    <div class="wc-row">
+                        <div class="wc-label">Current Forge Lv:</div>
+                        <select id="wc-forge-lv" style="width:80px;" onchange="updateWarForgeNodesCap(); updateWarCalc()"></select>
+                    </div>
+                    <div class="wc-row">
+                        <div class="wc-label">Forge Upgrade Nodes:</div>
+                        <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
+                            <input type="number" id="wc-forge-nodes" placeholder="0" min="0" oninput="updateWarForgeNodesCap(); updateWarCalc()" style="width: 70px;">
+                            <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-forge-nodes-max">10</span></span>
+                        </div>
+                    </div>
+                    <div class="wc-row">
+                        <div class="wc-label">Hammer:</div>
+                        <input type="text" id="wc-hammer" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                    </div>
+                    <div class="wc-line"></div>
+                    <div class="wc-row">
+                        <div class="wc-label">Dungeon Key:</div>
+                        <input type="text" id="wc-dungeon-key" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                    </div>
+                    <div class="wc-line"></div>
+
+                    <div class="wc-row"><div class="wc-label">Tech Tier I:</div><input type="text" id="wc-tech-I" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                    <div class="wc-row"><div class="wc-label">Tech Tier II:</div><input type="text" id="wc-tech-II" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                    <div class="wc-row"><div class="wc-label">Tech Tier III:</div><input type="text" id="wc-tech-III" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                    <div class="wc-row"><div class="wc-label">Tech Tier IV:</div><input type="text" id="wc-tech-IV" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                    <div class="wc-row"><div class="wc-label">Tech Tier V:</div><input type="text" id="wc-tech-V" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                    <div class="wc-line"></div>
+
+                    <div class="wc-row">
+                        <div class="wc-label">Skill Summon Lv:&nbsp;<button class="btn-info" onclick="openSkillLevelsModal()" style="vertical-align: middle; margin-bottom: 2px;">i</button></div>
+                        <input type="number" id="wc-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" style="width: 80px;">
+                    </div>
+                    <div class="wc-row">
+                        <div class="wc-label">Skill Summon Exp:</div>
+                        <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
+                            <input type="number" id="wc-skill-exp" placeholder="0" min="0" oninput="updateWarSkillExpCap(); updateWarCalc()" style="width: 70px;">
+                            <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-skill-max">10</span></span>
+                        </div>
+                    </div>
+                    <div class="wc-row">
+                        <div class="wc-label">Green Ticket:</div>
+                        <input type="text" id="wc-ticket" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                    </div>
+                    <div class="wc-line"></div>
+
+                    <div class="wc-row">
+                        <div class="wc-label">Mount Summon Lv:</div>
+                        <input type="number" id="wc-mount-lv" placeholder="1" min="1" max="100" oninput="updateWarMountExpCap(); updateWarCalc()" style="width: 80px;">
+                    </div>
+                    <div class="wc-row">
+                        <div class="wc-label">Mount Summon Exp:</div>
+                        <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
+                            <input type="number" id="wc-mount-exp" placeholder="0" min="0" oninput="updateWarMountExpCap(); updateWarCalc()" style="width: 70px;">
+                            <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-mount-max">2</span></span>
+                        </div>
+                    </div>
+                    <div class="wc-row">
+                        <div class="wc-label">Mount Key:</div>
+                        <input type="text" id="wc-mount-key" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                    </div>
+                    <div class="wc-line"></div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 2px;">
+                        <div class="wc-header-label wc-color-cell">Hatch Egg</div>
+                        <div class="wc-header-label wc-color-cell">Merge Egg/Pet</div>
+                        <div class="wc-header-label wc-color-cell">Merge Mount</div>
+                    </div>
+
+                    <div class="wc-color-row" style="background-color: #ecf0f1;">
+                        <div class="wc-color-cell"><input type="text" id="wc-hatch-common" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-common" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-common" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                    </div>
+                    <div class="wc-color-row" style="background-color: #5cd8fe;">
+                        <div class="wc-color-cell"><input type="text" id="wc-hatch-rare" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-rare" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-rare" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                    </div>
+                    <div class="wc-color-row" style="background-color: #5dfe8a;">
+                        <div class="wc-color-cell"><input type="text" id="wc-hatch-epic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-epic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-epic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                    </div>
+                    <div class="wc-color-row" style="background-color: #fcfe5d;">
+                        <div class="wc-color-cell"><input type="text" id="wc-hatch-legendary" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-legendary" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-legendary" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                    </div>
+                    <div class="wc-color-row" style="background-color: #ff5c5d;">
+                        <div class="wc-color-cell"><input type="text" id="wc-hatch-ultimate" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-ultimate" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-ultimate" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                    </div>
+                    <div class="wc-color-row" style="background-color: #d55cff;">
+                        <div class="wc-color-cell"><input type="text" id="wc-hatch-mythic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-mythic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-mythic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
+                    </div>
+                </div>
             </div>
         </div>
+
         <div class="daily-card">
             <div class="daily-card-header strip-red">
                 <div class="daily-header-title">WAR POINTS SUMMARY</div>
@@ -72,6 +188,7 @@ const HTML_WAR = `
                 <div id="war-calc-summary" style="width: 100%; margin-top: 15px;"></div>
             </div>
         </div>
+
         <div class="daily-card">
             <div class="daily-card-header strip-red">
                 <div class="daily-header-title">WAR POINTS BREAKDOWN</div>
@@ -587,7 +704,6 @@ const HTML_PET = `
                 </div>
             </div>
         </div>
-        <div class="physical-spacer pet-spacer"></div>
     </div>
 </div>
 `;
@@ -694,7 +810,6 @@ const HTML_DAILY = `
             </div>
         </div>
         
-        <div class="physical-spacer spacer-60"></div>
     </div>
 </div>
 `;
@@ -704,6 +819,9 @@ const HTML_WEEKLY = `
     <div class="log-container">
         <div class="daily-card config-card">          
             <div class="daily-card-body">
+                <div class="daily-sub-desc text-clean-black" style="font-size: 0.85rem !important; margin-bottom: 12px; line-height: 1.2;">
+                    Make sure you already entered the correct levels in Daily Gain page
+                </div>
                 <div class="daily-input-row">
                     <label class="daily-label">League:</label>
                     <div class="war-select-group flex-center">
@@ -781,7 +899,7 @@ const HTML_WEEKLY = `
                     <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="weekly-base-hammer"></div></div>
                     <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="weekly-base-gold"></div></div>
                     <div class="calc-line"><span class="calc-label">Green Ticket</span><div class="calc-val-group" id="weekly-base-ticket"></div></div>
-                    <div class="calc-line"><span class="calc-label">Eggshells</span><div class="calc-val-group" id="weekly-base-eggshell"></div></div>
+                    <div class="calc-line"><span class="calc-label">Eggshell</span><div class="calc-val-group" id="weekly-base-eggshell"></div></div>
                     <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="weekly-base-potion"></div></div>
                     <div class="calc-line"><span class="calc-label">Mount Key</span><div class="calc-val-group" id="weekly-base-mountkey"></div></div>
                 </div>
@@ -806,50 +924,62 @@ const HTML_WEEKLY = `
                 <div class="daily-card-body">                    
                     
                     <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
-                        <div class="calc-row-input">
-                            <label>Skill Summon Lv:</label>
-                            <input type="number" id="asc-skill-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()">
-                        </div>
-                        <div class="calc-row-input">
-                            <label>Skill Summon Exp:</label>
-                            <div class="pet-flex-center" style="display: flex; align-items: center;">
-                                <input type="number" id="asc-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('skill'); updateWeekly()">
-                                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-skill-max">10</span></span>
-                            </div>
-                        </div>
-                    </div>
+        <div class="calc-row-input">
+            <label for="asc-skill-lv">Skill Summon Lv:</label>
+            <input type="number" id="asc-skill-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()">
+        </div>
+        <div class="calc-row-input">
+            <label for="asc-skill-exp">Skill Summon Exp:</label>
+            <div class="pet-flex-center" style="display: flex; align-items: center;">
+                <input type="number" id="asc-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('skill'); updateWeekly()">
+                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-skill-max">10</span></span>
+            </div>
+        </div>
+        <div class="calc-row-input">
+            <label for="asc-skill-inv">Green Tickets:</label>
+            <input type="text" id="asc-skill-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
+        </div>
+    </div>
 
-                    <hr class="pet-hr" style="margin: 10px 0;">
+    <hr class="pet-hr" style="margin: 10px 0;">
 
-                    <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
-                        <div class="calc-row-input">
-                            <label>Pet Summon Lv:</label>
-                            <input type="number" id="asc-pet-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()">
-                        </div>
-                        <div class="calc-row-input">
-                            <label>Pet Summon Exp:</label>
-                            <div class="pet-flex-center" style="display: flex; align-items: center;">
-                                <input type="number" id="asc-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('pet'); updateWeekly()">
-                                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-pet-max">3</span></span>
-                            </div>
-                        </div>
-                    </div>
+    <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
+        <div class="calc-row-input">
+            <label for="asc-pet-lv">Pet Summon Lv:</label>
+            <input type="number" id="asc-pet-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()">
+        </div>
+        <div class="calc-row-input">
+            <label for="asc-pet-exp">Pet Summon Exp:</label>
+            <div class="pet-flex-center" style="display: flex; align-items: center;">
+                <input type="number" id="asc-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('pet'); updateWeekly()">
+                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-pet-max">3</span></span>
+            </div>
+        </div>
+        <div class="calc-row-input">
+            <label for="asc-pet-inv">Eggshells:</label>
+            <input type="text" id="asc-pet-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
+        </div>
+    </div>
 
-                    <hr class="pet-hr" style="margin: 10px 0;">
+    <hr class="pet-hr" style="margin: 10px 0;">
 
-                    <div class="pet-block" style="border: none; padding: 0; margin: 0;">
-                        <div class="calc-row-input">
-                            <label>Mount Summon Lv:</label>
-                            <input type="number" id="asc-mount-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()">
-                        </div>
-                        <div class="calc-row-input">
-                            <label>Mount Summon Exp:</label>
-                            <div class="pet-flex-center" style="display: flex; align-items: center;">
-                                <input type="number" id="asc-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('mount'); updateWeekly()">
-                                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-mount-max">16</span></span>
-                            </div>
-                        </div>
-                    </div>
+    <div class="pet-block" style="border: none; padding: 0; margin: 0;">
+        <div class="calc-row-input">
+            <label for="asc-mount-lv">Mount Summon Lv:</label>
+            <input type="number" id="asc-mount-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()">
+        </div>
+        <div class="calc-row-input">
+            <label for="asc-mount-exp">Mount Summon Exp:</label>
+            <div class="pet-flex-center" style="display: flex; align-items: center;">
+                <input type="number" id="asc-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('mount'); updateWeekly()">
+                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-mount-max">16</span></span>
+            </div>
+        </div>
+        <div class="calc-row-input">
+            <label for="asc-mount-inv">Mount Keys:</label>
+            <input type="text" id="asc-mount-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
+        </div>
+    </div>
 
                     <hr class="pet-hr" style="margin: 15px 0;">
 
@@ -1192,7 +1322,6 @@ const HTML_EQUIPMENT = `
             </div>
         </div>
 
-        <div class="physical-spacer spacer-60"></div>
     </div>
 </div>
 `;
@@ -1327,7 +1456,7 @@ const HTML_SUMMON = `
                     <div class="calc-row-input" style="margin-bottom: 15px; align-items: center;">
                         <div style="flex: 1; line-height: 1.2;">
                             <label style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000000; -webkit-text-stroke: 0px; display: block; margin-bottom: 2px;">Target Probability (%)</label>
-                            <span style="font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 0.75rem; color: #666666; -webkit-text-stroke: 0px;">Chance to pull at least 1 pet for that tier</span>
+                            <span style="font-family: 'Fredoka', sans-serif; font-weight: 500; font-size: 0.75rem; color: #666666; -webkit-text-stroke: 0px;">Chance to pull at least 1 egg for that tier</span>
                         </div>
                         <div>
                             <input type="number" id="sum-pet-prob" class="calc-input-chunky" style="width: 70px; text-align: center;" value="90" min="0" max="99" oninput="validateProbability(this); updateSummonCalc('pet')">
@@ -1385,10 +1514,6 @@ const HTML_SUMMON = `
                         <div class="merge-res-val" id="sum-mount-res-lv" style="display: flex; flex-direction: column; align-items: flex-end;">-</div>
                     </div>
                     
-                    <div style="text-align: center; margin: 15px 0 10px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">
-                        Mount and Mount Keys needed to have a chance of summoning higher tier mounts for the first time
-                    </div>
-
                     <div id="sum-mount-milestones-container"></div>
                 </div>
             </div>
@@ -1426,7 +1551,6 @@ const HTML_SUMMON = `
             
         </div>
         
-        <div class="physical-spacer pet-spacer"></div>
         
     </div>
 </div>
@@ -1639,7 +1763,6 @@ const HTML_HELP = `
             </div>
         </div>
 
-        <div class="physical-spacer spacer-60" style="height: 60px;"></div>
     </div>
 </div>
 `;
