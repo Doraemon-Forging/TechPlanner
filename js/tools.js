@@ -184,24 +184,25 @@ function syncTargetForgeDropdown() {
     let curVal = parseInt(curEl.value) || 1;
     targetEl.innerHTML = "";
   
-    if (curVal >= 35) {
-        targetEl.add(new Option("-", "-"));
-        targetEl.disabled = true;
-        targetEl.style.opacity = "0.5"; 
+    targetEl.disabled = false;
+    targetEl.style.opacity = "1";
+    
+    let currentTarget = targetEl.value;
+
+    for (let i = curVal + 1; i <= 35; i++) {
+        targetEl.add(new Option(i, i));
+    }
+    
+    targetEl.add(new Option("Ascension", "Ascension"));
+    
+    if (currentTarget === "Ascension") {
+        targetEl.value = "Ascension";
     } else {
-        targetEl.disabled = false;
-        targetEl.style.opacity = "1";
-        
-        let currentTarget = parseInt(targetEl.value);
-        
-        for (let i = curVal + 1; i <= 35; i++) {
-            targetEl.add(new Option(i, i));
-        }
-        
-        if (isNaN(currentTarget) || currentTarget <= curVal) {
-            targetEl.value = curVal + 1;
+        let parsedTarget = parseInt(currentTarget);
+        if (isNaN(parsedTarget) || parsedTarget <= curVal) {
+            targetEl.value = curVal < 35 ? curVal + 1 : "Ascension";
         } else {
-            targetEl.value = currentTarget;
+            targetEl.value = parsedTarget;
         }
     }
 }
@@ -370,23 +371,30 @@ function updateCalculator() {
     const res5 = document.getElementById('calc-res-5');
     const resTarget = document.getElementById('calc-res-target-forge');
 
-    // --- OVERRIDE FOR MAX LEVEL (35) ---
-    if (fLv >= 35 || typeof forgeLevelData === 'undefined' || !forgeLevelData[fLv]) {
-        
-        // 1st Card: Render Dashes
+
+    if (fLv > 35 || typeof forgeLevelData === 'undefined' || (!forgeLevelData[fLv] && fLv !== 35)) {
+
         let h5 = genLine('Cost', '-', '-', 'fm_gold', 'standard');
         h5 += genLine('Finish', '-', '-', null, 'standard');
         h5 += genLine('Duration', '-', '-', null, 'standard');
         if (res5) res5.innerHTML = h5;
-
-        // 2nd Card: Render Dashes
-        let hTarget = genLine('Total Gold', '-', '-', 'fm_gold', 'standard');
+        
+        let hTarget = genLine('Total Cost', '-', '-', 'fm_gold', 'standard');
         hTarget += genLine('Total Duration', '-', '-', null, 'standard');
         if (resTarget) resTarget.innerHTML = hTarget;
 
-    } else {
+    } else if (fLv === 35) {
+        let h5 = genLine('Cost', 3000000, 3000000, 'fm_gold', 'gold');
+        h5 += genLine('Finish', '-', '-', null, 'standard');
+        h5 += genLine('Duration', 0, 0, null, 'time'); // Instant
+        if (res5) res5.innerHTML = h5;
         
-        // --- 1st CARD LOGIC (Standard Math) ---
+        let hTarget = genLine('Total Cost', 3000000, 3000000, 'fm_gold', 'gold');
+        hTarget += genLine('Total Duration', 0, 0, null, 'time');
+        if (resTarget) resTarget.innerHTML = hTarget;
+
+    } else {
+
         const cRaw = forgeLevelData[fLv][0];
         let h5 = genLine('Cost', Math.round(cRaw * (1 - curStats.forgeDisc / 100)), Math.round(cRaw * (1 - projStats.forgeDisc / 100)), 'fm_gold', 'gold');
 
@@ -400,7 +408,6 @@ function updateCalculator() {
         const planStartMs = planStartEl && planStartEl.value ? new Date(planStartEl.value).getTime() : Date.now();
         const state = calcState();
         
-        // Time Travel Math (Checks overlapping Queues)
         state.history.forEach(h => { 
             const stepDuration = (h.type === 'delay' ? h.mins : h.added); 
             runningTimeOffset += stepDuration; 
@@ -423,32 +430,48 @@ function updateCalculator() {
         
         h5 += `<div class="calc-line"><div class="calc-label">Finish</div>${renderForgeGroup(formatDT(dFinish), formatDT(dFinishProj), null, 'date')}</div>`;
         h5 += genLine('Duration', f1, f2, null, 'time');
-        
         if (res5) res5.innerHTML = h5;
-
-        // --- 2nd CARD LOGIC: CUMULATIVE TARGET LEVEL ---
-        const tLv = parseInt(document.getElementById('calc-target-forge-lv').value) || (fLv + 1);
         
-        let totalBaseCost = 0;
-        let totalBaseMins = 0;
+        const tLvRaw = document.getElementById('calc-target-forge-lv').value;
+        const isAscensionTarget = tLvRaw === "Ascension";
         
-        // Loop from Current Level up to Target Level - 1
+        const tLv = isAscensionTarget ? 35 : (parseInt(tLvRaw) || (fLv + 1));
+        
+        let totalCostCur = 0;
+        let totalCostProj = 0;
+        let totalMinsCur = 0;
+        let totalMinsProj = 0;
+        let totalGemsCur = 0;
+        let totalGemsProj = 0;
+        
         for (let i = fLv; i < tLv; i++) {
             if (forgeLevelData[i]) {
-                totalBaseCost += forgeLevelData[i][0];
-                totalBaseMins += forgeLevelData[i][1] * 60;
+                
+                const baseCost = forgeLevelData[i][0];
+                const baseMins = forgeLevelData[i][1] * 60;
+                
+                totalCostCur += Math.round(baseCost * (1 - curStats.forgeDisc / 100));
+                totalCostProj += Math.round(baseCost * (1 - projStats.forgeDisc / 100));
+
+                const curLvlMins = baseMins / (1 + curStats.speed / 100);
+                const projLvlMins = baseMins / (1 + projStats.speed / 100);
+                
+                totalMinsCur += curLvlMins;
+                totalMinsProj += projLvlMins;
+               
+                totalGemsCur += Math.round(curLvlMins / 7.25);
+                totalGemsProj += Math.round(projLvlMins / 7.25);
             }
         }
         
-        // Apply flat snapshot discounts
-        const totalCostCur = Math.round(totalBaseCost * (1 - curStats.forgeDisc / 100));
-        const totalCostProj = Math.round(totalBaseCost * (1 - projStats.forgeDisc / 100));
-        
-        const totalMinsCur = totalBaseMins / (1 + curStats.speed / 100);
-        const totalMinsProj = totalBaseMins / (1 + projStats.speed / 100);
+        if (isAscensionTarget) {
+            totalCostCur += 3000000;
+            totalCostProj += 3000000;
+        }
         
         let hTarget = genLine('Total Cost', totalCostCur, totalCostProj, 'fm_gold', 'gold');
         hTarget += genLine('Total Duration', totalMinsCur, totalMinsProj, null, 'time');
+        hTarget += genLine('Total Gem', totalGemsCur, totalGemsProj, null, 'number');
         
         if (resTarget) resTarget.innerHTML = hTarget;
     }

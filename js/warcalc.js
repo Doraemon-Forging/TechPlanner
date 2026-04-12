@@ -7,11 +7,9 @@ function initWarCalc() {
     const container = document.getElementById('war-calc-inputs');
     if (!container) return;
 
-    // Hide the default card header if it exists
     const cardHeader = container.closest('.daily-card')?.querySelector('.daily-card-header');
     if (cardHeader) cardHeader.style.display = 'none';
 
-    // Populate the Forge Level Dropdown dynamically
     const forgeSelect = document.getElementById('wc-forge-lv');
     if (forgeSelect && forgeSelect.options.length === 0) {
         for (let i = 1; i <= 34; i++) {
@@ -23,7 +21,6 @@ function initWarCalc() {
         }
     }
 
-    // Trigger initial updates to set max caps
     updateWarForgeNodesCap();
     updateWarMountExpCap();
     updateWarSkillExpCap();

@@ -437,6 +437,11 @@ const HTML_PET = `
                             <div id="merge-res-name" class="merge-res-val" style="font-size: 1.1rem; text-align: center;">-</div>
                         </div>
                     </div>
+
+                    <div style="background-color: #ecf0f1; border: 2px solid #000; border-radius: 8px; margin-bottom: 5px; padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div id="merge-res-dmg" style="width: auto; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">-</div>    
+                        <div id="merge-res-hp" style="width: auto; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">-</div>
+                    </div>
                     
                     <div style="text-align: center; font-size: 0.85rem; color: #ffffff; margin-bottom: 2px; font-family: 'Fredoka', sans-serif;">Current Level Progress</div>
                     <div class="pet-progress-wrapper" style="margin-left: 0; margin-bottom: 8px; height: 24px;">
@@ -450,10 +455,6 @@ const HTML_PET = `
                         <div class="pet-progress-text" id="merge-res-bar-text">0 / 0 xp (0%)</div>
                     </div>
 
-                    <div style="background-color: #ecf0f1; border: 2px solid #000; border-radius: 8px; margin-bottom: 5px; padding: 12px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <div id="merge-res-dmg" style="width: auto; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">-</div>    
-                        <div id="merge-res-hp" style="width: auto; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">-</div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1653,6 +1654,8 @@ const HTML_HELP = `
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>Equipment:</b> View expected HP and damage. See exactly how increasing your max item level affects the item levels you pull, your overall power, and your economy.</li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
+                        <li><b>Summon Calc:</b> Calculate how many resources you need to reach certain level of Skill / Egg / Pet summoning and theirs expected yield.</li>
+                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>Forge Calc:</b> Crunch the numbers to see the value of your hammer and stuffs related to Forge upgrades.</li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>War Calc:</b> Estimate your expected clan war points based on the resources you plan to spend.</li>
@@ -1660,6 +1663,8 @@ const HTML_HELP = `
                         <li><b>Egg Planner:</b> Schedule your egg hatching queue </li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>Pet & Mount:</b> Calculate the amount of EXP and the resulting power for your pets and mounts.</li>
+                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
+                        <li><b>Battle Sim:</b> Simulate PvP battle.</li>
                     </ul>
                 </div>
 
