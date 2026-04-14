@@ -292,7 +292,7 @@ function captureFullState() {
         },
         warCalcData: {
             forgeLv: getVal('wc-forge-lv'), forgeNodes: getVal('wc-forge-nodes'), forgeBonus: getVal('wc-forge-bonus'),
-            hammer: getVal('wc-hammer'), dungeonKey: getVal('wc-dungeon-key'),
+            hammer: getVal('wc-hammer'), forgeGem: getVal('wc-forge-gem'), dungeonKey: getVal('wc-dungeon-key'),
             skillLv: getVal('wc-skill-lv'), skillExp: getVal('wc-skill-exp'),
             ticket: getVal('wc-ticket'),
             techI: getVal('wc-tech-I'), techII: getVal('wc-tech-II'), techIII: getVal('wc-tech-III'), techIV: getVal('wc-tech-IV'), techV: getVal('wc-tech-V'),
@@ -318,9 +318,9 @@ function captureFullState() {
             }
         },
         summonData: {
-            skill: { lvl: getVal('sum-skill-lvl'), exp: getVal('sum-skill-exp'), res: getVal('sum-skill-res'), prob: getVal('sum-skill-prob') },
-            pet: { lvl: getVal('sum-pet-lvl'), exp: getVal('sum-pet-exp'), res: getVal('sum-pet-res'), prob: getVal('sum-pet-prob') },
-            mount: { lvl: getVal('sum-mount-lvl'), exp: getVal('sum-mount-exp'), res: getVal('sum-mount-res'), prob: getVal('sum-mount-prob') }
+            skill: { lvl: getVal('sum-skill-lvl'), exp: getVal('sum-skill-exp'), res: getVal('sum-skill-res'), prob: getVal('sum-skill-prob'), targetLv: getVal('sum-skill-target-lv') },
+            pet: { lvl: getVal('sum-pet-lvl'), exp: getVal('sum-pet-exp'), res: getVal('sum-pet-res'), prob: getVal('sum-pet-prob'), targetLv: getVal('sum-pet-target-lv') },
+            mount: { lvl: getVal('sum-mount-lvl'), exp: getVal('sum-mount-exp'), res: getVal('sum-mount-res'), prob: getVal('sum-mount-prob'), targetLv: getVal('sum-mount-target-lv') }
         },
         equipmentData: {
             ascension: getVal('eq-ascension'),
@@ -397,7 +397,7 @@ function loadState(d) {
     try {
         if (d.warCalcData) {
             safeSetVal('wc-forge-lv', d.warCalcData.forgeLv); safeSetVal('wc-forge-nodes', d.warCalcData.forgeNodes); safeSetVal('wc-forge-bonus', d.warCalcData.forgeBonus);
-            safeSetVal('wc-hammer', d.warCalcData.hammer); safeSetVal('wc-dungeon-key', d.warCalcData.dungeonKey);
+            safeSetVal('wc-hammer', d.warCalcData.hammer); safeSetVal('wc-forge-gem', d.warCalcData.forgeGem); safeSetVal('wc-dungeon-key', d.warCalcData.dungeonKey);
             safeSetVal('wc-skill-lv', d.warCalcData.skillLv); safeSetVal('wc-skill-exp', d.warCalcData.skillExp);
             safeSetVal('wc-ticket', d.warCalcData.ticket);
             safeSetVal('wc-tech-I', d.warCalcData.techI); safeSetVal('wc-tech-II', d.warCalcData.techII); safeSetVal('wc-tech-III', d.warCalcData.techIII); safeSetVal('wc-tech-IV', d.warCalcData.techIV); safeSetVal('wc-tech-V', d.warCalcData.techV);
@@ -451,18 +451,21 @@ function loadState(d) {
                 safeSetVal('sum-skill-exp', d.summonData.skill.exp); 
                 safeSetVal('sum-skill-res', d.summonData.skill.res); 
                 if(d.summonData.skill.prob !== undefined) safeSetVal('sum-skill-prob', d.summonData.skill.prob); 
+                safeSetVal('sum-skill-target-lv', d.summonData.skill.targetLv); 
             }
             if(d.summonData.pet) { 
                 safeSetVal('sum-pet-lvl', d.summonData.pet.lvl); 
                 safeSetVal('sum-pet-exp', d.summonData.pet.exp); 
                 safeSetVal('sum-pet-res', d.summonData.pet.res); 
                 if(d.summonData.pet.prob !== undefined) safeSetVal('sum-pet-prob', d.summonData.pet.prob); 
+                safeSetVal('sum-pet-target-lv', d.summonData.pet.targetLv); 
             }
             if(d.summonData.mount) { 
                 safeSetVal('sum-mount-lvl', d.summonData.mount.lvl); 
                 safeSetVal('sum-mount-exp', d.summonData.mount.exp); 
                 safeSetVal('sum-mount-res', d.summonData.mount.res); 
                 if(d.summonData.mount.prob !== undefined) safeSetVal('sum-mount-prob', d.summonData.mount.prob); 
+                safeSetVal('sum-mount-target-lv', d.summonData.mount.targetLv); 
             }
         }
     } catch(e) {}

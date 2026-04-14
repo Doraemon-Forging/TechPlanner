@@ -122,7 +122,6 @@ function renderStats() {
             else if (meta.isDiscount) { infoBtnHTML = `<button class="btn-info" onclick="showPotionTable(${curT * 2}, ${projT * 2})">i</button>`; }
             else if (key === 'spt' && ns.id === 'timer') { infoBtnHTML = `<button class="btn-info" onclick="showTechTimerTable(${curT * 4}, ${projT * 4})">i</button>`; }
             
-            // --- THE FIX: DYNAMIC MULTIPLIERS ---
             else if (key === 'forge' && ns.id === 'disc') { 
                 const discVal = meta.val !== undefined ? meta.val : 1;
                 infoBtnHTML = `<button class="btn-info" onclick="showForgeTable('cost',${curT * discVal},${projT * discVal})">i</button>`; 
@@ -168,11 +167,9 @@ function populateForgeDropdown() {
     const s = document.getElementById('calc-forge-lv'); 
     if (!s) return;
     s.innerHTML = ""; 
-    // Now goes up to 35
     for (let i = 1; i <= 35; i++) s.add(new Option(i, i)); 
     s.value = 20;
-    
-    // Initialize the Target dropdown based on default value
+
     syncTargetForgeDropdown();
 }
 
@@ -216,7 +213,7 @@ function getTechBonuses(lvls) {
         return fallback;
     };
 
-    speed = sumLvl('timer') * getVal('timer', 4); 
+    speed = sumLvl('timer') * getVal('timer', 2); 
     sell = sumLvl('sell') * getVal('sell', 1); 
     hBonus = sumLvl('h_bonus') * getVal('h_bonus', 1); 
     cBonus = sumLvl('c_bonus') * getVal('c_bonus', 1); 
@@ -282,20 +279,16 @@ function updateCalculator() {
     const targetEl = document.getElementById('calc-target');
     if (!hammerEl || !targetEl) return;
 
-    // Get Inputs
     const hIn = parseFloat(hammerEl.value.replace(/,/g, '')) || 0;
     const gTarget = parseFloat(targetEl.value.replace(/,/g, '')) || 0;
     const fLv = parseInt(document.getElementById('calc-forge-lv').value) || 1; 
 
-    // UX: Formatting Inputs
     if (document.activeElement !== hammerEl) hammerEl.value = hIn > 0 ? hIn.toLocaleString('en-US') : (hammerEl.value ? '0' : '');
     if (document.activeElement !== targetEl) targetEl.value = gTarget > 0 ? gTarget.toLocaleString('en-US') : (targetEl.value ? '0' : '');
-    
-    // Fetch Player Stats
+
     const curStats = getTechBonuses(setupLevels); 
     const projStats = getTechBonuses(calcState().levels);
     
-    // Helper: Renderer
     const renderForgeGroup = (v1, v2, iconKey, type) => {
         const iconHtml = iconKey ? `<img src="icons/${iconKey}.png" class="calc-icon-left" style="margin-right: 4px;">` : '';
         
@@ -328,7 +321,6 @@ function updateCalculator() {
         }
     };
 
-    // Helper: Generate Line
     const genLine = (label, v1, v2, iconKey, type = 'standard', tooltip = "") => {
         const tt = tooltip ? `<span class="info-tooltip" title="${tooltip}" onclick="alert('${tooltip}')">(?)</span>` : '';
         return `<div class="calc-line"><div class="calc-label">${label} ${tt}</div>${renderForgeGroup(v1, v2, iconKey, type)}</div>`;
@@ -345,14 +337,20 @@ function updateCalculator() {
     
     let yieldHtml = `<div style="margin-top: 15px; padding-top: 5px;">
                         <div style="font-family: 'Fredoka', sans-serif; font-weight: 600 !important; letter-spacing: 0.5px; font-size: 1rem; text-align: center; margin-bottom: 10px; color: #000000; -webkit-text-stroke: 0px #7f8c8d; paint-order: stroke fill;">Expected Item Yield</div>`;    
+    
     const rates = typeof CALC_FORGE_RATES !== 'undefined' ? CALC_FORGE_RATES[fLv] || CALC_FORGE_RATES[1] : [];
     const TIER_NAMES = ["Primitive", "Medieval", "Early-Modern", "Modern", "Space", "Interstellar", "Multiverse", "Quantum", "Underworld", "Divine"];
+    const TIER_COLORS = ['#f1f2f6', '#5cd8fe', '#5dfe8a', '#fcfe5d', '#ff5c5d', '#d55cff', '#74feee', '#7d5eff', '#b07879', '#fe9e0c'];
     
     for (let i = 0; i < 10; i++) {
         if (rates[i] > 0) {
             const amountB = effH1 * (rates[i] / 100);
             const amountA = effH2 * (rates[i] / 100);
-            yieldHtml += `<div class="calc-line"><div class="calc-label">${TIER_NAMES[i]}</div>${renderForgeGroup(amountB, amountA, null, 'yield')}</div>`;
+            
+            yieldHtml += `<div class="calc-line" style="background-color: ${TIER_COLORS[i]}; border-radius: 6px; padding: 4px 8px; margin-bottom: 4px; border-bottom: none; color: #000;">
+                <div class="calc-label" style="color: #000;">${TIER_NAMES[i]}</div>
+                ${renderForgeGroup(amountB, amountA, null, 'yield')}
+            </div>`;
         }
     }
     yieldHtml += `</div>`;
@@ -413,7 +411,7 @@ function updateCalculator() {
             runningTimeOffset += stepDuration; 
             if (h.tree === 'forge' && h.id && h.id.includes('timer')) { 
                 const techFinishTime = planStartMs + (runningTimeOffset * 60000); 
-                if (techFinishTime <= mainStartTime) { speedBonusAtStart += 4; } 
+                if (techFinishTime <= mainStartTime) { speedBonusAtStart += 2; } 
             } 
         });
         
@@ -553,7 +551,6 @@ function activateEggInsert(idx) {
         }
     }
 
-    // SAFE CONTAINER SCROLL (Hybrid for Mobile & Desktop)
     const wrappers = [
         document.querySelector('.sidebar-scroll-wrapper'),
         document.querySelector('.pane.right-pane-wrapper')
@@ -650,9 +647,7 @@ function markEggDone(idx, timestamp) {
         syncEggDate(localIso); 
         expandedEggIdx = -1; 
 
-        // --- SAFE VISUAL FEEDBACK & SCROLLING ---
         setTimeout(() => {
-            // A. Safely scroll the exact containers used on Mobile and Desktop
             const wrappers = [
                 document.querySelector('.sidebar-scroll-wrapper'),
                 document.querySelector('.pane.right-pane-wrapper')
@@ -662,8 +657,7 @@ function markEggDone(idx, timestamp) {
                     el.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             });
-            
-            // B. Flash the Egg Date Input Boxes
+
             const dateBoxes = document.querySelectorAll('#egg-date-desktop, .cd-select');
             dateBoxes.forEach(box => {
                 box.classList.remove('ui-glow-success');

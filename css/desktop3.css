@@ -1,5 +1,5 @@
 /* css/desktop3.css */
-/* PET & MOUNT + DAILY/WEEKLY TAB STYLES + WAR CALCULATOR */
+/* PET & MOUNT + DAILY/WEEKLY TAB STYLES + WAR CALC + SUMMON CALC */
 
 /* ==========================================================================
    01. PET & MOUNT CALCULATOR
@@ -225,4 +225,12 @@
 }
 .wc-scope input.wc-color-input:focus {
     background: rgba(255,255,255,0.8) !important;
+}
+
+/* ==========================================================================
+   09. SUMMON CALCULATOR
+   ========================================================================== */
+
+#panel-summon .seg-btn.active {
+    font-size: 1.05rem !important; 
 }

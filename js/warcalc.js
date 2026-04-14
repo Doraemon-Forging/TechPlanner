@@ -12,7 +12,7 @@ function initWarCalc() {
 
     const forgeSelect = document.getElementById('wc-forge-lv');
     if (forgeSelect && forgeSelect.options.length === 0) {
-        for (let i = 1; i <= 34; i++) {
+        for (let i = 1; i <= 35; i++) { // UPDATED: Now loops to 35
             const opt = document.createElement('option');
             opt.value = i;
             opt.text = i;
@@ -33,15 +33,23 @@ function updateWarForgeNodesCap() {
 
     if (lvEl && nodesEl && maxEl) {
         let lv = parseInt(lvEl.value) || 1;
-        let maxNodes = 10;
-        if (typeof forgeLevelData !== 'undefined' && forgeLevelData[lv]) {
-            maxNodes = forgeLevelData[lv][2] || 1;
-        }
 
-        maxEl.innerText = maxNodes;
+        if (lv === 35) {
+            maxEl.innerText = "MAX";
+            nodesEl.value = "";
+            nodesEl.disabled = true;
+        } else {
+            let maxNodes = 10;
+            if (typeof forgeLevelData !== 'undefined' && forgeLevelData[lv]) {
+                maxNodes = forgeLevelData[lv][2] || 1;
+            }
 
-        if (parseInt(nodesEl.value) > maxNodes) {
-            nodesEl.value = maxNodes;
+            maxEl.innerText = maxNodes;
+            nodesEl.disabled = false;
+
+            if (parseInt(nodesEl.value) > maxNodes) {
+                nodesEl.value = maxNodes;
+            }
         }
     }
 }
@@ -183,6 +191,7 @@ function updateWarCalc() {
     const forgeNodes = parseInt(document.getElementById('wc-forge-nodes')?.value || 0);
 
     const hammer = getVal('wc-hammer');
+    const forgeGems = getVal('wc-forge-gem'); // NEW: Get Gem Input
     const dungeonKeys = getVal('wc-dungeon-key');
     
     const skillLv = parseInt(document.getElementById('wc-skill-lv')?.value || 1);
@@ -235,7 +244,7 @@ function updateWarCalc() {
         }
     }
 
-    // 1.5 FORGE UPGRADE GOLD SPENT
+    // 1.5 FORGE UPGRADE GOLD SPENT & GEMS
     const techForgeDisc = getTechVal('forge', 'disc');
     const fData = (typeof forgeLevelData !== 'undefined' && forgeLevelData[forgeLv]) ? forgeLevelData[forgeLv] : [0,0,1];
     
@@ -254,6 +263,7 @@ function updateWarCalc() {
     const ptsPerNodeA = Math.floor(costPerNodeA / 1000) * 27; 
     const warForgeUpgradeA = (ptsPerNodeA * forgeNodes);
 
+    const warForgeGems = forgeGems * 50; 
     const warDungeon = dungeonKeys * 3000; 
 
     // --- 2. SKILL SUMMON CALCULATION ---
@@ -280,7 +290,6 @@ function updateWarCalc() {
     // --- 2.5 SKILL UPGRADE CALCULATION (Fractional Math) ---
     let skillUpgradePtsB = 0; let skillUpgradePtsA = 0;
     
-    // Find historical base amount
     let historicalSkills = skillExp;
     for (let i = 1; i < skillLv; i++) {
         if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[i] && SKILL_LEVEL_DATA[i][0] !== "MAX") {
@@ -291,14 +300,11 @@ function updateWarCalc() {
     const baseYields = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(1, 0, historicalSkills) : [0,0,0,0,0,0];
     const UPGRADE_POINTS = [125, 150, 175, 200, 225, 250];
 
-    // Inline Fractional Helper (Now capped at Max Level 100)
     const getFracLvl = (amt) => {
         let cur = 1; 
         let rem = amt;
         
-        // Ensure it stops calculating once it hits the game cap of Lv 100
         while (cur < 100) { 
-            // Fetch cost from data.js, or use hardcoded fallback logic
             let cost = 8;
             if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[cur]) {
                 cost = SKILL_UPGRADE_COSTS[cur];
@@ -319,11 +325,10 @@ function updateWarCalc() {
                 return cur + (rem / cost); 
             }
         }
-        return 100; // Max level reached, ignore remaining copies
+        return 100; 
     };
 
     for (let i = 0; i < 6; i++) {
-        // Divide by 3 assuming 3 different skills exist per rarity pool
         const baseAmt = baseYields[i] / 3;
         const bAmt = (baseYields[i] + (window.currentWarYields.skillB[i] || 0)) / 3;
         const aAmt = (baseYields[i] + (window.currentWarYields.skillA[i] || 0)) / 3;
@@ -332,7 +337,6 @@ function updateWarCalc() {
         const fB = getFracLvl(bAmt);
         const fA = getFracLvl(aAmt);
 
-        // If fBase is 100, fB/fA will also be 100, resulting in 0 upgrade points.
         skillUpgradePtsB += (fB - fBase) * UPGRADE_POINTS[i] * 3;
         skillUpgradePtsA += (fA - fBase) * UPGRADE_POINTS[i] * 3;
     }
@@ -367,7 +371,6 @@ function updateWarCalc() {
     const mountsB = typeof calcWarMountPulls === 'function' ? calcWarMountPulls(mntLv, mntExp, mYieldB) : [0,0,0,0,0,0];
     const mountsA = typeof calcWarMountPulls === 'function' ? calcWarMountPulls(mntLv, mntExp, mYieldA) : [0,0,0,0,0,0];
 
-    // Merge Mount arrays into WarYields object safely
     window.currentWarYields.mountB = mountsB;
     window.currentWarYields.mountA = mountsA;
     window.currentWarYields.mountPullsB = mPullsB;
@@ -381,26 +384,26 @@ function updateWarCalc() {
     const warMountMergeSummonB = warMountB;
     const warMountMergeSummonA = warMountA;
 
-    // --- DAILY BREAKDOWN (Added Skill Upgrade to Day 1 and Day 3) ---
+    // --- DAILY BREAKDOWN ---
+    // NEW: Add warForgeGems to Day 2 and Day 4
     const d1B = warForgeB + warSkillB + rndUpgradePtsB + warTech;
     const d1A = warForgeA + warSkillA + rndUpgradePtsA + warTech;
 
-    const d2B = warForgeUpgradeB + warDungeon + warEggHatch + warEggMergeInput;
-    const d2A = warForgeUpgradeA + warDungeon + warEggHatch + warEggMergeInput;
+    const d2B = warForgeUpgradeB + warDungeon + warEggHatch + warEggMergeInput + warForgeGems;
+    const d2A = warForgeUpgradeA + warDungeon + warEggHatch + warEggMergeInput + warForgeGems;
 
     const d3B = warForgeB + warSkillB + rndUpgradePtsB + warMountB + warMountMergeSummonB + warMountMergeInput;
     const d3A = warForgeA + warSkillA + rndUpgradePtsA + warMountA + warMountMergeSummonA + warMountMergeInput;
 
-    const d4B = warForgeUpgradeB + warEggHatch + warEggMergeInput + warTech;
-    const d4A = warForgeUpgradeA + warEggHatch + warEggMergeInput + warTech;
+    const d4B = warForgeUpgradeB + warEggHatch + warEggMergeInput + warTech + warForgeGems;
+    const d4A = warForgeUpgradeA + warEggHatch + warEggMergeInput + warTech + warForgeGems;
 
     const d5B = warForgeB + warMountB + warMountMergeSummonB + warMountMergeInput + warDungeon;
     const d5A = warForgeA + warMountA + warMountMergeSummonA + warMountMergeInput + warDungeon;
 
-    const totB = warForgeB + warForgeUpgradeB + warDungeon + warSkillB + rndUpgradePtsB + warTech + warEggHatch + warEggMergeInput + warMountB + warMountMergeSummonB + warMountMergeInput;
-    const totA = warForgeA + warForgeUpgradeA + warDungeon + warSkillA + rndUpgradePtsA + warTech + warEggHatch + warEggMergeInput + warMountA + warMountMergeSummonA + warMountMergeInput;
+    const totB = warForgeB + warForgeUpgradeB + warDungeon + warSkillB + rndUpgradePtsB + warTech + warEggHatch + warEggMergeInput + warMountB + warMountMergeSummonB + warMountMergeInput + warForgeGems;
+    const totA = warForgeA + warForgeUpgradeA + warDungeon + warSkillA + rndUpgradePtsA + warTech + warEggHatch + warEggMergeInput + warMountA + warMountMergeSummonA + warMountMergeInput + warForgeGems;
 
-    // --- UI RENDER FUNCTIONS ---
     const isMobile = window.innerWidth <= 768; 
 
     const formatCompactGold = (val) => {
@@ -444,7 +447,6 @@ function updateWarCalc() {
 
         let labelHtml = label;
         if (infoType) {
-            // FIX: Check if it's the specific Skill Upgrade modal, otherwise use normal Yield modal
             const onClickFunc = infoType === 'skillUpgrade' ? `openSkillUpgradeModal()` : `openWarYieldModal('${infoType}')`;
             labelHtml = `${label}&nbsp;<button class="btn-info" onclick="${onClickFunc}" style="vertical-align: middle; margin-bottom: 2px;">i</button>`;
         }
@@ -514,7 +516,7 @@ function updateWarCalc() {
         ${customTotalRowHtml}
         ${renderWarRow("Forge", warForgeB, warForgeA)}
         ${renderWarRow("Forge Upgrade Gold Spent", warForgeUpgradeB, warForgeUpgradeA)}
-        ${renderWarRow("Dungeon Keys", warDungeon, warDungeon)}
+        ${renderWarRow("Gems Spent on Forge", warForgeGems, warForgeGems)} ${renderWarRow("Dungeon Keys", warDungeon, warDungeon)}
         ${renderWarRow("Tech Upgrade", warTech, warTech)}
         ${renderWarRow("Skill Summon", warSkillB, warSkillA, 'skill')}
         ${renderWarRow("Skill Upgrade", rndUpgradePtsB, rndUpgradePtsA, 'skillUpgrade')}
@@ -532,7 +534,6 @@ function updateWarCalc() {
     }
 }
 
-// Ensure update fires when global tech changes happen (if your app uses these events)
 if (typeof window !== 'undefined') {
     window.addEventListener('techPlannerUpdated', updateWarCalc); 
 }

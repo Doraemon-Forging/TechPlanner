@@ -3,7 +3,6 @@
  * Static configuration, game constants, and tree definitions.
  */
 
-// ... (Keep existing Helper Functions: formatEggTime, eggStat) ...
 const formatEggTime = (totalMins) => {
     const h = Math.floor(totalMins / 60);
     const m = Math.floor(totalMins % 60);
@@ -17,7 +16,6 @@ const formatEggTime = (totalMins) => {
 
 const eggStat = (l, b, n) => `Speed +${l * 10}% (${formatEggTime(b / (1 + l * 0.1))})`;
 
-// ... (Keep existing Constants: tierTimes, potionCosts, forgeLevelData, bracketFloors, EGG_POINTS, EGG_DATA) ...
 const tierTimes = {
     1: [5, 10, 20, 40, 80],
     2: [160, 320, 640, 1280, 1408],
@@ -248,25 +246,23 @@ const PET_LEVEL_DATA = {
     99: [13, 17.50, 16.50, 16.50, 16.50, 17.21, 15.79],
     100: ["MAX", 17.50, 16.50, 16.50, 16.50, 16.50, 16.50]
 };
-// ==========================================
-// SKILL UPGRADE CONSTANTS
-// ==========================================
+
 // Array index corresponds to the current skill level. 
 // e.g., SKILL_UPGRADE_COSTS[6] = 3 means it takes 3 pulls to go from Lv 6 to Lv 7.
 const SKILL_UPGRADE_COSTS = [
-    0, // Placeholder for index 0
-    2, 2, 2, 2, 2, // Lv 1 to 5
-    3, 3, 3, 3, 3, // Lv 6 to 10
-    4, 4, 4, 4,    // Lv 11 to 14
-    5, 5, 5, 5, 5, 5, 5, // Lv 15 to 21
-    6, 6, 6, 6,    // Lv 22 to 25
-    7, 7, 7, 7,    // Lv 26 to 29
-    8              // Lv 30+ (Handled via fallback in logic)
+    0, // Placeholder for index 0
+    2, 2, 2, 2, 2, // Lv 1 to 5
+    3, 3, 3, 3, 3, // Lv 6 to 10
+    4, 4, 4, 4, // Lv 11 to 14
+    5, 5, 5, 5, 5, 5, 5, // Lv 15 to 21
+    6, 6, 6, 6, // Lv 22 to 25
+    7, 7, 7, 7, // Lv 26 to 29
+    8 // Lv 30+ (Handled via fallback in logic)
 ];
 
 function getSkillUpgradeCost(level) {
-    if (level >= 30) return 8;
-    return SKILL_UPGRADE_COSTS[level] || 8;
+    if (level >= 30) return 8;
+    return SKILL_UPGRADE_COSTS[level] || 8;
 }
 
 const TREES = {
@@ -442,10 +438,10 @@ const LEAGUE_REWARDS = {
 const CLAN_WAR_REWARDS = {
     "S-Tier": { "Win":[5700, 150000, 7800, 3150, 5900, 3150], "Lose":[2850, 75000, 3900, 1500, 2900, 1500] },
     "A-Tier": { "Win":[2500, 80000, 3600, 1500, 2800, 1500], "Lose":[1250, 40000, 1800, 750, 1400, 750] },
-    "B-Tier": { "Win":[4000, 140000, 2800, 11, 2000, 1000], "Lose":[2000, 70000, 1400, 5, 1000, 550] },
-    "C-Tier": { "Win":[2900, 96000, 1900, 8, 1500, 750], "Lose":[1400, 48000, 960, 4, 720, 400] },
-    "D-Tier": { "Win":[2000, 67000, 1350, 5, 1000, 540], "Lose":[1000, 33000, 670, 3, 500, 270] },
-    "E-Tier": { "Win":[1400, 47000, 950, 4, 700, 380], "Lose":[700, 24000, 470, 2, 350, 190] },
+    "B-Tier": { "Win":[1400, 55000, 2100, 840, 1580, 840], "Lose":[700, 27500, 1050, 420, 790, 420] },
+    "C-Tier": { "Win":[750, 20000, 1050, 420, 800, 420], "Lose":[375, 10000, 525, 210, 400, 210] },
+    "D-Tier": { "Win":[380, 10000, 520, 210, 400, 200], "Lose":[190, 5000, 260, 105, 200, 100] },
+    "E-Tier": { "Win":[190, 5000, 260, 100, 200, 100], "Lose":[100, 2500, 130, 50, 100, 50] },
     "None":   { "Win":[0, 0, 0, 0, 0, 0], "Lose":[0, 0, 0, 0, 0, 0] }
 };
 
@@ -487,7 +483,6 @@ const PET_TYPE_MAP = {
     "Genie": "HP", "Baby Dragon": "Hybrid", "Spectral Tiger": "Damage"
 };
 
-
 const FODDER_XP = {
     "Common": 100,
     "Rare": 250,
@@ -496,6 +491,7 @@ const FODDER_XP = {
     "Ultimate": 3906,
     "Mythic": 9766
 };
+
 const MOUNT_FODDER_XP = { "Common": 100, "Rare": 300, "Epic": 900, "Legendary": 2700, "Ultimate": 8100, "Mythic": 24300 };
 
 const MOUNT_BASE_STATS = {

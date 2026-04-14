@@ -18,10 +18,10 @@ const MODAL_SETTINGS = {
         disclaimer: ""
     },
     skillLevels: {
-        title: "ESTIMATED SKILL LEVELS",
-        headerColor: "#ebf8fa", titleColor: "#ffffff",
-        disclaimer: "Calculations assume an equal drop rate among the 3 skills within each tier"
-    },
+        title: "ESTIMATED SKILL LEVELS",
+        headerColor: "#ebf8fa", titleColor: "#ffffff",
+        disclaimer: "Calculations assume an equal drop rate among the 3 skills within each tier"
+        },
     eqAvgBreakdown: {
         title: "OVERALL AVERAGE HEALTH/DAMAGE BREAKDOWN",
         headerColor: "#ebf8fa", titleColor: "#ffffff",
@@ -36,6 +36,12 @@ const MODAL_SETTINGS = {
         title: "EXPECTED MOUNT YIELD",
         headerColor: "#ebf8fa", titleColor: "#ffffff",
         disclaimer: ""
+    },
+    summonProb: {
+        title: "", 
+        headerColor: "#ffffff", 
+        titleColor: "#000000",
+        disclaimer: "" 
     },
     eqSellBreakdown: { 
         title: "SELL PRICE BREAKDOWN", 
@@ -230,16 +236,13 @@ const formatYield = (val) => {
 };
 
 function switchContentTab(tabId, btn) {
-    // 1. Reset buttons
     const container = btn.parentNode;
     Array.from(container.children).forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
-    // 2. Hide all tab content
     const parent = container.parentNode;
     parent.querySelectorAll('.tab-content-area').forEach(div => div.style.display = 'none');
 
-    // 3. Show selected tab
     const target = parent.querySelector(`#${tabId}`);
     if (target) target.style.display = 'block';
 }
@@ -250,8 +253,7 @@ function updateSellRefTable() {
     if (!input || !tbody) return;
 
     let bonus = parseFloat(input.value) || 0;
-    
-    // SAVE TO GLOBAL STATE
+
     if (!window.refTablePrefs) window.refTablePrefs = {};
     window.refTablePrefs.sellBonus = bonus;
     
@@ -293,7 +295,6 @@ function updateStatsRefTable() {
     const mastery = parseFloat(masteryInput.value) || 0;
     const ascVal = ascSel ? parseInt(ascSel.value) : 0;
 
-    // SAVE TO GLOBAL STATE
     if (!window.refTablePrefs) window.refTablePrefs = {};
     window.refTablePrefs.statsTier = tier;
     window.refTablePrefs.statsMastery = mastery;
@@ -558,21 +559,20 @@ function showEqSellTable(cur, proj) {
     showTable("EQUIPMENT SELL PRICE", "icons/forge_sell.png", { label: "Bonus", before: `+${cur}%`, after: `+${proj}%` }, headers, allRows);
 }
 function showForgeTable(type, cur, proj) {
-    const isUpgrade = proj > cur; 
+    const isUpgrade = proj > cur; 
     const isT = type === 'timer'; 
     const title = isT ? "FORGE UPGRADE TIME" : "FORGE UPGRADE COST"; 
     const iconSrc = isT ? "icons/forge_timer.png" : "icons/forge_disc.png"; 
     const headers = ["Level", isT ? "Upgrade Duration" : "Upgrade Cost"]; 
     const rows = [];
 
-    // 1. Setup accumulators for the totals
     let totalValBefore = 0;
     let totalValAfter = 0;
 
-    for (let i = 1; i <= 34; i++) {
-        if (!forgeLevelData[i]) continue;
-        const [cost, hours] = forgeLevelData[i];
-        let v1, v2; 
+    for (let i = 1; i <= 34; i++) {
+        if (!forgeLevelData[i]) continue;
+        const [cost, hours] = forgeLevelData[i];
+        let v1, v2; 
         
         if (isT) { 
             const mins = hours * 60; 
@@ -597,10 +597,10 @@ function showForgeTable(type, cur, proj) {
             v2 = formatForgeCost(rawV2); 
         }
         
-        let cellContent = v1; 
+        let cellContent = v1; 
         if (isUpgrade) cellContent += ` ➜ ${v2}`; 
         rows.push([`${i} ➜ ${i + 1}`, cellContent]);
-    }
+    }
 
     // 2. Format the accumulated totals
     let totalStrBefore, totalStrAfter;
@@ -626,11 +626,9 @@ function showForgeTable(type, cur, proj) {
 function openEqSellBreakdownModal(currentAvg, fromLevel, fromBonus, finalAvg) {
     const fontStr = "font-family: 'Fredoka', sans-serif; -webkit-text-stroke: 0px;";
     const safeFormat = (val) => typeof formatEqValue === 'function' ? formatEqValue(val) : val.toLocaleString();
-    
-    // READ FROM GLOBAL STATE (OR DEFAULT TO 0)
+
     const savedBonus = (window.refTablePrefs && window.refTablePrefs.sellBonus) ? window.refTablePrefs.sellBonus : 0;
 
-    // TAB 1: BREAKDOWN HTML
     let breakdownHtml = `
     <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 5px;">
         <div style="background-color: #f2f2f2; border-radius: 8px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;">
@@ -683,16 +681,13 @@ function openEqAvgBreakdownModal(hpB, hpM, hpA, dmgB, dmgM, dmgA) {
     const fmt = (val) => typeof formatCombatStat === 'function' ? formatCombatStat(val) : val.toLocaleString();
     const fontStyle = "font-family: 'Fredoka', sans-serif; -webkit-text-stroke: 0px;";
 
-    // READ FROM GLOBAL STATE
     const savedTier = (window.refTablePrefs && window.refTablePrefs.statsTier) ? window.refTablePrefs.statsTier : 'Quantum';
     const savedMastery = (window.refTablePrefs && window.refTablePrefs.statsMastery) ? window.refTablePrefs.statsMastery : 0;
     const savedAscension = (window.refTablePrefs && window.refTablePrefs.statsAscension) !== undefined ? window.refTablePrefs.statsAscension : 0;
     
-    // Helper to select the correct option
     const isSel = (val) => val === savedTier ? 'selected' : '';
     const isAscSel = (val) => val == savedAscension ? 'selected' : '';
 
-    // TAB 1: BREAKDOWN
     const createRow = (label, val, icon, isGain, isTotal) => {
         const colorClass = (isGain && val > 0) || isTotal ? 'color: #198754;' : 'color: #000;';
         const bgClass = isTotal ? 'background-color: #d1f2eb; border: 2px solid #198754; margin-top: 6px;' : 'background-color: #ecf0f1; margin-bottom: 6px;';
@@ -947,10 +942,9 @@ function formatSkillLevel(eachAmt) {
     
     let currentLevel = 1;
     let remainingPulls = eachAmt;
-    
-    // Cap at level 100
+
     while (currentLevel < 100) {
-        // Fetch cost safely with fallbacks
+
         let cost = 8;
         if (typeof getSkillUpgradeCost === 'function') {
             cost = getSkillUpgradeCost(currentLevel);
@@ -976,8 +970,7 @@ function formatSkillLevel(eachAmt) {
             }
         }
     }
-    
-    // If it breaks out of the loop, it hit the max level
+
     return "Lv 100 (MAX)";
 }
 
@@ -985,9 +978,7 @@ function getFractionalSkillLevel(eachAmt) {
     let currentLevel = 1;
     let remaining = eachAmt;
     
-    // Cap at level 100
     while (currentLevel < 100) {
-        // Fetch cost safely with fallbacks
         let cost = 8;
         if (typeof getSkillUpgradeCost === 'function') {
             cost = getSkillUpgradeCost(currentLevel);
@@ -1010,7 +1001,6 @@ function getFractionalSkillLevel(eachAmt) {
         }
     }
     
-    // Max level reached, no more fractional points given
     return 100;
 }
 
@@ -1031,7 +1021,6 @@ function getLevelFromTotalPulls(totalSkills) {
 }
 
 function openSkillLevelsModal() {
-    // 1. Grab current base values
     const lvEl = document.getElementById('wc-skill-lv');
     const expEl = document.getElementById('wc-skill-exp');
     
@@ -1081,15 +1070,12 @@ function openSkillLevelsModal() {
 function openSkillUpgradeModal() {
     if (!window.currentWarYields) return;
 
-    // 1. Grab base info
     const baseLv = parseInt(document.getElementById('wc-skill-lv')?.value || 1);
     const baseExp = parseFloat(document.getElementById('wc-skill-exp')?.value.replace(/,/g, '') || 0);
 
-    // 2. Base yields
     const historicalSkills = typeof getHistoricalSkillCount === 'function' ? getHistoricalSkillCount(baseLv, baseExp) : 0;
     const baseYields = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(1, 0, historicalSkills) : [0,0,0,0,0,0];
 
-    // 3. Ticket yields
     const ticketB = window.currentWarYields.skillB || [0,0,0,0,0,0];
     const ticketA = window.currentWarYields.skillA || [0,0,0,0,0,0];
 
@@ -1159,6 +1145,233 @@ function openSkillUpgradeModal() {
     renderMasterModal('skillLevels', finalHtml);
 }
 
+// --- FORGE PROBABILITY MODAL ---
+let currentForgeProbModalLevel = 1;
+
+function openForgeProbModal(levelOverride = null) {
+    if (levelOverride !== null) {
+        currentForgeProbModalLevel = parseInt(levelOverride);
+    } else {
+        const targetInput = document.getElementById('calc-target-forge-lv')?.value;
+        let parsedTarget = parseInt(targetInput);
+        
+        if (isNaN(parsedTarget)) {
+            parsedTarget = parseInt(document.getElementById('calc-forge-lv')?.value) || 1;
+        }
+        currentForgeProbModalLevel = parsedTarget;
+    }
+
+    if (currentForgeProbModalLevel < 1) currentForgeProbModalLevel = 1;
+    if (currentForgeProbModalLevel > 35) currentForgeProbModalLevel = 35;
+
+    let listHtml = '';
+    const rates = typeof CALC_FORGE_RATES !== 'undefined' ? CALC_FORGE_RATES[currentForgeProbModalLevel] : null;
+
+    if (!rates) {
+        listHtml = `<div style="text-align:center; padding: 20px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000;">Data not available for Level ${currentForgeProbModalLevel}</div>`;
+    } else {
+        const TIER_NAMES = ["Primitive", "Medieval", "Early-Modern", "Modern", "Space", "Interstellar", "Multiverse", "Quantum", "Underworld", "Divine"];
+        const TIER_COLORS = ['#f1f2f6', '#5cd8fe', '#5dfe8a', '#fcfe5d', '#ff5c5d', '#d55cff', '#74feee', '#7d5eff', '#b07879', '#fe9e0c'];
+        
+        const fontStyle = "font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000; -webkit-text-stroke: 0px;";
+
+        for (let i = 0; i < 10; i++) {
+            if (rates[i] > 0) { 
+                const formattedRate = rates[i] < 1 ? rates[i].toFixed(2) : rates[i].toFixed(1);
+
+                listHtml += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin-bottom: 6px; background-color: ${TIER_COLORS[i]}; border-radius: 8px;">
+                    <span style="${fontStyle}">${TIER_NAMES[i]}</span>
+                    <span style="${fontStyle}">${formattedRate}%</span>
+                </div>`;
+            }
+        }
+    }
+
+    const leftArrowSvg = `
+    <svg width="32" height="32" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 0px #000);">
+        <polygon points="18,4 4.14,12 18,20" fill="#00a3ff" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></polygon>
+    </svg>`;
+
+    const rightArrowSvg = `
+    <svg width="32" height="32" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 0px #000);">
+        <polygon points="6,4 19.86,12 6,20" fill="#00a3ff" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></polygon>
+    </svg>`;
+
+    const levelTextStyle = `
+        font-family: 'Fredoka', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #ffffff;
+        -webkit-text-stroke: 3px #000000;
+        paint-order: stroke fill;                
+        line-height: 1;
+        letter-spacing: 1px;
+    `;
+
+    const subTextStyle = `
+        font-family: 'Fredoka', sans-serif; 
+        font-size: 0.95rem; 
+        font-weight: 600; 
+        color: #000; 
+        margin-top: 4px;
+        -webkit-text-stroke: 0px;
+    `;
+
+    const navHtml = `
+    <style>
+        .modal-header-fixed { display: none !important; }
+        .modal-body-scroll { padding-top: 25px !important; padding-bottom: 25px !important; border-radius: 16px !important; }
+        
+        #tableModal .modal-content { overflow: visible !important; margin-bottom: 30px !important; }
+
+        .btn-close-floating { 
+            position: absolute !important;
+            top: auto !important; 
+            bottom: -24px !important; 
+            left: 50% !important; 
+            right: auto !important; 
+            transform: translateX(-50%) !important; 
+        }
+    </style>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
+        
+        <button onclick="openForgeProbModal(${currentForgeProbModalLevel - 1})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center;">
+            ${leftArrowSvg}
+        </button>
+        
+        <div style="text-align: center;">
+            <div style="${levelTextStyle}">Level ${currentForgeProbModalLevel}</div>
+            <div style="${subTextStyle}">Forge probabilities</div>
+        </div>
+        
+        <button onclick="openForgeProbModal(${currentForgeProbModalLevel + 1})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center;">
+            ${rightArrowSvg}
+        </button>
+        
+    </div>
+    `;
+
+    renderMasterModal('summonProb', navHtml + listHtml); 
+}
+
+// --- SUMMON PROBABILITY MODAL ---
+let currentProbModalType = 'skill';
+let currentProbModalLevel = 1;
+
+function openSummonProbModal(type, levelOverride = null) {
+    currentProbModalType = type;
+    
+    if (levelOverride !== null) {
+        currentProbModalLevel = parseInt(levelOverride);
+    } else {
+        const targetInput = document.getElementById(`sum-${type}-target-lv`)?.value;
+        const currentInput = document.getElementById(`sum-${type}-lvl`)?.value;
+        currentProbModalLevel = parseInt(targetInput) || parseInt(currentInput) || 1;
+    }
+
+    if (currentProbModalLevel < 1) currentProbModalLevel = 1;
+    if (currentProbModalLevel > 100) currentProbModalLevel = 100;
+
+    const config = typeof SUMMON_CONFIG !== 'undefined' ? SUMMON_CONFIG[type] : null;
+    let listHtml = '';
+
+    if (!config || !config.db || !config.db[currentProbModalLevel]) {
+        listHtml = `<div style="text-align:center; padding: 20px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000;">Data not available for Level ${currentProbModalLevel}</div>`;
+    } else {
+        const rates = config.db[currentProbModalLevel];
+        const tiers = [
+            { name: 'Common', rate: rates[1] || 0, color: '#f1f2f6' },
+            { name: 'Rare', rate: rates[2] || 0, color: '#5cd8fe' },
+            { name: 'Epic', rate: rates[3] || 0, color: '#5dfe8a' },
+            { name: 'Legendary', rate: rates[4] || 0, color: '#fcfe5d' },
+            { name: 'Ultimate', rate: rates[5] || 0, color: '#ff5c5d' },
+            { name: 'Mythic', rate: rates[6] || 0, color: '#d55cff' }
+        ];
+
+        const fontStyle = "font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000; -webkit-text-stroke: 0px;";
+
+        tiers.forEach(t => {
+            if (t.rate > 0 || t.name === 'Common') { 
+                listHtml += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin-bottom: 6px; background-color: ${t.color}; border-radius: 8px;">
+                    <span style="${fontStyle}">${t.name}</span>
+                    <span style="${fontStyle}">${(t.rate).toFixed(2)}%</span>
+                </div>`;
+            }
+        });
+    }
+
+    const leftArrowSvg = `
+    <svg width="32" height="32" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 0px #000);">
+        <polygon points="18,4 4.14,12 18,20" fill="#00a3ff" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></polygon>
+    </svg>`;
+
+    const rightArrowSvg = `
+    <svg width="32" height="32" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 0px #000);">
+        <polygon points="6,4 19.86,12 6,20" fill="#00a3ff" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></polygon>
+    </svg>`;
+
+    const levelTextStyle = `
+        font-family: 'Fredoka', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #ffffff;
+        -webkit-text-stroke: 3px #000000;
+        paint-order: stroke fill;                 
+        line-height: 1;
+        letter-spacing: 1px;
+    `;
+
+    const subTextStyle = `
+        font-family: 'Fredoka', sans-serif; 
+        font-size: 0.95rem; 
+        font-weight: 600; 
+        color: #000; 
+        margin-top: 4px;
+        -webkit-text-stroke: 0px;
+    `;
+
+    const displayType = type.charAt(0).toUpperCase() + type.slice(1);
+
+    const navHtml = `
+    <style>
+        .modal-header-fixed { display: none !important; }
+        .modal-body-scroll { padding-top: 25px !important; padding-bottom: 25px !important; border-radius: 16px !important; }
+        
+        #tableModal .modal-content { overflow: visible !important; margin-bottom: 30px !important; }
+
+        .btn-close-floating { 
+            position: absolute !important;
+            top: auto !important; 
+            bottom: -24px !important; 
+            left: 50% !important; 
+            right: auto !important; 
+            transform: translateX(-50%) !important; 
+        }
+    </style>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
+        
+        <button onclick="openSummonProbModal('${type}', ${currentProbModalLevel - 1})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center;">
+            ${leftArrowSvg}
+        </button>
+        
+        <div style="text-align: center;">
+            <div style="${levelTextStyle}">Level ${currentProbModalLevel}</div>
+            <div style="${subTextStyle}">${displayType} probabilities</div>
+        </div>
+        
+        <button onclick="openSummonProbModal('${type}', ${currentProbModalLevel + 1})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center;">
+            ${rightArrowSvg}
+        </button>
+        
+    </div>
+    `;
+
+    renderMasterModal('summonProb', navHtml + listHtml);
+}
 // =========================================
 // 6. HELP MODAL
 // =========================================

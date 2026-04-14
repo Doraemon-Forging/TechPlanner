@@ -29,7 +29,7 @@ const HTML_CALC = `
         <div class="calc-tool-card">
             <div class="calc-card-input-area">
                 <div class="calc-row-input">
-                    <label>Target Forge Lv:</label>
+                    <label>Target Forge Lv:&nbsp; <button class="btn-info" onclick="openForgeProbModal()" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
                     <select id="calc-target-forge-lv" class="calc-select-chunky" onchange="updateCalculator()"></select>
                 </div>
             </div>
@@ -89,9 +89,13 @@ const HTML_WAR = `
                         </div>
                     </div>
                     <div class="wc-row">
+                        <div class="wc-label">Gem Spent on Forge:</div>
+                        <input type="text" id="wc-forge-gem" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                    </div>
+                    <div class="wc-row">
                         <div class="wc-label">Hammer:</div>
                         <input type="text" id="wc-hammer" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
-                    </div>
+                    </div>                    
                     <div class="wc-line"></div>
                     <div class="wc-row">
                         <div class="wc-label">Dungeon Key:</div>
@@ -108,12 +112,12 @@ const HTML_WAR = `
 
                     <div class="wc-row">
                         <div class="wc-label">Skill Summon Lv:&nbsp;<button class="btn-info" onclick="openSkillLevelsModal()" style="vertical-align: middle; margin-bottom: 2px;">i</button></div>
-                        <input type="number" id="wc-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" style="width: 80px;">
+                        <input type="number" id="wc-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarSkillExpCap(); updateWarCalc()" style="width: 80px;">
                     </div>
                     <div class="wc-row">
                         <div class="wc-label">Skill Summon Exp:</div>
                         <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
-                            <input type="number" id="wc-skill-exp" placeholder="0" min="0" oninput="updateWarSkillExpCap(); updateWarCalc()" style="width: 70px;">
+                            <input type="number" id="wc-skill-exp" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateWarSkillExpCap(); updateWarCalc()" style="width: 70px;">
                             <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-skill-max">10</span></span>
                         </div>
                     </div>
@@ -125,12 +129,12 @@ const HTML_WAR = `
 
                     <div class="wc-row">
                         <div class="wc-label">Mount Summon Lv:</div>
-                        <input type="number" id="wc-mount-lv" placeholder="1" min="1" max="100" oninput="updateWarMountExpCap(); updateWarCalc()" style="width: 80px;">
+                        <input type="number" id="wc-mount-lv" placeholder="1" min="1" max="100" oninput="updateWarMountExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarMountExpCap(); updateWarCalc()" style="width: 80px;">
                     </div>
                     <div class="wc-row">
                         <div class="wc-label">Mount Summon Exp:</div>
                         <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
-                            <input type="number" id="wc-mount-exp" placeholder="0" min="0" oninput="updateWarMountExpCap(); updateWarCalc()" style="width: 70px;">
+                            <input type="number" id="wc-mount-exp" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateWarMountExpCap(); updateWarCalc()" style="width: 70px;">
                             <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-mount-max">2</span></span>
                         </div>
                     </div>
@@ -831,6 +835,10 @@ const HTML_WEEKLY = `
                         <select id="weekly-war-tier" class="war-select" style="width: 75px;" onchange="updateWeekly()">
                             <option value="S-Tier" selected>S-Tier</option>
                             <option value="A-Tier">A-Tier</option>
+                            <option value="B-Tier">B-Tier</option>
+                            <option value="C-Tier">C-Tier</option>
+                            <option value="D-Tier">D-Tier</option>
+                            <option value="E-Tier">E-Tier</option>
                             <option value="None">None</option>
                         </select>
                         <select id="weekly-war-win" class="war-select select-small" style="width: 65px;" onchange="updateWeekly()">
@@ -1325,18 +1333,22 @@ const HTML_SUMMON = `
                     <div class="pet-block" style="border: none; padding: 0; margin: 0;">
                         <div class="calc-row-input">
                             <label>Summon Lv:</label>
-                            <input type="number" id="sum-skill-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('skill'); updateSummonCalc('skill')">
+                            <input type="number" id="sum-skill-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('skill'); updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, false); updateSummonCap('skill'); updateSummonCalc('skill')">
                         </div>
                         <div class="calc-row-input">
                             <label>Summon Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="sum-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateSummonCap('skill'); updateSummonCalc('skill')">
+                                <input type="number" id="sum-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateSummonCap('skill'); updateSummonCalc('skill')">
                                 <span class="calc-label pet-label-sub">/ <span id="sum-skill-max">10</span></span>
                             </div>
                         </div>
                         <div class="calc-row-input">
                             <label>Green Tickets:</label>
-                            <input type="text" id="sum-skill-res" class="calc-input-chunky" style="width: 100px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateSummonCalc('skill')" oninput="cleanInput(this); updateSummonCalc('skill')">
+                            <input type="text" id="sum-skill-res" class="calc-input-chunky" style="width: 100px;" placeholder="0" onfocus="unformatInput(this)" onblur="updateSummonCalc('skill'); formatInput(this)" oninput="cleanInput(this); updateSummonCalc('skill')">
+                        </div>
+                        <div class="calc-row-input">
+                            <label>Target Lv:&nbsp; <button class="btn-info" onclick="openSummonProbModal('skill')" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
+                            <input type="number" id="sum-skill-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('skill')">
                         </div>
                     </div>
                 </div>
@@ -1355,7 +1367,6 @@ const HTML_SUMMON = `
                 </div>
             </div>
 
-            <!-- SKILL EXPECTED YIELD & PROBABILITY CARD -->
             <div class="daily-card" style="margin: 15px 0;">
                 <div class="daily-card-header strip-blue">
                     <div class="daily-header-title">Expected Yield & Probability</div>
@@ -1396,18 +1407,22 @@ const HTML_SUMMON = `
                     <div class="pet-block" style="border: none; padding: 0; margin: 0;">
                         <div class="calc-row-input">
                             <label>Summon Lv:</label>
-                            <input type="number" id="sum-pet-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('pet'); updateSummonCalc('pet')">
+                            <input type="number" id="sum-pet-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('pet'); updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, false); updateSummonCap('pet'); updateSummonCalc('pet')">
                         </div>
                         <div class="calc-row-input">
                             <label>Summon Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="sum-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateSummonCap('pet'); updateSummonCalc('pet')">
+                                <input type="number" id="sum-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateSummonCap('pet'); updateSummonCalc('pet')">
                                 <span class="calc-label pet-label-sub">/ <span id="sum-pet-max">3</span></span>
                             </div>
                         </div>
                         <div class="calc-row-input">
                             <label>Eggshells:</label>
-                            <input type="text" id="sum-pet-res" class="calc-input-chunky" style="width: 100px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateSummonCalc('pet')" oninput="cleanInput(this); updateSummonCalc('pet')">
+                            <input type="text" id="sum-pet-res" class="calc-input-chunky" style="width: 100px;" placeholder="0" onfocus="unformatInput(this)" onblur="updateSummonCalc('pet'); formatInput(this)" oninput="cleanInput(this); updateSummonCalc('pet')">
+                        </div>
+                        <div class="calc-row-input">
+                            <label>Target Lv:&nbsp; <button class="btn-info" onclick="openSummonProbModal('pet')" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
+                            <input type="number" id="sum-pet-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('pet')">
                         </div>
                     </div>
                 </div>
@@ -1426,7 +1441,6 @@ const HTML_SUMMON = `
                 </div>
             </div>
 
-            <!-- PET EXPECTED YIELD & PROBABILITY CARD -->
             <div class="daily-card" style="margin: 15px 0;">
                 <div class="daily-card-header strip-blue">
                     <div class="daily-header-title">Expected Yield & Probability</div>
@@ -1467,18 +1481,22 @@ const HTML_SUMMON = `
                     <div class="pet-block" style="border: none; padding: 0; margin: 0;">
                         <div class="calc-row-input">
                             <label>Summon Lv:</label>
-                            <input type="number" id="sum-mount-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('mount'); updateSummonCalc('mount')">
+                            <input type="number" id="sum-mount-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('mount'); updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, false); updateSummonCap('mount'); updateSummonCalc('mount')">
                         </div>
                         <div class="calc-row-input">
                             <label>Summon Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="sum-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateSummonCap('mount'); updateSummonCalc('mount')">
+                                <input type="number" id="sum-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateSummonCap('mount'); updateSummonCalc('mount')">
                                 <span class="calc-label pet-label-sub">/ <span id="sum-mount-max">2</span></span>
                             </div>
                         </div>
                         <div class="calc-row-input">
                             <label>Mount Keys:</label>
-                            <input type="text" id="sum-mount-res" class="calc-input-chunky" style="width: 100px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateSummonCalc('mount')" oninput="cleanInput(this); updateSummonCalc('mount')">
+                            <input type="text" id="sum-mount-res" class="calc-input-chunky" style="width: 100px;" placeholder="0" onfocus="unformatInput(this)" onblur="updateSummonCalc('mount'); formatInput(this)" oninput="cleanInput(this); updateSummonCalc('mount')">
+                        </div>
+                        <div class="calc-row-input">
+                            <label>Target Lv:&nbsp; <button class="btn-info" onclick="openSummonProbModal('mount')" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
+                            <input type="number" id="sum-mount-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('mount')">
                         </div>
                     </div>
                 </div>
@@ -1530,7 +1548,6 @@ const HTML_SUMMON = `
             </div>
             
         </div>
-        
         
     </div>
 </div>

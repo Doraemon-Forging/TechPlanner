@@ -1,22 +1,21 @@
 /**
- * SUMMON.JS (Optimized)
+ * SUMMON.JS
  * Core Logic for the Summon Calc Tab (Skills, Pets, Mounts)
  */
 
 // ==========================================
 // 0. UNIVERSAL CONFIGURATION
 // ==========================================
-// This object holds all the unique variables for each summon type. 
-// The math engine uses this to know what to calculate.
+
 const SUMMON_CONFIG = {
     skill: {
         db: typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : null,
         baseCost: 200,
-        costRoundMode: 'round', // Skills use Math.round
+        costRoundMode: 'round',
         yieldPerPull: 5,
         techPrefix: 'spt',
         techCostKey: 'ticket',
-        techChanceKey: null,    // Skills don't have extra chance tech
+        techChanceKey: null,    
         chanceMult: 0,
         icon: 'green_ticket.png',
         itemName: 'Skills',
@@ -29,9 +28,9 @@ const SUMMON_CONFIG = {
         costRoundMode: 'round',
         yieldPerPull: 1,
         techPrefix: 'spt',
-        techCostKey: null,      // Pets don't have cost reduction tech
+        techCostKey: null,
         techChanceKey: 'lucky',
-        chanceMult: 2,          // 2% per level
+        chanceMult: 2,
         icon: 'eggshell.png',
         itemName: 'Eggs',
         resName: 'Eggshells',
@@ -40,12 +39,12 @@ const SUMMON_CONFIG = {
     mount: {
         db: typeof MOUNT_LEVEL_DATA !== 'undefined' ? MOUNT_LEVEL_DATA : null,
         baseCost: 50,
-        costRoundMode: 'ceil',  // Mounts use Math.ceil
+        costRoundMode: 'ceil',
         yieldPerPull: 1,
         techPrefix: 'power',
         techCostKey: 'mount_cost',
         techChanceKey: 'mount_chance',
-        chanceMult: 2,          // 2% per level
+        chanceMult: 2,
         icon: 'mount_key.png',
         itemName: 'Mounts',
         resName: 'Mount Keys',
@@ -144,6 +143,7 @@ function updateSummonCalc(type) {
     const lvInput = parseInt(document.getElementById(`sum-${type}-lvl`).value) || 1;
     const expInput = parseFloat(document.getElementById(`sum-${type}-exp`).value.replace(/,/g, '')) || 0;
     const resInput = parseFloat(document.getElementById(`sum-${type}-res`).value.replace(/,/g, '')) || 0;
+    const targetLvInput = parseInt(document.getElementById(`sum-${type}-target-lv`)?.value) || 0;
 
     // --- 1. Tech Modifiers ---
     let curCostLv = 0, planCostLv = 0, curChanceLv = 0, planChanceLv = 0;
@@ -198,7 +198,7 @@ function updateSummonCalc(type) {
     // --- 4. Render Updates ---
     const isMobile = window.innerWidth <= 768;
     renderHeader(type, projB, projA, isMobile);
-    renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extraChanceB, extraChanceA, isMobile);
+    renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extraChanceB, extraChanceA, isMobile, targetLvInput);
     
     if(document.getElementById(`sum-${type}-yield-container`)) {
         calculateUniversalYieldTable(type, config, lvInput, expInput, yieldB, yieldA, costB, costA, extraChanceB, extraChanceA, projB, projA, isMobile);
@@ -232,8 +232,7 @@ function renderHeader(type, projB, projA, isMobile) {
 
     const lvFontStyle = "font-family: 'Fredoka', sans-serif; font-weight: 600; color: #000; font-size: 0.95rem;";
     const lvExpStyle = "font-size: 0.85em; font-weight: 500; color: #000;";
-    
-    // Uses Math.round for skills, 1 decimal for pets/mounts
+
     const formatExp = (val) => type === 'skill' ? Math.round(val).toLocaleString('en-US') : val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
     const getLevelText = (proj) => {
@@ -246,7 +245,6 @@ function renderHeader(type, projB, projA, isMobile) {
     const valA = `<span style="${lvFontStyle}">${getLevelText(projA)}</span>`;
     const arrow = `<span style="font-family: 'Fredoka', sans-serif; font-weight: 800; color: #198754; font-size: 0.95rem; margin: 0 4px; -webkit-text-stroke: 0px !important;">➜</span>`;
 
-    // THE FIX: Compare the formatted strings directly to perfectly match original strictness
     if (projB.maxExp === "MAX" || (projB.level === projA.level && formatExp(projB.exp) === formatExp(projA.exp))) {
         levelHtml = valB;
     } else {
@@ -281,8 +279,29 @@ function getDynamicMilestones(type, config) {
     return dynamicMilestones;
 }
 
-function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extraB, extraA, isMobile) {
-    const milestones = getDynamicMilestones(type, config);
+function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extraB, extraA, isMobile, targetLvInput) {
+    const baseMilestones = getDynamicMilestones(type, config);
+    let milestones = [...baseMilestones];
+
+    if (targetLvInput > 0) {
+        milestones.push({
+            name: "Target",
+            index: 'custom', 
+            color: "#e4e4e4", 
+            targetLv: targetLvInput,
+            isTarget: true 
+        });
+    }
+
+    milestones.sort((a, b) => {
+        if (a.targetLv !== b.targetLv) {
+            return a.targetLv - b.targetLv;
+        }
+        if (a.isTarget) return -1;
+        if (b.isTarget) return 1;
+        return 0;
+    });
+
     const fontStyle = "font-family: 'Fredoka', sans-serif; -webkit-text-stroke: 0px;";
     const keyIcon = `<img src="icons/${config.icon}" style="width: 1rem; height: 1rem; object-fit: contain; vertical-align: -2px;">`;
 
@@ -291,35 +310,35 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
         ${config.itemName} and ${config.resName} needed to have a chance of summoning higher tier ${type}s for the first time
     </div>`;
 
+    const calcNeeds = (unlocked, targetCum, curCum, cost, extra) => {
+        if (unlocked) return { items: 0, res: 0 };
+        let expNeeded = targetCum - curCum;
+        let itemsNeeded = type === 'skill' ? Math.max(0, Math.ceil(expNeeded)) : Math.ceil(expNeeded);
+        let pullsNeeded = Math.ceil((type === 'skill' ? itemsNeeded / 5 : expNeeded) / (1 + extra));
+        return { items: itemsNeeded, res: pullsNeeded * cost };
+    };
+
+    const buildStatus = (unlocked, items, res) => {
+        if (unlocked) return `<span style="${fontStyle} font-weight: 600; color: #000;">✔ Unlocked</span>`;
+        let fmtRes = typeof formatSummonKeys !== 'undefined' ? formatSummonKeys(res) : res.toLocaleString();
+        return `
+        <div style="display: inline-flex; align-items: center; gap: 4px; color: #000; white-space: nowrap;">
+            <span style="${fontStyle} font-weight: 600; color: #000;">${items.toLocaleString()}</span>
+            <span style="${fontStyle} font-weight: 500; font-size: 0.8rem; color: #000;">(${keyIcon} ${fmtRes})</span>
+        </div>`;
+    };
+
+    const arrow = `<span style="font-family: 'Fredoka', sans-serif; font-weight: 800; color: #198754; font-size: 1.05rem; margin: 0 4px; -webkit-text-stroke: 0px !important;">➜</span>`;
+
     milestones.forEach(m => {
         const targetCum = getCumulativePulls(m.targetLv, 0, config.db);
         const unlockedB = totalCumB >= targetCum;
         const unlockedA = totalCumA >= targetCum;
 
-        const calcNeeds = (unlocked, curCum, cost, extra) => {
-            if (unlocked) return { items: 0, res: 0 };
-            let expNeeded = targetCum - curCum;
-            let itemsNeeded = type === 'skill' ? Math.max(0, Math.ceil(expNeeded)) : Math.ceil(expNeeded);
-            let pullsNeeded = Math.ceil((type === 'skill' ? itemsNeeded / 5 : expNeeded) / (1 + extra));
-            return { items: itemsNeeded, res: pullsNeeded * cost };
-        };
-
-        const needsB = calcNeeds(unlockedB, totalCumB, costB, extraB);
-        const needsA = calcNeeds(unlockedA, totalCumA, costA, extraA);
-
-        const buildStatus = (unlocked, items, res) => {
-            if (unlocked) return `<span style="${fontStyle} font-weight: 600; color: #000;">✔ Unlocked</span>`;
-            let fmtRes = typeof formatSummonKeys !== 'undefined' ? formatSummonKeys(res) : res.toLocaleString();
-            return `
-            <div style="display: inline-flex; align-items: center; gap: 4px; color: #000; white-space: nowrap;">
-                <span style="${fontStyle} font-weight: 600; color: #000;">${items.toLocaleString()}</span>
-                <span style="${fontStyle} font-weight: 500; font-size: 0.8rem; color: #000;">(${keyIcon} ${fmtRes})</span>
-            </div>`;
-        };
+        const needsB = calcNeeds(unlockedB, targetCum, totalCumB, costB, extraB);
+        const needsA = calcNeeds(unlockedA, targetCum, totalCumA, costA, extraA);
 
         let statusHtml = '';
-        const arrow = `<span style="font-family: 'Fredoka', sans-serif; font-weight: 800; color: #198754; font-size: 1.05rem; margin: 0 4px; -webkit-text-stroke: 0px !important;">➜</span>`;
-
         if (unlockedB && unlockedA) {
             statusHtml = `<span style="${fontStyle} font-weight: 600; color: #000;">✔ Unlocked</span>`;
         } else if (needsB.items === needsA.items && needsB.res === needsA.res) {
@@ -332,8 +351,10 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
                 : `<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px;"><div style="white-space: nowrap;">${statB}</div><div style="display: flex; align-items: center; white-space: nowrap;">${arrow} ${statA}</div></div>`;
         }
 
+        const borderStyle = m.isTarget ? 'border: 1px solid rgba(0,0,0,0.15); box-shadow: 0 2px 4px rgba(0,0,0,0.05);' : 'border: 1px solid transparent;';
+
         html += `
-        <div style="background-color: ${m.color}; border-radius: 8px; padding: 12px 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+        <div style="background-color: ${m.color}; border-radius: 8px; padding: 12px 15px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; ${borderStyle}">
             <div style="flex: 0 0 25%; max-width: 30%; text-align: left; line-height: 1.2;">
                 <span style="${fontStyle} font-weight: 600; color: #000;">${m.name}</span>
                 <span style="${fontStyle} font-size:0.8rem; font-weight:500; color: #000; display: inline-block;">(Lv ${m.targetLv})</span>
@@ -342,7 +363,6 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
         </div>`;
     });
 
-    // Progress Bar
     let absoluteMaxExp = 0;
     for (let i = 1; i < 100; i++) {
         if (config.db[i] && config.db[i][0] !== "MAX") absoluteMaxExp += config.db[i][0]; else break; 
@@ -381,11 +401,9 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
 function calculateUniversalYieldTable(type, config, sLv, sExp, yieldB, yieldA, costB, costA, extraB, extraA, projB, projA, isMobile) {
     const arrowHtml = `<span style="font-family: 'Fredoka', sans-serif; font-weight: 800; color: #198754; font-size: 1.05rem; margin: 0 4px; -webkit-text-stroke: 0px !important;">➜</span>`;
     const fontStyle = "font-family: 'Fredoka', sans-serif; font-size: 0.95rem; font-weight: 600; color: #000000; -webkit-text-stroke: 0px;";
-    
-    // FORMATTER 1: For the Total Yield header (Matches original: whole numbers for Skills, 1 dec for Pets/Mounts)
+
     const formatTotal = (val) => type === 'skill' ? Math.round(val).toLocaleString('en-US') : val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-    // FORMATTER 2: The "Smart" Formatter for the table rows (0, <10 gets 2 decimals, >=10 gets 1 decimal)
     const formatYieldRow = (val) => {
         if (!val || val === 0) return "0";
         if (val < 10) return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

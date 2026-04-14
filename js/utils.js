@@ -91,6 +91,17 @@ function unformatInput(el) {
     el.value = el.value.replace(/,/g, '');
 }
 
+function validateLevelOnBlur(el, isTarget = false) {
+    if (el.value === "") {
+        if (!isTarget) el.value = 1; 
+        return; 
+    }
+    
+    let val = parseInt(el.value);
+    if (val > 100) el.value = 100;
+    else if (val < 1) el.value = 1;
+}
+
 // --- UI HELPERS ---
 
 function toggleDropdown(id) {
