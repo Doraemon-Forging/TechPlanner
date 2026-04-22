@@ -52,6 +52,8 @@ const MODAL_SETTINGS = {
         title: "LEVEL RANGE PROGRESSION", 
         headerColor: "#ebf8fa", titleColor: "#ffffff", 
         disclaimer: "Repeatedly forging an item slot increases your level bracket for that specific tier." 
+    },
+    summonYield: { title: "ASCENSION YIELD BREAKDOWN", headerColor: "#ebf8fa", titleColor: "#000000", disclaimer: "Yields and costs are split based on the different drop rates active during each specific ascension phase."     
     }
 };
 
@@ -353,13 +355,69 @@ function updateStatsRefTable() {
 // 5. SPECIFIC MODALS
 // =========================================
 
+// --- SYSTEM MODALS (CONFIRM/PROMPT) ---
+function openConfirmModal(message, onConfirmCallback) {
+    window.currentConfirmCallback = onConfirmCallback;
+    const modal = document.getElementById('tableModal');
+    const content = modal.querySelector('.modal-content');
+    
+    content.className = 'modal-content confirm-mode'; 
+    content.style.cssText = ''; 
+    
+    content.innerHTML = `
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; text-align: center; color: #ffffff; margin-bottom: 20px; line-height: 1.3;">
+            ${message}
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button class="btn-confirm-cancel" onclick="document.getElementById('tableModal').style.display='none'" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #ff4757; box-shadow: inset 0 -4px 0 0 #c0392b; transition: transform 0.1s;">
+            <img src="icons/icon_cancel.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+        </button>
+        <button class="btn-confirm-ok" onclick="document.getElementById('tableModal').style.display='none'; if(window.currentConfirmCallback) window.currentConfirmCallback();" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #00b0ff; box-shadow: inset 0 -4px 0 0 #005680; transition: transform 0.1s;">
+            <img src="icons/button_ok.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+        </button>
+    </div>
+    <style>
+        .btn-confirm-ok:active { transform: translateY(3px); box-shadow: inset 0 -1px 0 0 #005680 !important; }
+        .btn-confirm-cancel:active { transform: translateY(3px); box-shadow: inset 0 -1px 0 0 #c0392b !important; }
+    </style>`;
+    modal.style.display = 'block';
+}
+
+function openPromptModal(message, onConfirmCallback) {
+    window.currentPromptCallback = onConfirmCallback;
+    const modal = document.getElementById('tableModal');
+    const content = modal.querySelector('.modal-content');
+    
+    content.className = 'modal-content confirm-mode'; 
+    content.style.cssText = ''; 
+    
+    content.innerHTML = `
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; text-align: center; color: #ffffff; margin-bottom: 15px; line-height: 1.3;">
+            ${message}
+        </div>
+        <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+            <input type="number" id="custom-prompt-input" style="width: 100px; height: 40px; background: #ffffff; border: 2px solid #000000; border-radius: 8px; font-family: 'Fredoka', sans-serif; font-size: 1rem; -webkit-text-stroke: 0px transparent !important;font-weight: 600; text-align: center; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);" placeholder="0" min="1">
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button class="btn-confirm-cancel" onclick="document.getElementById('tableModal').style.display='none'" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #ff4757; box-shadow: inset 0 -4px 0 0 #c0392b; transition: transform 0.1s;">
+                <img src="icons/icon_cancel.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+            <button class="btn-confirm-ok" onclick="document.getElementById('tableModal').style.display='none'; if(window.currentPromptCallback) window.currentPromptCallback(document.getElementById('custom-prompt-input').value);" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #00b0ff; box-shadow: inset 0 -4px 0 0 #005680; transition: transform 0.1s;">
+                <img src="icons/button_ok.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+        </div>`;
+    modal.style.display = 'block';
+
+    setTimeout(() => { const input = document.getElementById('custom-prompt-input'); if (input) input.focus(); }, 50);
+}
+
 // --- WAR CALC MODALS ---
 function openWarYieldModal(type) {
     if (!window.currentWarYields) return;
     
     const dataB = type === 'skill' ? window.currentWarYields.skillB : window.currentWarYields.mountB;
     const dataA = type === 'skill' ? window.currentWarYields.skillA : window.currentWarYields.mountA;
-    const POINTS_MAP = type === 'skill' ? [125, 150, 175, 200, 225, 250] : [50, 100, 250, 500, 1500, 2500];
+    const POINTS_MAP = type === 'skill' ? [125, 125, 125, 125, 125, 125] : [600, 600, 600, 600, 600, 600];
     const ROW_COLORS = ['#f1f1f1', '#5dd9ff', '#5dfe8a', '#fdff5e', '#ff5d5e', '#d55cff'];
     
     let totalB = 0; let totalA = 0; let rowsHtml = '';
@@ -380,7 +438,8 @@ function openWarYieldModal(type) {
             </div>`;
 
         const ptsB = vB * POINTS_MAP[i]; const ptsA = vA * POINTS_MAP[i];
-        const fmtPtsB = Math.round(ptsB).toLocaleString('en-US'); const fmtPtsA = Math.round(ptsA).toLocaleString('en-US');
+        const fmtPtsB = formatCompactGold(ptsB);
+        const fmtPtsA = formatCompactGold(ptsA);
         const isSinglePts = (fmtPtsB === fmtPtsA);
 
         let ptsHtml = isSinglePts ? `<span style="${fontStyle} color: #000;">${fmtPtsB}</span>` : `
@@ -409,27 +468,64 @@ function openWarYieldModal(type) {
             </div>`;
     };
 
+    // 1. Render Specific Pull/Summon Stats First
     if (type === 'skill') {
-        // Grab base info to calculate projected levels
-        const baseLv = parseInt(document.getElementById('wc-skill-lv')?.value || 1);
-        const baseExp = parseFloat(document.getElementById('wc-skill-exp')?.value.replace(/,/g, '') || 0);
-        const historicalSkills = typeof getHistoricalSkillCount === 'function' ? getHistoricalSkillCount(baseLv, baseExp) : 0;
-
-        const finalSkillsB = historicalSkills + Math.round(totalB);
-        const finalSkillsA = historicalSkills + Math.round(totalA);
-
-        const levelDataB = typeof getLevelFromTotalPulls === 'function' ? getLevelFromTotalPulls(finalSkillsB) : {level: 1, exp: 0, maxExp: 10};
-        const levelDataA = typeof getLevelFromTotalPulls === 'function' ? getLevelFromTotalPulls(finalSkillsA) : {level: 1, exp: 0, maxExp: 10};
-
-        const formatLv = (ld) => ld.maxExp === "MAX" ? "Lv 100 (MAX)" : `Lv ${ld.level} (${Math.round(ld.exp)}/${ld.maxExp})`;
-
         summaryHtml += renderSummaryRow("Skill Summoned", Math.round(totalB).toLocaleString('en-US'), Math.round(totalA).toLocaleString('en-US'));
-        summaryHtml += renderSummaryRow("Summon Lv", formatLv(levelDataB), formatLv(levelDataA));
-
     } else if (type === 'mount') {
-        const pullsB = window.currentWarYields.mountPullsB || 0; const pullsA = window.currentWarYields.mountPullsA || 0;
-        summaryHtml += renderSummaryRow("Mount Pull", Math.round(pullsB).toLocaleString('en-US'), Math.round(pullsA).toLocaleString('en-US'));
+        const pullsB = window.currentWarYields.mountPullsB || 0; 
+        const pullsA = window.currentWarYields.mountPullsA || 0;
         summaryHtml += renderSummaryRow("Mount Summoned", formatYield(totalB), formatYield(totalA));
+    }
+
+    const lvEl = document.getElementById(`wc-${type}-lv`);
+    const expEl = document.getElementById(`wc-${type}-exp`);
+    const ascEl = document.getElementById(`wc-${type}-asc`);
+
+    const currentLv = parseInt(lvEl ? lvEl.value : 1) || 1;
+    const currentExp = parseFloat(expEl ? expEl.value.replace(/,/g, '') : 0) || 0;
+    const currentAsc = parseInt(ascEl ? ascEl.value : 0) || 0;
+
+    const dataTable = type === 'skill' ? (typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : null) : (typeof MOUNT_LEVEL_DATA !== 'undefined' ? MOUNT_LEVEL_DATA : null);
+
+    if (dataTable && typeof getCumulativePulls === 'function' && typeof getLevelFromCumulative === 'function') {
+        const baseCumulative = getCumulativePulls(currentLv, currentExp, dataTable, currentAsc);
+        
+        const finalCumB = baseCumulative + totalB;
+        const finalCumA = baseCumulative + totalA;
+
+        const levelDataB = getLevelFromCumulative(finalCumB, dataTable);
+        const levelDataA = getLevelFromCumulative(finalCumA, dataTable);
+
+        const enforceRollover = (proj) => {
+            if (proj.level >= 100) {
+                let maxExp = dataTable[100] ? dataTable[100][0] : "MAX";
+                if (maxExp === "MAX" || proj.exp >= maxExp || proj.exp === "MAX") {
+                    if (proj.ascension < 3) {
+                        proj.ascension += 1;
+                        proj.level = 1;
+                        proj.exp = 0;
+                        proj.maxExp = dataTable[1] ? dataTable[1][0] : 0;
+                    }
+                }
+            }
+        };
+        enforceRollover(levelDataB);
+        enforceRollover(levelDataA);
+
+        const getAscStars = (asc) => {
+            if (asc === 1) return `<img src="icons/asc1.png" style="height: 1.1em; vertical-align: -3px; margin-right: 2px;">`;
+            if (asc === 2) return `<img src="icons/asc2.png" style="height: 1.1em; vertical-align: -3px; margin-right: 2px;">`;
+            if (asc === 3) return `<img src="icons/asc3.png" style="height: 1.1em; vertical-align: -3px; margin-right: 2px;">`;
+            return ``;
+        };
+
+        const formatLv = (ld) => {
+            let stars = getAscStars(ld.ascension);
+            let displayLv = ld.ascension > 0 ? `${stars}Lv ${ld.level}` : `Lv ${ld.level}`;
+            return ld.maxExp === "MAX" ? `${displayLv} (MAX)` : `${displayLv} (${Math.round(ld.exp).toLocaleString()}/${ld.maxExp.toLocaleString()})`;
+        };
+
+        summaryHtml += renderSummaryRow("Summon Lv", formatLv(levelDataB), formatLv(levelDataA));
     }
 
     const mobileStyle = `
@@ -456,7 +552,328 @@ function openWarYieldModal(type) {
     MODAL_SETTINGS.warYield.title = backupTitle;
 }
 
-// --- CALCULATOR & DAILY MODALS ---
+function openSkillLevelsModal() {
+    const lvEl = document.getElementById('wc-skill-lv');
+    const expEl = document.getElementById('wc-skill-exp');
+    
+    const currentLv = parseInt(lvEl ? lvEl.value : 1) || 1;
+    const currentExp = parseFloat(expEl ? expEl.value.replace(/,/g, '') : 0) || 0;
+
+    const historicalSkills = getHistoricalSkillCount(currentLv, currentExp);
+    const yields = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(1, 0, historicalSkills) : [0,0,0,0,0,0];
+    
+    const ROW_COLORS = ['#f1f1f1', '#5dd9ff', '#5dfe8a', '#fdff5e', '#ff5d5e', '#d55cff'];
+    const fontStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; -webkit-text-stroke: 0px #000000 !important; font-size: 0.9rem;";
+    
+    let rowsHtml = '';
+
+    for (let i = 0; i < 6; i++) {
+        const totalAmt = yields[i];
+        const eachAmt = totalAmt / 3; 
+        
+        const amtStr = formatSkillAmount(totalAmt);
+        const lvlStr = formatSkillLevel(eachAmt);
+
+        rowsHtml += `
+            <div style="background-color: ${ROW_COLORS[i]}; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="text-align: left;"><span style="${fontStyle} color: #000;">${amtStr}</span></div><div style="text-align: right;"><span style="${fontStyle} color: #000;">${lvlStr}</span></div>
+            </div>`;
+    }
+
+    let summaryHtml = `
+        <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="${fontStyle} color: #000;">Total Skill Summoned</span>
+            <div style="text-align: right;"><span style="${fontStyle} color: #000;">${Math.round(historicalSkills).toLocaleString('en-US')}</span></div>
+        </div>`;
+
+    const finalHtml = `
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            ${summaryHtml}
+            <div style="height: 10px;"></div> <div style="display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 5px;">
+                <span style="${fontStyle} color: #000;">Amount</span><span style="${fontStyle} color: #000;">Skill Lv</span>
+            </div>
+            ${rowsHtml}
+        </div>`;
+
+    renderMasterModal('skillLevels', finalHtml);
+}
+
+// --- SKILL LEVEL ESTIMATOR MODAL ---
+
+function getHistoricalSkillCount(level, exp) {
+    let total = 0;
+    for (let i = 1; i < level; i++) {
+        if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[i] && SKILL_LEVEL_DATA[i][0] !== "MAX") {
+            total += SKILL_LEVEL_DATA[i][0];
+        }
+    }
+    return total + exp;
+}
+
+function formatSkillAmount(amt) {
+    if (amt === 0) return "0";
+    if (amt > 0 && amt < 0.01) return "< 0.01";
+    if (amt >= 0.01 && amt < 10) return amt.toFixed(2);
+    return amt.toFixed(1);
+}
+
+function formatSkillLevel(eachAmt) {
+    if (eachAmt < 0.05) return "0";
+    
+    let currentLevel = 1;
+    let remainingPulls = eachAmt;
+
+    while (currentLevel < 100) {
+        let cost = 8;
+        if (typeof getSkillUpgradeCost === 'function') {
+            cost = getSkillUpgradeCost(currentLevel);
+        } else if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[currentLevel]) {
+            cost = SKILL_UPGRADE_COSTS[currentLevel];
+        } else {
+            if (currentLevel >= 1 && currentLevel <= 5) cost = 2;
+            else if (currentLevel >= 6 && currentLevel <= 10) cost = 3;
+            else if (currentLevel >= 11 && currentLevel <= 14) cost = 4;
+            else if (currentLevel >= 15 && currentLevel <= 21) cost = 5;
+            else if (currentLevel >= 22 && currentLevel <= 25) cost = 6;
+            else if (currentLevel >= 26 && currentLevel <= 29) cost = 7;
+        }
+
+        if (remainingPulls >= cost) {
+            remainingPulls -= cost;
+            currentLevel++;
+        } else {
+            if (currentLevel === 1) {
+                return `Lv 1 (${remainingPulls.toFixed(2)}/${cost})`;
+            } else {
+                return `Lv ${currentLevel} (${remainingPulls.toFixed(1)}/${cost})`;
+            }
+        }
+    }
+
+    return "Lv 100 (MAX)";
+}
+
+function getFractionalSkillLevel(eachAmt) {
+    let currentLevel = 1;
+    let remaining = eachAmt;
+    
+    while (currentLevel < 100) {
+        let cost = 8;
+        if (typeof getSkillUpgradeCost === 'function') {
+            cost = getSkillUpgradeCost(currentLevel);
+        } else if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[currentLevel]) {
+            cost = SKILL_UPGRADE_COSTS[currentLevel];
+        } else {
+            if (currentLevel >= 1 && currentLevel <= 5) cost = 2;
+            else if (currentLevel >= 6 && currentLevel <= 10) cost = 3;
+            else if (currentLevel >= 11 && currentLevel <= 14) cost = 4;
+            else if (currentLevel >= 15 && currentLevel <= 21) cost = 5;
+            else if (currentLevel >= 22 && currentLevel <= 25) cost = 6;
+            else if (currentLevel >= 26 && currentLevel <= 29) cost = 7;
+        }
+
+        if (remaining >= cost) {
+            remaining -= cost;
+            currentLevel++;
+        } else {
+            return currentLevel + (remaining / cost);
+        }
+    }
+    
+    return 100;
+}
+
+function getLevelFromTotalPulls(totalSkills) {
+    let lvl = 1;
+    let exp = totalSkills;
+    
+    while (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[lvl] && SKILL_LEVEL_DATA[lvl][0] !== "MAX") {
+        let maxExp = SKILL_LEVEL_DATA[lvl][0];
+        if (exp >= maxExp) {
+            exp -= maxExp;
+            lvl++;
+        } else {
+            return { level: lvl, exp: exp, maxExp: maxExp };
+        }
+    }
+    return { level: lvl, exp: exp, maxExp: "MAX" };
+}
+
+function openSkillUpgradeModal() {
+    if (!window.currentWarYields) return;
+
+    const baseLv = parseInt(document.getElementById('wc-skill-lv')?.value || 1);
+    const baseExp = parseFloat(document.getElementById('wc-skill-exp')?.value.replace(/,/g, '') || 0);
+    const baseAsc = parseInt(document.getElementById('wc-skill-asc')?.value || 0);
+
+    const historicalSkills = typeof getHistoricalSkillCount === 'function' ? getHistoricalSkillCount(baseLv, baseExp) : 0;
+    const baseYields = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(1, 0, historicalSkills) : [0,0,0,0,0,0];
+
+    const getVal = (id) => { const el = document.getElementById(id); return el && el.value ? parseFloat(el.value.replace(/,/g, '')) || 0 : 0; };
+    const tickets = getVal('wc-ticket');
+    
+    const getTechVal = (tree, nodeId) => {
+        let beforeLvl = 0, afterLvl = 0;
+        if (typeof setupLevels !== 'undefined') { for (let t = 1; t <= 5; t++) beforeLvl += (setupLevels[`${tree}_T${t}_${nodeId}`] || 0); }
+        let planState = typeof calcState === 'function' ? calcState().levels : (typeof setupLevels !== 'undefined' ? setupLevels : {});
+        if (planState) { for (let t = 1; t <= 5; t++) afterLvl += (planState[`${tree}_T${t}_${nodeId}`] || 0); }
+        return { before: beforeLvl, after: afterLvl };
+    };
+    
+    const techTicket = getTechVal('spt', 'ticket');
+    const costB = 200 * (1 - (techTicket.before * 1) / 100);
+    const costA = 200 * (1 - (techTicket.after * 1) / 100);
+    
+    const yieldItemsB = Math.floor(tickets / (costB || 200)) * 5;
+    const yieldItemsA = Math.floor(tickets / (costA || 200)) * 5;
+
+    const config = { db: typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : null };
+    let phasesB = typeof simulatePhaseFlow === 'function' ? simulatePhaseFlow('skill', config, baseLv, baseExp, baseAsc, yieldItemsB, costB, 0, 0, 1) : [];
+    let phasesA = typeof simulatePhaseFlow === 'function' ? simulatePhaseFlow('skill', config, baseLv, baseExp, baseAsc, yieldItemsA, costA, 0, 0, 1) : [];
+
+    if (!phasesB.length) phasesB = [{ asc: baseAsc, yields: window.currentWarYields.skillB || [0,0,0,0,0,0] }];
+    if (!phasesA.length) phasesA = [{ asc: baseAsc, yields: window.currentWarYields.skillA || [0,0,0,0,0,0] }];
+
+    const UPGRADE_POINTS = [125, 125, 125, 125, 125, 125];
+    const ROW_COLORS = ['#f1f1f1', '#5dd9ff', '#5dfe8a', '#fdff5e', '#ff5d5e', '#d55cff'];
+    
+    const fontStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; -webkit-text-stroke: 0px #000000 !important; font-size: 0.9rem;";
+    const arrowStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 650; font-size: 1rem; color: #198754; -webkit-text-stroke: 0px #000000 !important; margin: 0 4px;";
+    const afterStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000 !important; color: #000000;";
+
+    const getFrac = (copies) => {
+        let cur = 1; let rem = copies;
+        while (cur < 100) {
+            let cost = 8;
+            if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[cur]) cost = SKILL_UPGRADE_COSTS[cur];
+            else {
+                if (cur >= 1 && cur <= 5) cost = 2; else if (cur >= 6 && cur <= 10) cost = 3;
+                else if (cur >= 11 && cur <= 14) cost = 4; else if (cur >= 15 && cur <= 21) cost = 5;
+                else if (cur >= 22 && cur <= 25) cost = 6; else if (cur >= 26 && cur <= 29) cost = 7;
+            }
+            if (rem >= cost) { rem -= cost; cur++; } 
+            else { return cur + (rem / cost); }
+        }
+        return 100.0;
+    };
+
+    const formatDisplayStr = (lvl, copies) => {
+        if (copies < 0.05) return "0"; // NEW THRESHOLD
+        if (lvl === 100.0) return "Lv 100 (MAX)";
+        
+        let cur = Math.floor(lvl);
+        let rem = lvl - cur;
+        let cost = 8;
+        if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[cur]) cost = SKILL_UPGRADE_COSTS[cur];
+        else {
+            if (cur >= 1 && cur <= 5) cost = 2; else if (cur >= 6 && cur <= 10) cost = 3;
+            else if (cur >= 11 && cur <= 14) cost = 4; else if (cur >= 15 && cur <= 21) cost = 5;
+            else if (cur >= 22 && cur <= 25) cost = 6; else if (cur >= 26 && cur <= 29) cost = 7;
+        }
+        return `Lv ${cur} (${(rem * cost).toFixed(1)}/${cost})`;
+    };
+
+    const ascMap = new Set();
+    phasesB.forEach(p => ascMap.add(p.asc));
+    phasesA.forEach(p => ascMap.add(p.asc));
+    const ascKeys = Array.from(ascMap).sort((a,b)=>a-b);
+    const showTabs = ascKeys.length > 1;
+
+    let tabsHtml = '';
+    if (showTabs) {
+        tabsHtml = `<div style="display: flex; justify-content: center; width: 100%;">
+                        <div id="modal-tabs-container" style="display: flex; flex-wrap: nowrap; margin: 12px 0 15px 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box;">`;
+    }
+
+    let contentHtml = '';
+    const btnClass = `seg-btn-skill-asc`;
+    const contentClass = `tab-content-skill-asc`;
+
+    const makeStacked = (b, a, align) => `
+        <div style="display: flex; flex-direction: column; align-items: ${align}; gap: 2px;">
+            <span style="${fontStyle} color: #000;">${b}</span>
+            <div style="display: flex; align-items: center;"><span style="${arrowStyle}">➜</span><span style="${afterStyle}">${a}</span></div>
+        </div>`;
+
+    ascKeys.forEach((asc, index) => {
+        const isActive = (index === 0) ? 'active' : '';
+        const tabId = `skill-asc-tab-${asc}`;
+        
+        if (showTabs) {
+            const tabLabel = asc === 0 ? 'Asc 0' : `<img src="icons/asc${asc}.png" style="height: 1.1em; vertical-align: -2px;" onerror="this.style.display='none'; this.nextSibling.textContent='Asc ${asc}';"><span style="display:none;"></span>`;
+            const switchJs = `document.querySelectorAll('.${contentClass}').forEach(el => el.style.display='none'); document.getElementById('${tabId}').style.display='block'; document.querySelectorAll('.${btnClass}').forEach(el => el.classList.remove('active')); this.classList.add('active');`;
+            tabsHtml += `<button class="${btnClass} seg-btn ${isActive}" onclick="${switchJs}" style="flex: 1 1 0 !important; min-width: 0 !important; padding: 0 2px !important; display: flex !important; justify-content: center !important; align-items: center !important;">${tabLabel}</button>`;
+        }
+
+        let pB = phasesB.find(p => p.asc === asc) || { yields: [0,0,0,0,0,0] };
+        let pA = phasesA.find(p => p.asc === asc) || { yields: [0,0,0,0,0,0] };
+
+        const isBasePhase = (asc === baseAsc);
+
+        let rowsHtml = '';
+        for (let i = 0; i < 6; i++) {
+            let copiesBase = isBasePhase ? (baseYields[i] / 3) : 0;
+            let copiesB = copiesBase + (pB.yields[i] / 3);
+            let copiesA = copiesBase + (pA.yields[i] / 3);
+
+            let fracBase = getFrac(copiesBase);
+            let fracB = getFrac(copiesB);
+            let fracA = getFrac(copiesA);
+
+            let gainedB = Math.max(0, fracB - fracBase);
+            let gainedA = Math.max(0, fracA - fracBase);
+
+            let ptsB = gainedB * UPGRADE_POINTS[i] * 3;
+            let ptsA = gainedA * UPGRADE_POINTS[i] * 3;
+
+            const lvlStrB = formatDisplayStr(fracB, copiesB);
+            const lvlStrA = formatDisplayStr(fracA, copiesA);
+
+            const fmtGainB = gainedB < 0.01 ? "0" : gainedB.toFixed(2);
+            const fmtGainA = gainedA < 0.01 ? "0" : gainedA.toFixed(2);
+            
+            const fmtPtsB = formatCompactGold(ptsB);
+            const fmtPtsA = formatCompactGold(ptsA);
+
+            const isSingleLvl = (lvlStrB === lvlStrA);
+            const isSingleGain = (fmtGainB === fmtGainA);
+            const isSinglePts = (fmtPtsB === fmtPtsA);
+
+            const leftHtml = isSingleLvl ? `<span style="${fontStyle} color: #000;">${lvlStrB}</span>` : makeStacked(lvlStrB, lvlStrA, 'flex-start');
+            const midHtml = isSingleGain ? `<span style="${fontStyle} color: #000;">${fmtGainB}</span>` : makeStacked(fmtGainB, fmtGainA, 'center');
+            const rightHtml = isSinglePts ? `<span style="${fontStyle} color: #000;">${fmtPtsB}</span>` : makeStacked(fmtPtsB, fmtPtsA, 'flex-end');
+
+            rowsHtml += `
+                <div style="background-color: ${ROW_COLORS[i]}; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 5px;">
+                    <div style="text-align: left; width: 40%;">${leftHtml}</div>
+                    <div style="text-align: center; width: 30%;">${midHtml}</div>
+                    <div style="text-align: right; width: 30%;">${rightHtml}</div>
+                </div>`;
+        }
+
+        contentHtml += `
+            <div id="${tabId}" class="tab-content-area ${contentClass}" style="display: ${index === 0 ? 'block' : 'none'};">
+                <div style="display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 5px; gap: 5px;">
+                    <div style="width: 40%; text-align: left;"><span style="${fontStyle} color: #000;">Projected Lv</span></div>
+                    <div style="width: 30%; text-align: center;"><span style="${fontStyle} color: #000;">Lv Gained</span></div>
+                    <div style="width: 30%; text-align: right;"><span style="${fontStyle} color: #000;">War Points</span></div>
+                </div>
+                ${rowsHtml}
+            </div>`;
+    });
+
+    if (showTabs) tabsHtml += `</div></div>`;
+
+    const finalHtml = `
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            ${tabsHtml}
+            ${contentHtml}
+        </div>`;
+    
+    renderMasterModal('skillLevels', finalHtml);
+}
+
+// --- DAILY MODAL ---
 function openDailyGoldModal(md) {
     const getHammerData = (valB, valA) => {
         const fmtB = Math.round(valB).toLocaleString('en-US'); const fmtA = Math.round(valA).toLocaleString('en-US');
@@ -516,24 +933,6 @@ function openDailyGoldModal(md) {
     renderMasterModal('dailyGold', customStyles + buildBox(hammerRows) + buildBox(goldRows));
 }
 
-function openForgeModal(md, forgeLvl) {
-    const rates = typeof CALC_FORGE_RATES !== 'undefined' ? CALC_FORGE_RATES[forgeLvl] || CALC_FORGE_RATES[1] : [];
-    const TIER_NAMES =["Primitive", "Medieval", "Early-Modern", "Modern", "Space", "Interstellar", "Multiverse", "Quantum", "Underworld", "Divine"];
-    const allRows =[];
-    
-    for (let i = 0; i < 10; i++) {
-        if (rates[i] > 0) {
-            const amtB = md.effHB * (rates[i] / 100); const amtA = md.effHA * (rates[i] / 100);
-            const fmtB = formatYield(amtB); const fmtA = formatYield(amtA);
-            
-            let valStr = fmtB;
-            if (fmtB !== fmtA) valStr += ` ➜ ${fmtA}`;
-            allRows.push([TIER_NAMES[i], valStr]);
-        }
-    }
-    renderModalTable('dailyForge', null, ["Item Tier", "Amount"], allRows, 0,[]);
-}
-
 // --- STATS TAB MODALS ---
 function showPotionTable(cur, proj) {
     const isUpgrade = proj > cur; const headers = ['Level', 'Upgrade Cost']; const allRows = [];
@@ -579,7 +978,6 @@ function showForgeTable(type, cur, proj) {
             const rawV1 = mins / (1 + cur / 100);
             const rawV2 = mins / (1 + proj / 100);
             
-            // Add raw minutes to total
             totalValBefore += rawV1;
             totalValAfter += rawV2;
             
@@ -588,8 +986,7 @@ function showForgeTable(type, cur, proj) {
         } else { 
             const rawV1 = Math.round(cost * (1 - cur / 100));
             const rawV2 = Math.round(cost * (1 - proj / 100));
-            
-            // Add raw cost to total
+
             totalValBefore += rawV1;
             totalValAfter += rawV2;
             
@@ -602,7 +999,6 @@ function showForgeTable(type, cur, proj) {
         rows.push([`${i} ➜ ${i + 1}`, cellContent]);
     }
 
-    // 2. Format the accumulated totals
     let totalStrBefore, totalStrAfter;
     if (isT) {
         totalStrBefore = formatSmartTime(totalValBefore);
@@ -612,14 +1008,12 @@ function showForgeTable(type, cur, proj) {
         totalStrAfter = formatForgeCost(Math.round(totalValAfter));
     }
 
-    // 3. Build the final "Total" row string
     let totalCellContent = totalStrBefore;
     if (isUpgrade) totalCellContent += ` ➜ ${totalStrAfter}`;
-    
-    // 4. Push the Total row to the end of the array
+
     rows.push(["Total", totalCellContent]);
 
-    showTable(title, iconSrc, isT ? { label: "Speed", before: `+${cur}%`, after: `+${proj}%` } : { label: "Discount", before: `-${cur}%`, after: `-${proj}%` }, headers, rows, 50);
+    showTable(title, iconSrc, isT ? { label: "Speed", before: `+${cur}%`, after: `+${proj}%` } : { label: "Discount", before: `-${cur}%`, after: `-${proj}%` }, headers, rows, 50);
 }
 
 // --- EQUIPMENT MODALS ---
@@ -649,7 +1043,6 @@ function openEqSellBreakdownModal(currentAvg, fromLevel, fromBonus, finalAvg) {
         </div>
     </div>`;
 
-    // TAB 2: REF TABLE HTML
     let refTableHtml = `
     <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 5px;">
         <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
@@ -710,7 +1103,6 @@ function openEqAvgBreakdownModal(hpB, hpM, hpA, dmgB, dmgM, dmgA) {
     breakdownHtml += createRow("New Average", dmgA, "icon_dmg.png", false, true);
     breakdownHtml += `</div>`;
 
-    // TAB 2: REF TABLE
     let refTableHtml = `
     <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 5px;">
         <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -791,358 +1183,113 @@ function openEqRangeModal() {
 }
 
 // --- MOUNT MODALS ---
-function openMountMilestoneModal() {
-    if (!window.currentMountData || !window.currentMountData.milestones) return;
-    
-    let rowsHtml = '';
-    const fontStyle = "font-family: 'Fredoka', sans-serif; -webkit-text-stroke: 0px;";
-    
-    window.currentMountData.milestones.forEach(m => {
-        const buildStatusBefore = (isUnlocked, mounts, keys) => {
-            if (isUnlocked) return `<span style="${fontStyle} font-weight: 600; color: #000;">✔ Unlocked</span>`;
-            return `<span style="${fontStyle} font-weight: 600; color: #000;">${mounts.toLocaleString()} <span style="font-weight:500; font-size:0.9rem; color:#000;">(<img src="icons/mount_key.png" style="width: 14px; height: 14px; object-fit: contain; vertical-align: -2px;"> ${keys})</span></span>`;
-        };
-
-        const buildStatusAfter = (isUnlocked, mounts, keys) => {
-            if (isUnlocked) return `<span style="${fontStyle} font-weight: 700; color: #000;">✔ Unlocked</span>`;
-            return `<span style="${fontStyle} font-weight: 600; color: #000;">${mounts.toLocaleString()} <span style="font-weight:500; font-size:0.9rem; color:#000;">(<img src="icons/mount_key.png" style="width: 14px; height: 14px; object-fit: contain; vertical-align: -2px;"> ${keys})</span></span>`;
-        };
-
-        let statusHtml = '';
-        if (m.mountsBefore === m.mountsAfter && m.unlockedBefore === m.unlockedAfter) {
-            statusHtml = buildStatusBefore(m.unlockedBefore, m.mountsBefore, m.keysBefore);
-        } else {
-            let statusBefore = buildStatusBefore(m.unlockedBefore, m.mountsBefore, m.keysBefore);
-            let statusAfter = buildStatusAfter(m.unlockedAfter, m.mountsAfter, m.keysAfter);
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile) {
-                statusHtml = `<div style="display: flex; flex-direction: column; align-items: flex-end;">${statusBefore}<div style="display:flex; align-items:center;"><span style="margin-right: 4px; font-size: 0.9em; color: #198754; font-weight: 800; -webkit-text-stroke: 0px !important;">➜</span>${statusAfter}</div></div>`;
-            } else {
-                statusHtml = `<div style="display:flex; align-items:center;">${statusBefore} <span style="font-family: 'Fredoka', sans-serif; font-weight: 800; color: #198754; margin: 0 6px; -webkit-text-stroke: 0px !important;">➜</span> ${statusAfter}</div>`;
-            }
-        }
-
-        rowsHtml += `
-        <div style="background-color: ${m.color}; border-radius: 8px; padding: 12px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="${fontStyle} font-weight: 600; color: #000;">${m.name} <span style="font-size:0.8rem; font-weight:500;">(Lv ${m.targetLv})</span></span>
-            <div style="text-align: right;">${statusHtml}</div>
-        </div>`;
-    });
-
-    const expBefore = window.currentMountData.expBefore || 0;
-    const expAfter = window.currentMountData.expAfter || 0;
-    const maxExp = window.currentMountData.maxExp || 7842;
-    
-    let pctBefore = (expBefore / maxExp) * 100; if (pctBefore > 100) pctBefore = 100;
-    let pctAfter = (expAfter / maxExp) * 100; if (pctAfter > 100) pctAfter = 100;
-    
-    let progressHtml = `
-        <hr class="pet-hr" style="margin: 15px 0;">
-        <div style="text-align: center; margin-bottom: 8px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.8rem; color: #000; -webkit-text-stroke: 0px;">Summon Exp to Max Level</div>
-        <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px;">
-            <div class="pet-progress-wrapper" style="margin-left: 0; margin-bottom: 0; height: 32px;">
-                <div class="pet-progress-fill" style="width: ${pctBefore}%;"></div>
-                <div class="pet-progress-text">${Math.round(expBefore).toLocaleString()} / ${maxExp.toLocaleString()} xp (${pctBefore.toFixed(1)}%)</div>
-            </div>`;
-    
-    if (expBefore !== expAfter) {
-        progressHtml += `
-            <div style="text-align: center; color: #198754; font-size: 1.3rem; font-weight: 900; -webkit-text-stroke: 0px; line-height: 1;">⬇</div>
-            <div class="pet-progress-wrapper" style="margin-left: 0; margin-bottom: 0; height: 32px;">
-                <div class="pet-progress-fill" style="width: ${pctAfter}%; background-color: #00e676;"></div>
-                <div class="pet-progress-text">${Math.round(expAfter).toLocaleString()} / ${maxExp.toLocaleString()} xp (${pctAfter.toFixed(1)}%)</div>
-            </div>`;
-    }
-    progressHtml += `</div>`;
-
-    renderMasterModal('mountMilestones', `<div style="padding-top: 5px; display: flex; flex-direction: column;">${rowsHtml}${progressHtml}</div>`);
-}
-
 function openMountExpModal() {
     renderMasterModal('mountExpBreakdown', window.mountYieldTableHtml);
 }
 
-// --- SYSTEM MODALS (CONFIRM/PROMPT) ---
-function openConfirmModal(message, onConfirmCallback) {
-    window.currentConfirmCallback = onConfirmCallback;
-    const modal = document.getElementById('tableModal');
-    const content = modal.querySelector('.modal-content');
-    
-    content.className = 'modal-content confirm-mode'; 
-    content.style.cssText = ''; 
-    
-    content.innerHTML = `
-        <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; text-align: center; color: #ffffff; margin-bottom: 20px; line-height: 1.3;">
-            ${message}
-        </div>
-        <div style="display: flex; justify-content: center; gap: 12px;">
-            <button class="btn-confirm-cancel" onclick="document.getElementById('tableModal').style.display='none'" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #ff4757; box-shadow: inset 0 -4px 0 0 #c0392b; transition: transform 0.1s;">
-            <img src="icons/icon_cancel.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
-        </button>
-        <button class="btn-confirm-ok" onclick="document.getElementById('tableModal').style.display='none'; if(window.currentConfirmCallback) window.currentConfirmCallback();" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #00b0ff; box-shadow: inset 0 -4px 0 0 #005680; transition: transform 0.1s;">
-            <img src="icons/button_ok.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
-        </button>
-    </div>
-    <style>
-        .btn-confirm-ok:active { transform: translateY(3px); box-shadow: inset 0 -1px 0 0 #005680 !important; }
-        .btn-confirm-cancel:active { transform: translateY(3px); box-shadow: inset 0 -1px 0 0 #c0392b !important; }
-    </style>`;
-    modal.style.display = 'block';
-}
+// --- FORGE SCHEDULE MODAL ---
+function openForgeScheduleModal() {
+    if (!window.currentForgeSchedule || window.currentForgeSchedule.length === 0) return;
 
-function openPromptModal(message, onConfirmCallback) {
-    window.currentPromptCallback = onConfirmCallback;
-    const modal = document.getElementById('tableModal');
-    const content = modal.querySelector('.modal-content');
-    
-    content.className = 'modal-content confirm-mode'; 
-    content.style.cssText = ''; 
-    
-    content.innerHTML = `
-        <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; text-align: center; color: #ffffff; margin-bottom: 15px; line-height: 1.3;">
-            ${message}
-        </div>
-        <div style="display: flex; justify-content: center; margin-bottom: 20px;">
-            <input type="number" id="custom-prompt-input" style="width: 100px; height: 40px; background: #ffffff; border: 2px solid #000000; border-radius: 8px; font-family: 'Fredoka', sans-serif; font-size: 1rem; -webkit-text-stroke: 0px transparent !important;font-weight: 600; text-align: center; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);" placeholder="0" min="1">
-        </div>
-        <div style="display: flex; justify-content: center; gap: 12px;">
-            <button class="btn-confirm-cancel" onclick="document.getElementById('tableModal').style.display='none'" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #ff4757; box-shadow: inset 0 -4px 0 0 #c0392b; transition: transform 0.1s;">
-                <img src="icons/icon_cancel.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
-            </button>
-            <button class="btn-confirm-ok" onclick="document.getElementById('tableModal').style.display='none'; if(window.currentPromptCallback) window.currentPromptCallback(document.getElementById('custom-prompt-input').value);" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #00b0ff; box-shadow: inset 0 -4px 0 0 #005680; transition: transform 0.1s;">
-                <img src="icons/button_ok.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
-            </button>
-        </div>`;
-    modal.style.display = 'block';
-
-    setTimeout(() => { const input = document.getElementById('custom-prompt-input'); if (input) input.focus(); }, 50);
-}
-
-// --- SKILL LEVEL ESTIMATOR MODAL ---
-
-function getHistoricalSkillCount(level, exp) {
-    let total = 0;
-    for (let i = 1; i < level; i++) {
-        if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[i] && SKILL_LEVEL_DATA[i][0] !== "MAX") {
-            total += SKILL_LEVEL_DATA[i][0];
-        }
-    }
-    return total + exp;
-}
-
-function formatSkillAmount(amt) {
-    if (amt === 0) return "0";
-    if (amt > 0 && amt < 0.01) return "< 0.01";
-    if (amt >= 0.01 && amt < 10) return amt.toFixed(2);
-    return amt.toFixed(1);
-}
-
-function formatSkillLevel(eachAmt) {
-    if (eachAmt === 0) return "0";
-    
-    let currentLevel = 1;
-    let remainingPulls = eachAmt;
-
-    while (currentLevel < 100) {
-
-        let cost = 8;
-        if (typeof getSkillUpgradeCost === 'function') {
-            cost = getSkillUpgradeCost(currentLevel);
-        } else if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[currentLevel]) {
-            cost = SKILL_UPGRADE_COSTS[currentLevel];
-        } else {
-            if (currentLevel >= 1 && currentLevel <= 5) cost = 2;
-            else if (currentLevel >= 6 && currentLevel <= 10) cost = 3;
-            else if (currentLevel >= 11 && currentLevel <= 14) cost = 4;
-            else if (currentLevel >= 15 && currentLevel <= 21) cost = 5;
-            else if (currentLevel >= 22 && currentLevel <= 25) cost = 6;
-            else if (currentLevel >= 26 && currentLevel <= 29) cost = 7;
-        }
-
-        if (remainingPulls >= cost) {
-            remainingPulls -= cost;
-            currentLevel++;
-        } else {
-            if (currentLevel === 1) {
-                return `Lv 1 (${remainingPulls.toFixed(2)}/${cost})`;
-            } else {
-                return `Lv ${currentLevel} (${remainingPulls.toFixed(1)}/${cost})`;
-            }
-        }
+    if (!MODAL_SETTINGS.forgeSchedule) {
+        MODAL_SETTINGS.forgeSchedule = {
+            title: "FORGE UPGRADE SCHEDULE",
+            headerColor: "#ebf8fa",
+            titleColor: "#000000",
+            disclaimer: "Assumes back-to-back upgrading with no delays. Takes into account your planned Forge Timer tech upgrades."
+        };
     }
 
-    return "Lv 100 (MAX)";
-}
+    const formatScheduleDT = (ms) => {
+        const d = new Date(ms);
+        const dateStr = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+        const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        return `${dateStr}, ${timeStr}`;
+    };
 
-function getFractionalSkillLevel(eachAmt) {
-    let currentLevel = 1;
-    let remaining = eachAmt;
+    const groupedSchedule = {};
     
-    while (currentLevel < 100) {
-        let cost = 8;
-        if (typeof getSkillUpgradeCost === 'function') {
-            cost = getSkillUpgradeCost(currentLevel);
-        } else if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[currentLevel]) {
-            cost = SKILL_UPGRADE_COSTS[currentLevel];
-        } else {
-            if (currentLevel >= 1 && currentLevel <= 5) cost = 2;
-            else if (currentLevel >= 6 && currentLevel <= 10) cost = 3;
-            else if (currentLevel >= 11 && currentLevel <= 14) cost = 4;
-            else if (currentLevel >= 15 && currentLevel <= 21) cost = 5;
-            else if (currentLevel >= 22 && currentLevel <= 25) cost = 6;
-            else if (currentLevel >= 26 && currentLevel <= 29) cost = 7;
+    window.currentForgeSchedule.forEach(step => {
+        let ascMatch = step.label.match(/Asc (\d+)/);
+        let asc = 0;
+        if (ascMatch) {
+            asc = parseInt(ascMatch[1]);
         }
-
-        if (remaining >= cost) {
-            remaining -= cost;
-            currentLevel++;
-        } else {
-            return currentLevel + (remaining / cost);
-        }
-    }
-    
-    return 100;
-}
-
-function getLevelFromTotalPulls(totalSkills) {
-    let lvl = 1;
-    let exp = totalSkills;
-    
-    while (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[lvl] && SKILL_LEVEL_DATA[lvl][0] !== "MAX") {
-        let maxExp = SKILL_LEVEL_DATA[lvl][0];
-        if (exp >= maxExp) {
-            exp -= maxExp;
-            lvl++;
-        } else {
-            return { level: lvl, exp: exp, maxExp: maxExp };
-        }
-    }
-    return { level: lvl, exp: exp, maxExp: "MAX" };
-}
-
-function openSkillLevelsModal() {
-    const lvEl = document.getElementById('wc-skill-lv');
-    const expEl = document.getElementById('wc-skill-exp');
-    
-    const currentLv = parseInt(lvEl ? lvEl.value : 1) || 1;
-    const currentExp = parseFloat(expEl ? expEl.value.replace(/,/g, '') : 0) || 0;
-
-    // 2. Calculate BASE Historical Skills
-    const historicalSkills = getHistoricalSkillCount(currentLv, currentExp);
-    const yields = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(1, 0, historicalSkills) : [0,0,0,0,0,0];
-    
-    const ROW_COLORS = ['#f1f1f1', '#5dd9ff', '#5dfe8a', '#fdff5e', '#ff5d5e', '#d55cff'];
-    const fontStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; -webkit-text-stroke: 0px #000000 !important; font-size: 0.9rem;";
-    
-    let rowsHtml = '';
-
-    for (let i = 0; i < 6; i++) {
-        const totalAmt = yields[i];
-        const eachAmt = totalAmt / 3; 
         
-        const amtStr = formatSkillAmount(totalAmt);
-        const lvlStr = formatSkillLevel(eachAmt);
-
-        rowsHtml += `
-            <div style="background-color: ${ROW_COLORS[i]}; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <div style="text-align: left;"><span style="${fontStyle} color: #000;">${amtStr}</span></div><div style="text-align: right;"><span style="${fontStyle} color: #000;">${lvlStr}</span></div>
-            </div>`;
-    }
-
-    let summaryHtml = `
-        <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="${fontStyle} color: #000;">Total Skill Summoned</span>
-            <div style="text-align: right;"><span style="${fontStyle} color: #000;">${Math.round(historicalSkills).toLocaleString('en-US')}</span></div>
-        </div>`;
-
-    const finalHtml = `
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-            ${summaryHtml}
-            <div style="height: 10px;"></div> <div style="display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 5px;">
-                <span style="${fontStyle} color: #000;">Amount</span><span style="${fontStyle} color: #000;">Skill Lv</span>
-            </div>
-            ${rowsHtml}
-        </div>`;
-
-    renderMasterModal('skillLevels', finalHtml);
-}
-
-function openSkillUpgradeModal() {
-    if (!window.currentWarYields) return;
-
-    const baseLv = parseInt(document.getElementById('wc-skill-lv')?.value || 1);
-    const baseExp = parseFloat(document.getElementById('wc-skill-exp')?.value.replace(/,/g, '') || 0);
-
-    const historicalSkills = typeof getHistoricalSkillCount === 'function' ? getHistoricalSkillCount(baseLv, baseExp) : 0;
-    const baseYields = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(1, 0, historicalSkills) : [0,0,0,0,0,0];
-
-    const ticketB = window.currentWarYields.skillB || [0,0,0,0,0,0];
-    const ticketA = window.currentWarYields.skillA || [0,0,0,0,0,0];
-
-    const UPGRADE_POINTS = [125, 150, 175, 200, 225, 250];
-    const ROW_COLORS = ['#f1f1f1', '#5dd9ff', '#5dfe8a', '#fdff5e', '#ff5d5e', '#d55cff'];
-    
-    let rowsHtml = '';
-    const fontStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; -webkit-text-stroke: 0px #000000 !important; font-size: 0.9rem;";
-    const arrowStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 650; font-size: 1rem; color: #198754; -webkit-text-stroke: 0px #000000 !important; margin: 0 4px;";
-    const afterStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000 !important; color: #000000;";
-
-    for (let i = 0; i < 6; i++) {
-        const totalTierBase = baseYields[i];
-        const totalTierB = totalTierBase + ticketB[i];
-        const totalTierA = totalTierBase + ticketA[i];
-
-        const baseFraction = getFractionalSkillLevel(totalTierBase / 3);
-        const fracB = getFractionalSkillLevel(totalTierB / 3);
-        const fracA = getFractionalSkillLevel(totalTierA / 3);
-
-        const ptsB = (fracB - baseFraction) * UPGRADE_POINTS[i] * 3;
-        const ptsA = (fracA - baseFraction) * UPGRADE_POINTS[i] * 3;
-
-        const lvlStrB = formatSkillLevel(totalTierB / 3);
-        const lvlStrA = formatSkillLevel(totalTierA / 3);
-        const fmtPtsB = Math.round(ptsB).toLocaleString('en-US');
-        const fmtPtsA = Math.round(ptsA).toLocaleString('en-US');
-
-        const isSingleLvl = (lvlStrB === lvlStrA);
-        const isSinglePts = (fmtPtsB === fmtPtsA);
-
-        let leftHtml = isSingleLvl ? `<span style="${fontStyle} color: #000;">${lvlStrB}</span>` : `
-            <div class="war-val-group-left" style="display: flex; justify-content: flex-start; align-items: center; gap: 4px; flex-wrap: wrap;">
-                <span style="${fontStyle} color: #000;">${lvlStrB}</span>
-                <div style="display: flex; align-items: center;"><span style="${arrowStyle}">➜</span><span style="${afterStyle}">${lvlStrA}</span></div>
-            </div>`;
-
-        let rightHtml = isSinglePts ? `<span style="${fontStyle} color: #000;">${fmtPtsB}</span>` : `
-            <div class="war-val-group" style="display: flex; justify-content: flex-end; align-items: center; gap: 4px; flex-wrap: wrap;">
-                <span style="${fontStyle} color: #000;">${fmtPtsB}</span>
-                <div style="display: flex; align-items: center;"><span style="${arrowStyle}">➜</span><span style="${afterStyle}">${fmtPtsA}</span></div>
-            </div>`;
-
-        rowsHtml += `
-            <div style="background-color: ${ROW_COLORS[i]}; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <div style="text-align: left; width: 65%;">${leftHtml}</div><div style="text-align: right; width: 35%;">${rightHtml}</div>
-            </div>`;
-    }
-
-    const mobileStyle = `
-    <style>
-        @media (max-width: 768px) {
-            .war-val-group { flex-direction: column; align-items: flex-end !important; gap: 0 !important; }
-            .war-val-group-left { flex-direction: column; align-items: flex-start !important; gap: 0 !important; }
+        if (!groupedSchedule[asc]) {
+            groupedSchedule[asc] = [];
         }
-    </style>`;
+        groupedSchedule[asc].push(step);
+    });
 
-    const finalHtml = `
-        ${mobileStyle}
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-            <div style="display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 5px;">
-                <span style="${fontStyle} color: #000;">Projected Skill Levels</span><span style="${fontStyle} color: #000;">War Points</span>
-            </div>
-            ${rowsHtml}
-        </div>`;
+    const ascKeys = Object.keys(groupedSchedule).map(Number).sort((a, b) => a - b);
+    const showTabs = ascKeys.length > 1;
+
+    let tabsHtml = '';
+    if (showTabs) {
+        tabsHtml = `<div style="display: flex; justify-content: center; width: 100%;">
+                        <div id="modal-tabs-container" style="display: flex; flex-wrap: nowrap; margin: 12px 0 15px 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box;">`;
+    }
     
-    renderMasterModal('skillLevels', finalHtml);
+    let contentHtml = ``;
+    const btnClass = `seg-btn-forge-sched`;
+    const contentClass = `tab-content-forge-sched`;
+
+    ascKeys.forEach((asc, index) => {
+        const isActive = (index === 0) ? 'active' : '';
+        const tabId = `forge-sched-tab-${asc}`;
+        
+        if (showTabs) {
+            const tabLabel = asc === 0 ? 'No Asc' : `<img src="icons/asc${asc}.png" style="height: 1.1em; vertical-align: -2px;" onerror="this.style.display='none'; this.nextSibling.textContent='Asc ${asc}';"><span style="display:none;"></span>`;
+            const switchJs = `document.querySelectorAll('.${contentClass}').forEach(el => el.style.display='none'); document.getElementById('${tabId}').style.display='block'; document.querySelectorAll('.${btnClass}').forEach(el => el.classList.remove('active')); this.classList.add('active');`;
+
+            tabsHtml += `<button class="${btnClass} seg-btn ${isActive}" onclick="${switchJs}" style="flex: 1 1 0 !important; min-width: 0 !important; padding: 0 2px !important; display: flex !important; justify-content: center !important; align-items: center !important;">${tabLabel}</button>`;
+        }
+
+        let rowsHtml = '';
+        groupedSchedule[asc].forEach(step => {
+            if (step.isAscension) return; 
+
+            let displayLabel = "";
+            let lvMatch = step.label.match(/Lv (\d+ ➜ \d+)/);
+            if (lvMatch) {
+                displayLabel = lvMatch[1];
+            } else {
+                displayLabel = step.label; 
+            }
+
+            let textStyle = `color: #000 !important; font-family: 'Fredoka', sans-serif; font-weight: 600;`;
+
+            let leftCol = `<div style="${textStyle} display: block; width: 100%; box-sizing: border-box; text-align: center;">${displayLabel}</div>`;
+            let rightCol = `<div style="${textStyle} display: block; width: 100%; box-sizing: border-box; text-align: center;">${formatScheduleDT(step.finish)}</div>`;
+
+            rowsHtml += `<tr>
+                <td style="width: 45%;">${leftCol}</td>
+                <td style="width: 55%;">${rightCol}</td>
+            </tr>`;
+        });
+
+        let tableHtml = `
+        <table class="clean-table" style="${showTabs ? 'margin-top: 10px;' : 'margin-top: 5px;'} width: 100%;">
+            <thead>
+                <tr>
+                    <th style="text-align: center; width: 45%;">Level</th>
+                    <th style="text-align: center; width: 55%;">Finish Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rowsHtml}
+            </tbody>
+        </table>`;
+
+        contentHtml += `<div id="${tabId}" class="tab-content-area ${contentClass}" style="display: ${index === 0 ? 'block' : 'none'};">${tableHtml}</div>`;
+    });
+
+    if (showTabs) {
+        tabsHtml += `</div></div>`;
+    }
+
+    renderMasterModal('forgeSchedule', tabsHtml + contentHtml);
 }
 
 // --- FORGE PROBABILITY MODAL ---
@@ -1372,6 +1519,134 @@ function openSummonProbModal(type, levelOverride = null) {
 
     renderMasterModal('summonProb', navHtml + listHtml);
 }
+
+function openSummonYieldModal(type) {
+    if (!window.currentSummonYields || !window.currentSummonYields[type]) return;
+    
+    const data = window.currentSummonYields[type];
+    
+    const phasesB = (data.phasesB || []).filter(p => p.pullsUsed > 0.1);
+    const phasesA = (data.phasesA || []).filter(p => p.pullsUsed > 0.1);
+    
+    const targetProb = data.targetProb || 90;
+    const config = data.config;
+    const keyIcon = `<img src="icons/${config.icon}" style="width: 1rem; height: 1rem; object-fit: contain; vertical-align: -2px;">`;
+
+    let maxAsc = 0, minAsc = 3;
+    phasesB.forEach(p => { if (p.asc > maxAsc) maxAsc = p.asc; if (p.asc < minAsc) minAsc = p.asc; });
+    phasesA.forEach(p => { if (p.asc > maxAsc) maxAsc = p.asc; if (p.asc < minAsc) minAsc = p.asc; });
+
+    if (phasesB.length === 0 && phasesA.length === 0) return;
+
+    if (minAsc > maxAsc) { minAsc = 0; maxAsc = 0; }
+    
+    let tabsHtml = `<div style="display: flex; justify-content: center; width: 100%;">
+    <div id="modal-tabs-container" style="display: flex; flex-wrap: nowrap; margin: 12px 0 15px 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box;">`;
+    let contentHtml = ``;
+
+    const colors = ['#f1f2f6', '#5cd8fe', '#5dfe8a', '#fcfe5d', '#ff5c5d', '#d55cff'];
+    const fontStyle = "font-family: 'Fredoka', sans-serif; font-size: 0.95rem; font-weight: 600; color: #000000; -webkit-text-stroke: 0px;";
+    const arrowHtml = `<span style="font-family: 'Fredoka', sans-serif; font-weight: 800; color: #198754; font-size: 1.05rem; margin: 0 4px; -webkit-text-stroke: 0px !important;">➜</span>`;
+
+    const formatYieldRow = (val) => {
+        if (!val || val < 0.01) return "0";
+        if (val < 10) return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    };
+
+    const isMobile = window.innerWidth <= 768;
+    const itemNamePlural = config.itemName;
+
+    const btnClass = `seg-btn-yield-${type}`;
+    const contentClass = `tab-content-yield-${type}`;
+
+    for (let asc = minAsc; asc <= maxAsc; asc++) {
+        const fallbackB = { yields:[0,0,0,0,0,0], pityCost:[0,0,0,0,0,0], pityItems:[0,0,0,0,0,0], pullsUsed: 0, cost: phasesB[0]?.cost || 0, extra: phasesB[0]?.extra || 0 };
+        const fallbackA = { yields:[0,0,0,0,0,0], pityCost:[0,0,0,0,0,0], pityItems:[0,0,0,0,0,0], pullsUsed: 0, cost: phasesA[0]?.cost || 0, extra: phasesA[0]?.extra || 0 };
+
+        const phaseB = phasesB.find(p => p.asc === asc) || fallbackB;
+        const phaseA = phasesA.find(p => p.asc === asc) || fallbackA;
+
+        const tabId = `sum-yield-tab-${type}-${asc}`;
+        const isActive = (asc === minAsc) ? 'active' : '';
+        const tabLabel = asc === 0 ? 'No Asc' : `<img src="icons/asc${asc}.png" style="height: 1.1em; vertical-align: -2px;">`;
+
+        const switchJs = `document.querySelectorAll('.${contentClass}').forEach(el => el.style.display='none'); document.getElementById('${tabId}').style.display='block'; document.querySelectorAll('.${btnClass}').forEach(el => el.classList.remove('active')); this.classList.add('active');`;
+
+        tabsHtml += `<button class="${btnClass} seg-btn ${isActive}" onclick="${switchJs}" style="flex: 1 1 0 !important; min-width: 0 !important; padding: 0 2px !important; display: flex !important; justify-content: center !important; align-items: center !important;">${tabLabel}</button>`;
+
+        let totalYieldB = phaseB.yields.reduce((sum, val) => sum + val, 0);
+        let totalYieldA = phaseA.yields.reduce((sum, val) => sum + val, 0);
+        
+        let resB = Math.ceil((type === 'skill' ? phaseB.pullsUsed / 5 : phaseB.pullsUsed) / (1 + phaseB.extra)) * phaseB.cost;
+        let resA = Math.ceil((type === 'skill' ? phaseA.pullsUsed / 5 : phaseA.pullsUsed) / (1 + phaseA.extra)) * phaseA.cost;
+
+        const formatTotal = (val) => type === 'skill' ? Math.round(val).toLocaleString('en-US') : val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const formatRes = (val) => typeof formatSummonKeys !== 'undefined' ? formatSummonKeys(val) : val.toLocaleString('en-US');
+        
+        let summaryB = `<div style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;"><span style="${fontStyle}">${formatTotal(totalYieldB)}</span> <span style="${fontStyle} font-weight: 500; font-size: 0.8rem; color: #000;">(${keyIcon} ${formatRes(resB)})</span></div>`;
+        let summaryA = `<div style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;"><span style="${fontStyle} color:#000;">${formatTotal(totalYieldA)}</span> <span style="${fontStyle} font-weight: 500; font-size: 0.8rem; color: #000;">(${keyIcon} ${formatRes(resA)})</span></div>`;
+        
+        let summaryHtml = `<div style="text-align: right;">${summaryB}</div>`;
+        if (formatTotal(totalYieldB) !== formatTotal(totalYieldA) || resB !== resA) {
+            summaryHtml = isMobile 
+                ? `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div>${summaryB}</div><div style="display: flex; align-items: center;">${arrowHtml}${summaryA}</div></div>`
+                : `<div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px; white-space: nowrap;">${summaryB} ${arrowHtml} ${summaryA}</div>`;
+        }
+
+        let rowsHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: #e6e9ed; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05); gap: 10px;">
+                <div style="flex: 0 0 45%; max-width: 45%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px; text-align: left; line-height: 1.2;">${itemNamePlural} Summoned</div>
+                <div style="flex: 1 1 auto; max-width: 55%; display: flex; justify-content: flex-end;">${summaryHtml}</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; align-items: center;">
+                <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: left; -webkit-text-stroke: 0px; line-height: 1.3;">Yield</div>
+                <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: right; -webkit-text-stroke: 0px; line-height: 1.3;">How Many More ${itemNamePlural} to Reach Target %</div>
+            </div>
+        `;
+
+        for (let i = 0; i < 6; i++) {
+            let yB = formatYieldRow(phaseB.yields[i]);
+            let yA = formatYieldRow(phaseA.yields[i]);
+            
+            let yHtml = yB === yA 
+                ? `<span style="${fontStyle}">${yB}</span>` 
+                : (isMobile 
+                    ? `<div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px;"><span style="${fontStyle}">${yB}</span><div style="display:flex; align-items:center; white-space:nowrap;">${arrowHtml} <span style="${fontStyle} color:#000;">${yA}</span></div></div>`
+                    : `<div style="display:flex; align-items:center; white-space:nowrap;"><span style="${fontStyle}">${yB}</span>${arrowHtml}<span style="${fontStyle} color:#000;">${yA}</span></div>`);
+
+            const renderPity = (items, res) => {
+                if (targetProb <= 0) return `<span style="${fontStyle} color:#000;">0</span>`;
+                return `<div style="display: inline-flex; align-items: center; gap: 4px; color: #000; white-space: nowrap;">
+                            <span style="${fontStyle} color: #000;">${items.toLocaleString()}</span>
+                            <span style="${fontStyle} font-weight:500; font-size:0.8rem; color: #000;">(${keyIcon} ${formatRes(res)})</span>
+                        </div>`;
+            }
+
+            let pB = renderPity(phaseB.pityItems[i], phaseB.pityCost[i]);
+            let pA = renderPity(phaseA.pityItems[i], phaseA.pityCost[i]);
+            
+            let pHtml = (phaseB.pityCost[i] === phaseA.pityCost[i] && phaseB.pityItems[i] === phaseA.pityItems[i]) 
+                ? pB 
+                : (isMobile 
+                    ? `<div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;"><span>${pB}</span><div style="display:flex; align-items:center; white-space:nowrap;">${arrowHtml} ${pA}</div></div>`
+                    : `<div style="display:flex; align-items:center; justify-content:flex-end; white-space:nowrap;">${pB}${arrowHtml}${pA}</div>`);
+
+            rowsHtml += `
+            <div style="background-color: ${colors[i]}; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; align-items: center; border: 1px solid rgba(0,0,0,0.05); gap: 10px;">
+                <div style="flex: 0 0 30%; max-width: 35%; text-align: left; display: flex; justify-content: flex-start;">${yHtml}</div>
+                <div style="flex: 1 1 auto; text-align: right; display: flex; justify-content: flex-end;">${pHtml}</div>
+            </div>`;
+        }
+        
+        contentHtml += `<div id="${tabId}" class="tab-content-area ${contentClass}" style="display: ${asc === minAsc ? 'block' : 'none'};">${rowsHtml}</div>`;
+    }
+    
+    tabsHtml += `</div></div>`; 
+    
+    renderMasterModal('summonYield', tabsHtml + contentHtml);
+}
+
 // =========================================
 // 6. HELP MODAL
 // =========================================
@@ -1381,7 +1656,6 @@ function toggleHelp() {
 }
 
 function switchHelpTab(tab) {
-    // Reset all buttons and hide all content
     ['how', 'what', 'who'].forEach(t => {
         const btn = document.getElementById(`btn-help-${t}`);
         const content = document.getElementById(`help-content-${t}`);
@@ -1389,7 +1663,6 @@ function switchHelpTab(tab) {
         if(content) content.style.display = 'none';
     });
     
-    // Activate the clicked one
     const targetBtn = document.getElementById(`btn-help-${tab}`);
     const targetContent = document.getElementById(`help-content-${tab}`);
     if(targetBtn) targetBtn.classList.add('active');

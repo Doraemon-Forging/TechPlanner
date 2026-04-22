@@ -18,6 +18,7 @@ let warConfig = { day: 2, hour: 12, min: 0, ampm: 'AM' }; // Default: Tuesday 12
 let movingStepIndex = -1;
 let validDropTargets = [];
 let justMovedIndex = -1;
+let deleteModeActive = false;
 
 // --- HELPERS (Logic) ---
 function getMeta(id) { const p = id.split('_'); return TREES[p[0]].meta[p.slice(2).join('_')]; }
@@ -200,7 +201,7 @@ function updateCalculations() {
     let vLvls;
     if (currentMode === 'setup') {
         vLvls = setupLevels;
-    } else if (insertModeIndex > -1) {
+    } else if (typeof insertModeIndex !== 'undefined' && insertModeIndex > -1) {
         vLvls = calcState(planQueue.slice(0, insertModeIndex)).levels;
     } else {
         vLvls = state.levels;
@@ -219,6 +220,9 @@ function updateCalculations() {
     if (list) {
         list.innerHTML = '';
         let curTime = startTime;
+        
+        const fragment = document.createDocumentFragment();
+
         state.history.forEach(h => {
             const row = document.createElement('div');
             let durMs = (h.type === 'delay' ? h.mins : h.added) * 60000;
@@ -231,60 +235,53 @@ function updateCalculations() {
             const timeOnlyStr = finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
             const finishDateStr = finishDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-            let isMovingThis = (movingStepIndex === h.idx);
-            let isValidDrop = (movingStepIndex > -1 && !isMovingThis && validDropTargets[h.idx]);
+            let isMovingThis = (typeof movingStepIndex !== 'undefined' && movingStepIndex === h.idx);
+            let isValidDrop = (typeof movingStepIndex !== 'undefined' && movingStepIndex > -1 && !isMovingThis && typeof validDropTargets !== 'undefined' && validDropTargets[h.idx]);
             
             let classNames = ['log-row'];
-            if (expandedLogIndex === h.idx) classNames.push('expanded'); 
-            if (isWarTime(finishDate)) classNames.push('war-active');
+            if (typeof expandedLogIndex !== 'undefined' && expandedLogIndex === h.idx) classNames.push('expanded'); 
+            if (typeof isWarTime === 'function' && isWarTime(finishDate)) classNames.push('war-active');
             
             if (isMovingThis) {
                 classNames.push('moving-active');
             } else if (isValidDrop) {
                 classNames.push('drop-valid');
-            } else if (movingStepIndex > -1) {
+            } else if (typeof movingStepIndex !== 'undefined' && movingStepIndex > -1) {
                 classNames.push('drop-invalid');
+            } else if (typeof deleteModeActive !== 'undefined' && deleteModeActive) {
+                classNames.push('drop-valid'); 
+                classNames.push('delete-mode-row'); 
             }
 
-            if (justMovedIndex === h.idx) classNames.push('flash-success');
-            if (h.idx === 0 && validDropTargets['top']) classNames.push('has-top-btn');
+            if (typeof justMovedIndex !== 'undefined' && justMovedIndex === h.idx) classNames.push('flash-success');
+            if (h.idx === 0 && typeof validDropTargets !== 'undefined' && validDropTargets['top']) classNames.push('has-top-btn');
 
             row.className = classNames.join(' ');
 
-            if (!isMovingThis && movingStepIndex === -1) {
-                row.onclick = () => toggleExp(h.idx);
+            if (!isMovingThis && (typeof movingStepIndex === 'undefined' || movingStepIndex === -1) && !deleteModeActive) {
+                row.onclick = () => { if(typeof toggleExp === 'function') toggleExp(h.idx); };
             }
 
             let iconHtml, nameHtml, rightGroupHtml;
-            let compactTimeHtml;
             
-            if (movingStepIndex === h.idx) {
-                compactTimeHtml = `
-                    <div class="move-time-group" style="flex-direction: row; gap: 5px;">
-                        <img src="icons/icon_time.png" style="width: 20px; height: 20px;">
-                        <div class="duration-style">${durStr}</div>
-                    </div>
-                `;
-            } else {
-                compactTimeHtml = `
-                    <div class="move-time-group">
-                        <div class="mt-row log-time-style">${dayStr}</div>
-                        <div class="mt-row log-time-style">${dateStr}</div>
-                        <div class="mt-row log-time-style">${timeOnlyStr}</div>
-                    </div>
-                `;
-            }
+            let compactTimeHtml = `
+                <div class="move-time-group">
+                    <div class="mt-row log-time-style">${dayStr}</div>
+                    <div class="mt-row log-time-style">${dateStr}</div>
+                    <div class="mt-row log-time-style">${timeOnlyStr}</div>
+                </div>
+            `;
 
             if (h.type === 'delay') {
                 iconHtml = `<div class="log-node-preview" style="background-color: #bdc3c7;"><span style="font-size:1.4em; line-height:1; margin-top:2px;">💤</span></div>`;
                 nameHtml = `<div class="log-name">Delay (+${h.mins}m)</div>`;
                 rightGroupHtml = `<div class="log-right-group"><div class="log-time">${finishDateStr}</div></div>`;
             } else {
-                const tierNum = getTier(h.id);
+                const tierNum = typeof getTier === 'function' ? getTier(h.id) : 1;
                 const parts = h.id.split('_');
                 const iconPath = `icons/${parts[0]}_${parts.slice(2).join('_')}.png`;
-                iconHtml = `<div class="log-node-preview"><img src="${iconPath}" class="lnp-img" onerror="this.style.display='none'"></div><div class="log-tier-text">${toRoman(tierNum)}-${h.lvl}</div>`;
-                nameHtml = `<div class="log-name">${h.name} ${toRoman(tierNum)}-${h.lvl}</div>`;
+                iconHtml = `<div class="log-node-preview"><img src="${iconPath}" class="lnp-img" onerror="this.style.display='none'"></div><div class="log-tier-text">${typeof toRoman === 'function' ? toRoman(tierNum) : tierNum}-${h.lvl}</div>`;
+                nameHtml = `<div class="log-name">${h.name} ${typeof toRoman === 'function' ? toRoman(tierNum) : tierNum}-${h.lvl}</div>`;
                 
                 rightGroupHtml = `
                     <div class="log-right-group">
@@ -298,14 +295,21 @@ function updateCalculations() {
             }
 
             let actionButtons = '';
-            if (isMovingThis) {
+            
+            if (deleteModeActive) {
+                actionButtons = `
+                    <button class="btn-move-action btn-move-cancel" onclick="event.stopPropagation(); executeCut(${h.idx})" style="background-color: #e74c3c;">
+                        <img src="icons/icon_cancel.png" class="btn-icon" style="width:16px; height:16px; margin-right:6px; display:block; filter:none;"> CUT HERE
+                    </button>
+                `;
+            } else if (isMovingThis) {
                 actionButtons = `
                     <button class="btn-move-action btn-move-cancel" onclick="event.stopPropagation(); cancelMove()">
                         <img src="icons/icon_cancel.png" class="btn-icon" style="width:16px; height:16px; margin-right:6px; display:block; filter:none;"> CANCEL
                     </button>
                 `;
             } else if (isValidDrop) {
-                if (h.idx === 0 && validDropTargets['top']) {
+                if (h.idx === 0 && typeof validDropTargets !== 'undefined' && validDropTargets['top']) {
                     actionButtons += `
                         <button class="btn-move-action btn-move-top" onclick="event.stopPropagation(); executeMove('top')">
                             <img src="icons/icon_above.png" class="btn-icon" style="width:16px; height:16px; margin-right:6px; display:block; filter:none;"> ABOVE
@@ -333,20 +337,25 @@ function updateCalculations() {
                 </div>
             `;
 
-           if (movingStepIndex === -1) {
+           if ((typeof movingStepIndex === 'undefined' || movingStepIndex === -1) && !deleteModeActive) {
                 const controlsHTML = `
-                    <button class="btn-game-ctrl btn-move" onclick="event.stopPropagation(); startMove(${h.idx})">MOVE</button>
-                    <button class="btn-game-ctrl btn-insert" onclick="event.stopPropagation(); activateInsert(${h.idx})">INSERT</button>                     
-                    <button class="btn-game-ctrl btn-done" onclick="event.stopPropagation(); markDone(${h.idx}, ${finishTs})">DONE</button>
-                    <button class="btn-game-ctrl btn-delay" onclick="event.stopPropagation(); addDelay(${h.idx})">DELAY</button>
-                    <button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); delStep(${h.idx})">DELETE</button>
+                    <button class="btn-game-ctrl btn-move" onclick="event.stopPropagation(); if(typeof startMove === 'function') startMove(${h.idx})">MOVE</button>
+                    <button class="btn-game-ctrl btn-insert" onclick="event.stopPropagation(); if(typeof activateInsert === 'function') activateInsert(${h.idx})">INSERT</button>                    
+                    <button class="btn-game-ctrl btn-done" onclick="event.stopPropagation(); if(typeof markDone === 'function') markDone(${h.idx}, ${finishTs})">DONE</button>
+                    <button class="btn-game-ctrl btn-delay" onclick="event.stopPropagation(); if(typeof addDelay === 'function') addDelay(${h.idx})">DELAY</button>
+                    <button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); if(typeof delStep === 'function') delStep(${h.idx})">DELETE</button>
                 `;
                 row.innerHTML += `<div class="log-controls">${controlsHTML}</div>`;
             }
-            list.appendChild(row);
+            
+            fragment.appendChild(row);
         });
+        
+
+        list.appendChild(fragment);
     }
-    drawLines();
+    
+    if (typeof drawLines === 'function') drawLines();
     if (typeof renderStats === 'function') renderStats();
     if (typeof updateCalculator === 'function') updateCalculator(); 
     if (typeof updateWarCalc === 'function') updateWarCalc(); 
@@ -360,8 +369,13 @@ function updateCalculations() {
 
     const pBtn = document.getElementById('btn-plan');
     if (pBtn) {
-        if (insertModeIndex > -1) { pBtn.innerHTML = "INSERTING..."; pBtn.classList.add('insert'); } 
-        else { pBtn.innerHTML = "PLAN"; pBtn.classList.remove('insert'); }
+        if (typeof insertModeIndex !== 'undefined' && insertModeIndex > -1) { 
+            pBtn.innerHTML = "INSERTING..."; 
+            pBtn.classList.add('insert'); 
+        } else { 
+            pBtn.innerHTML = "PLAN"; 
+            pBtn.classList.remove('insert'); 
+        }
     }
     if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
 }
@@ -537,8 +551,10 @@ function showFloatingLabel(nodeId) {
 
 function setMode(m) {
     currentMode = m; document.body.dataset.mode = m;
+    
     if (m !== 'plan') {
         insertModeIndex = -1;
+        if (typeof cancelDeleteMode === 'function') cancelDeleteMode(); // Exits delete mode safely
         ['capsule-logs', 'float-logs', 'float-tree'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('is-inserting');
@@ -603,31 +619,15 @@ function startMove(idx) {
 }
 
 function cancelMove() {
-    if (insertModeIndex > -1) {
-        insertModeIndex = -1;
-        ['capsule-logs', 'float-logs', 'float-tree'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('is-inserting');
-        });
-        
-        setMode('plan'); 
-
-        if (window.innerWidth <= 768 && typeof switchMobileView === 'function') {
-            switchMobileView('logs');
-        }
-
-        updateCalculations();
-        return; 
-    }
-
     movingStepIndex = -1;
-    validDropTargets = [];
+    justMovedIndex = -1;
+    deleteModeActive = false; 
     
     ['capsule-logs', 'float-logs', 'float-tree'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('is-moving');
     });
-
+    
     updateCalculations();
 }
 
@@ -805,10 +805,119 @@ function activateInsert(idx) {
 }
 
 function clearPlan() { 
-    openConfirmModal("Clear Schedule?", () => {
-        pushHistory(); planQueue = []; updateCalculations(); 
-    });
+    if (document.getElementById('custom-clear-overlay')) return; 
+
+    const overlay = document.createElement('div');
+    overlay.id = 'custom-clear-overlay';
+    overlay.className = 'modal'; 
+    overlay.style.display = 'block';
+
+    overlay.onclick = function(e) {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    };
+
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content confirm-mode';
+    modalContent.style.cssText = 'padding-bottom: 20px;'; 
+
+    modalContent.innerHTML = `
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; text-align: center; color: #ffffff; margin-bottom: 15px; line-height: 1.3;">
+            Clear Entire Schedule?
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px;">
+            <button class="btn-confirm-cancel" onclick="document.body.removeChild(document.getElementById('custom-clear-overlay'))" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #ff4757; box-shadow: inset 0 -4px 0 0 #c0392b; transition: transform 0.1s;">
+                <img src="icons/icon_cancel.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+            
+            <button class="btn-confirm-ok" onclick="executeFullClear(); document.body.removeChild(document.getElementById('custom-clear-overlay'))" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #00b0ff; box-shadow: inset 0 -4px 0 0 #005680; transition: transform 0.1s;">
+                <img src="icons/button_ok.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+        </div>
+
+        <hr style="border: none; border-bottom: 2px dashed rgba(255,255,255,0.2); margin: 0 15px 20px 15px;">
+
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; text-align: center; color: #ffffff; margin-bottom: 15px; line-height: 1.3;">
+            Choose Cut-Off Point?
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button class="btn-confirm-cancel" onclick="document.body.removeChild(document.getElementById('custom-clear-overlay'))" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #ff4757; box-shadow: inset 0 -4px 0 0 #c0392b; transition: transform 0.1s;">
+                <img src="icons/icon_cancel.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+
+            <button class="btn-confirm-ok" onclick="activateDeleteMode(); document.body.removeChild(document.getElementById('custom-clear-overlay'))" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #00b0ff; box-shadow: inset 0 -4px 0 0 #005680; transition: transform 0.1s;">
+                <img src="icons/button_ok.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+        </div>
+        
+        <style>
+            #custom-clear-overlay .btn-confirm-ok:active { transform: translateY(3px); box-shadow: inset 0 -1px 0 0 #005680 !important; }
+            #custom-clear-overlay .btn-confirm-cancel:active { transform: translateY(3px); box-shadow: inset 0 -1px 0 0 #c0392b !important; }
+        </style>
+    `;
+
+    overlay.appendChild(modalContent);
+    document.body.appendChild(overlay);
 }
+
+function executeFullClear() {
+    pushHistory(); 
+    planQueue = []; 
+    updateCalculations();
+}
+
+function activateDeleteMode() { 
+    deleteModeActive = true; 
+    expandedLogIndex = -1; 
+    
+    // Triggers the floating mobile CANCEL button
+    ['capsule-logs', 'float-logs', 'float-tree'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('is-moving');
+    });
+    
+    // We only need to override the color now. Your native CSS does the rest!
+    if (!document.getElementById('delete-mode-styles')) {
+        const style = document.createElement('style');
+        style.id = 'delete-mode-styles';
+        style.innerHTML = `
+            .log-row.delete-mode-row { border: 2px dashed #e74c3c !important; background-color: rgba(231, 76, 60, 0.05) !important; }
+        `;
+        document.head.appendChild(style);
+    }
+
+    updateCalculations(); 
+}
+
+function cancelDeleteMode() {
+    deleteModeActive = false;
+    ['capsule-logs', 'float-logs', 'float-tree'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('is-moving');
+    });
+    
+    const floatBtn = document.querySelector('.floating-cancel-del-btn');
+    if (floatBtn) floatBtn.remove();
+
+    updateCalculations();
+}
+
+function executeCut(idx) {
+    pushHistory(); 
+    planQueue = planQueue.slice(0, idx);
+    
+    let clean = false; 
+    while (!clean) { 
+        const sim = calcState(planQueue); 
+        if (sim.brokenSteps.length > 0) {
+            for (let j = sim.brokenSteps.length - 1; j >= 0; j--) planQueue.splice(sim.brokenSteps[j], 1); 
+        } else clean = true; 
+    }
+    
+    cancelMove(); 
+}
+
 function resetCurrentTree() {
     openConfirmModal(`Reset ${activeTreeKey.toUpperCase()} tree?`, () => {
         pushHistory();
@@ -830,20 +939,44 @@ function pushHistory() {
     if (historyStack.length > 50) historyStack.shift();
     if (typeof captureFullState === 'function') { historyStack.push(JSON.stringify(captureFullState())); redoStack = []; updateUndoRedoBtns(); if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); }
 }
+
 function undo() {
     if (historyStack.length === 0) return;
     redoStack.push(JSON.stringify(captureFullState()));
     const stateToLoad = JSON.parse(historyStack.pop());
-    if (typeof eggPlanQueue !== 'undefined') { const currentEggStart = document.getElementById('egg-date-desktop') ? document.getElementById('egg-date-desktop').value : null; stateToLoad.eggData = { queue: eggPlanQueue, start: currentEggStart }; }
-    loadState(stateToLoad); updateUndoRedoBtns(); if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+    
+    if (typeof eggPlanQueue !== 'undefined') { 
+        const currentEggStart = document.getElementById('egg-date-desktop') ? document.getElementById('egg-date-desktop').value : null; 
+        stateToLoad.eggData = { 
+            queue: JSON.parse(JSON.stringify(eggPlanQueue)), 
+            start: currentEggStart 
+        }; 
+    }
+    
+    loadState(stateToLoad); 
+    updateUndoRedoBtns(); 
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
 }
+
 function redo() {
     if (redoStack.length === 0) return;
     historyStack.push(JSON.stringify(captureFullState()));
     const stateToLoad = JSON.parse(redoStack.pop());
-    if (typeof eggPlanQueue !== 'undefined') { const currentEggStart = document.getElementById('egg-date-desktop') ? document.getElementById('egg-date-desktop').value : null; stateToLoad.eggData = { queue: eggPlanQueue, start: currentEggStart }; }
-    loadState(stateToLoad); updateUndoRedoBtns(); if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+    
+    if (typeof eggPlanQueue !== 'undefined') { 
+        const currentEggStart = document.getElementById('egg-date-desktop') ? document.getElementById('egg-date-desktop').value : null; 
+
+        stateToLoad.eggData = { 
+            queue: JSON.parse(JSON.stringify(eggPlanQueue)), 
+            start: currentEggStart 
+        }; 
+    }
+    
+    loadState(stateToLoad); 
+    updateUndoRedoBtns(); 
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
 }
+
 function updateUndoRedoBtns() {
     const hasH = historyStack.length > 0; const hasR = redoStack.length > 0;
     const upd = (id, on) => { const el = document.getElementById(id); if (el) { el.disabled = !on; el.style.opacity = !on ? "0.3" : "1"; el.style.pointerEvents = !on ? "none" : "auto"; } };

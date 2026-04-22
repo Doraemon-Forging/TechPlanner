@@ -78,7 +78,14 @@
 .war-select-group.flex-center { align-items: center; gap: 4px; }
 .select-mini { width: 45px; height: 32px !important; }
 .select-small { width: 60px; height: 32px !important; }
-.dash-span { font-family: 'Fredoka One'; margin: 0 2px; }
+
+.dash-span { 
+    font-family: 'Fredoka One'; 
+    margin: 0 2px; 
+    color: #ffffff !important; 
+    -webkit-text-stroke: 2.5px #000000; 
+    paint-order: stroke fill;
+}
 
 
 /* ==========================================================================
@@ -152,9 +159,24 @@
 .weekly-pill-grid .daily-res-value { font-size: 1rem !important; display: flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap; letter-spacing: -0.3px; }
 .weekly-pill-grid .calc-icon-left { width: 18px !important; height: 18px !important; margin-right: 4px !important; }
 
-.weekly-toggle-wrapper .new-mode-switch { display: flex !important; width: 100% !important; max-width: 280px !important; height: 52px !important; }
-.weekly-toggle-wrapper .seg-btn { line-height: 1.2 !important; padding: 6px 0 !important; transition: font-size 0.1s ease; }
+.weekly-toggle-wrapper .new-mode-switch { 
+    display: flex !important; 
+    width: 100% !important; 
+    max-width: 100% !important; 
+    height: 52px !important;
+}
 
+.weekly-toggle-wrapper .seg-btn { 
+    flex: 1 !important; 
+    line-height: 1.1 !important; 
+    padding: 4px 2px !important; 
+    font-size: 0.85rem !important;
+    transition: all 0.1s ease; 
+}
+
+#panel-weekly .seg-btn.active {
+    font-size: 1rem !important; 
+}
 
 /* ==========================================================================
    07. TEXT UTILITIES & MISC

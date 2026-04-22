@@ -75,14 +75,11 @@
                     <button class="dash-btn" id="btn-stats" onclick="setSidebarPanel('stats')">
                         <img src="icons/icon_stats.png" class="dash-icon">Stats
                     </button>
-                    <button class="dash-btn" id="btn-daily" onclick="setSidebarPanel('daily')">
-                        <img src="icons/icon_daily.png" class="dash-icon">Daily Gain
+                    <button class="dash-btn" id="btn-equip" onclick="setSidebarPanel('equipment')">
+                        <img src="icons/equipment.png" class="dash-icon">Equipment
                     </button>
                     <button class="dash-btn" id="btn-weekly" onclick="setSidebarPanel('weekly')">
                         <img src="icons/icon_weekly.png" class="dash-icon">Weekly Gain
-                    </button>
-                    <button class="dash-btn" id="btn-equip" onclick="setSidebarPanel('equipment')">
-                        <img src="icons/equipment.png" class="dash-icon">Equipment
                     </button>
                     <button class="dash-btn" id="btn-summon" onclick="setSidebarPanel('summon')">
                         <img src="icons/summon.png" class="dash-icon">Summon Calc
@@ -122,10 +119,9 @@
                 
                 <div class="island-tools">
                     <button class="island-btn" onclick="setSidebarPanel('logs')" data-tooltip="Schedule"><img src="icons/icon_timeline.png"></button>
-                    <button class="island-btn" onclick="setSidebarPanel('stats')" data-tooltip="Stats"><img src="icons/icon_stats.png"></button>
-                    <button class="island-btn" onclick="setSidebarPanel('daily')" data-tooltip="Daily Gain"><img src="icons/icon_daily.png"></button>
-                    <button class="island-btn" onclick="setSidebarPanel('weekly')" data-tooltip="Weekly Gain"><img src="icons/icon_weekly.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('stats')" data-tooltip="Stats"><img src="icons/icon_stats.png"></button>                    
                     <button class="island-btn" onclick="setSidebarPanel('equipment')" data-tooltip="Equipment"><img src="icons/equipment.png"></button>
+                    <button class="island-btn" onclick="setSidebarPanel('weekly')" data-tooltip="Weekly Gain"><img src="icons/icon_weekly.png"></button>
                     <button class="island-btn" onclick="setSidebarPanel('summon')" data-tooltip="Summon Calc"><img src="icons/summon.png"></button>
                     <button class="island-btn" onclick="setSidebarPanel('calc')" data-tooltip="Forge Calc"><img src="icons/anvil.png"></button>         
                     <button class="island-btn" onclick="setSidebarPanel('war')" data-tooltip="War Calc"><img src="icons/warcalc.png"></button>
@@ -252,7 +248,6 @@
                         <div id="container-war"></div>
                         <div id="container-pet"></div>
                         <div id="container-egg"></div>
-                        <div id="container-daily"></div>
                         <div id="container-weekly"></div>
                         <div id="container-equipment"></div>
                         <div id="container-summon"></div>
@@ -348,11 +343,8 @@
                         <img src="icons/equipment.png"><span>Equipment</span>
                     </button>
                     
-                    <button class="bento-btn btn-tracker" id="btn-daily" onclick="switchMobileView('daily')">
-                        <img src="icons/icon_daily.png"><span>Daily<br>Gain</span>
-                    </button>
-                    <button class="bento-btn btn-tracker" id="btn-weekly" onclick="switchMobileView('weekly')">
-                        <img src="icons/icon_weekly.png"><span>Weekly<br>Gain</span>
+                    <button class="bento-btn btn-tracker" id="btn-weekly" onclick="switchMobileView('weekly')" style="grid-column: span 2;">
+                        <img src="icons/icon_weekly.png"><span>Weekly Gain</span>
                     </button>
                     
                 </div>

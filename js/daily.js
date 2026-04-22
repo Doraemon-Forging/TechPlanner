@@ -29,7 +29,7 @@ function calculateDailyMath() {
         hammer:   60 + (steps.thief * 1),
         gold:     4000 + (steps.thief * 100),
         ticket:   200 + (steps.ghost * 2),
-        eggshell: 100 + Math.ceil(steps.inv / 2),
+        eggshell: 200 + Math.floor((13 * steps.inv + 9) / 20),
         potion:   100 + (steps.zombie * 1)
     };
 
@@ -118,7 +118,6 @@ function calculateDailyMath() {
         totCardsA: ((rewards.ticket.after * 2) / (200 * (1 - summonCost.after / 100))) * 5
     };
 }
-
 
 // ==========================================
 // 2. INITIALIZATION & STORAGE

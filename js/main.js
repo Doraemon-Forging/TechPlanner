@@ -269,7 +269,9 @@ function captureFullState() {
         calcData: { 
             world: getVal('calc-world'), 
             stage: getVal('calc-stage'), 
+            forgeAsc: getVal('calc-forge-asc'), 
             forgeLv: getVal('calc-forge-lv'), 
+            targetForgeAsc: getVal('calc-target-forge-asc'),
             targetForgeLv: getVal('calc-target-forge-lv'), 
             hammers: getVal('calc-hammers'), 
             target: getVal('calc-target'), 
@@ -318,9 +320,9 @@ function captureFullState() {
             }
         },
         summonData: {
-            skill: { lvl: getVal('sum-skill-lvl'), exp: getVal('sum-skill-exp'), res: getVal('sum-skill-res'), prob: getVal('sum-skill-prob'), targetLv: getVal('sum-skill-target-lv') },
-            pet: { lvl: getVal('sum-pet-lvl'), exp: getVal('sum-pet-exp'), res: getVal('sum-pet-res'), prob: getVal('sum-pet-prob'), targetLv: getVal('sum-pet-target-lv') },
-            mount: { lvl: getVal('sum-mount-lvl'), exp: getVal('sum-mount-exp'), res: getVal('sum-mount-res'), prob: getVal('sum-mount-prob'), targetLv: getVal('sum-mount-target-lv') }
+            skill: { asc: getVal('sum-skill-asc'), lvl: getVal('sum-skill-lvl'), exp: getVal('sum-skill-exp'), res: getVal('sum-skill-res'), prob: getVal('sum-skill-prob'), targetAsc: getVal('sum-skill-target-asc'), targetLv: getVal('sum-skill-target-lv') },
+            pet: { asc: getVal('sum-pet-asc'), lvl: getVal('sum-pet-lvl'), exp: getVal('sum-pet-exp'), res: getVal('sum-pet-res'), prob: getVal('sum-pet-prob'), targetAsc: getVal('sum-pet-target-asc'), targetLv: getVal('sum-pet-target-lv') },
+            mount: { asc: getVal('sum-mount-asc'), lvl: getVal('sum-mount-lvl'), exp: getVal('sum-mount-exp'), res: getVal('sum-mount-res'), prob: getVal('sum-mount-prob'), targetAsc: getVal('sum-mount-target-asc'), targetLv: getVal('sum-mount-target-lv') }
         },
         equipmentData: {
             ascension: getVal('eq-ascension'),
@@ -342,8 +344,44 @@ function captureFullState() {
 }
 
 function safeSetVal(id, val) { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; }
-function safeSyncDropdowns(isoDate, prefix) { if (!isoDate) return; const d = new Date(isoDate); if (isNaN(d.getTime())) return; safeSetVal(prefix + '-month', d.getMonth() + 1); safeSetVal(prefix + '-day', d.getDate()); safeSetVal(prefix + '-hour', d.getHours()); safeSetVal(prefix + '-min', d.getMinutes()); }
+function safeSyncDropdowns(isoDate, prefix) { 
+    if (!isoDate) return; 
+    const d = new Date(isoDate); 
+    if (isNaN(d.getTime())) return; 
+    
+    const monthVal = d.getFullYear() + '-' + d.getMonth();
+    const mEl = document.getElementById(prefix + '-month');
+    
+    if (mEl) {
+        let exists = false;
+        for (let i = 0; i < mEl.options.length; i++) {
+            if (mEl.options[i].value === monthVal) { exists = true; break; }
+        }
+        
+        if (!exists) {
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const yy = d.getFullYear().toString().slice(-2);
+            const shortName = monthNames[d.getMonth()];
+            const fullName = `${shortName} '${yy}`;
+            
+            const opt = new Option(fullName, monthVal);
+            opt.setAttribute('data-full', fullName);
+            opt.setAttribute('data-short', shortName);
+            mEl.add(opt);
+        }
+    }
 
+    safeSetVal(prefix + '-month', monthVal); 
+
+    if (mEl && mEl.selectedIndex > -1) {
+        Array.from(mEl.options).forEach(o => o.text = o.getAttribute('data-full'));
+        mEl.options[mEl.selectedIndex].text = mEl.options[mEl.selectedIndex].getAttribute('data-short');
+    }
+
+    safeSetVal(prefix + '-day', d.getDate()); 
+    safeSetVal(prefix + '-hour', d.getHours()); 
+    safeSetVal(prefix + '-min', d.getMinutes()); 
+}
 function loadState(d) {
     if (d.setupLevels && typeof setupLevels !== 'undefined') { Object.keys(setupLevels).forEach(k => delete setupLevels[k]); Object.assign(setupLevels, d.setupLevels); }
     if (d.planQueue && typeof planQueue !== 'undefined') { planQueue.length = 0; planQueue.push(...d.planQueue); }
@@ -358,9 +396,16 @@ function loadState(d) {
         if (d.calcData) { 
             safeSetVal('calc-world', d.calcData.world); 
             safeSetVal('calc-stage', d.calcData.stage); 
+
+            if (d.calcData.forgeAsc !== undefined) safeSetVal('calc-forge-asc', d.calcData.forgeAsc);
             safeSetVal('calc-forge-lv', d.calcData.forgeLv); 
-            
+
+            if (d.calcData.targetForgeAsc !== undefined) safeSetVal('calc-target-forge-asc', d.calcData.targetForgeAsc);
+            safeSetVal('calc-target-forge-lv', d.calcData.targetForgeLv);
+
             if (typeof syncTargetForgeDropdown === 'function') syncTargetForgeDropdown();
+
+            if (d.calcData.targetForgeAsc !== undefined) safeSetVal('calc-target-forge-asc', d.calcData.targetForgeAsc);
             safeSetVal('calc-target-forge-lv', d.calcData.targetForgeLv);
             
             safeSetVal('calc-hammers', d.calcData.hammers); 
@@ -447,24 +492,30 @@ function loadState(d) {
     try {
         if (d.summonData) {
             if(d.summonData.skill) { 
+                if(d.summonData.skill.asc !== undefined) safeSetVal('sum-skill-asc', d.summonData.skill.asc);
                 safeSetVal('sum-skill-lvl', d.summonData.skill.lvl); 
                 safeSetVal('sum-skill-exp', d.summonData.skill.exp); 
                 safeSetVal('sum-skill-res', d.summonData.skill.res); 
                 if(d.summonData.skill.prob !== undefined) safeSetVal('sum-skill-prob', d.summonData.skill.prob); 
+                if(d.summonData.skill.targetAsc !== undefined) safeSetVal('sum-skill-target-asc', d.summonData.skill.targetAsc);
                 safeSetVal('sum-skill-target-lv', d.summonData.skill.targetLv); 
             }
             if(d.summonData.pet) { 
+                if(d.summonData.pet.asc !== undefined) safeSetVal('sum-pet-asc', d.summonData.pet.asc);
                 safeSetVal('sum-pet-lvl', d.summonData.pet.lvl); 
                 safeSetVal('sum-pet-exp', d.summonData.pet.exp); 
                 safeSetVal('sum-pet-res', d.summonData.pet.res); 
                 if(d.summonData.pet.prob !== undefined) safeSetVal('sum-pet-prob', d.summonData.pet.prob); 
+                if(d.summonData.pet.targetAsc !== undefined) safeSetVal('sum-pet-target-asc', d.summonData.pet.targetAsc);
                 safeSetVal('sum-pet-target-lv', d.summonData.pet.targetLv); 
             }
             if(d.summonData.mount) { 
+                if(d.summonData.mount.asc !== undefined) safeSetVal('sum-mount-asc', d.summonData.mount.asc);
                 safeSetVal('sum-mount-lvl', d.summonData.mount.lvl); 
                 safeSetVal('sum-mount-exp', d.summonData.mount.exp); 
                 safeSetVal('sum-mount-res', d.summonData.mount.res); 
                 if(d.summonData.mount.prob !== undefined) safeSetVal('sum-mount-prob', d.summonData.mount.prob); 
+                if(d.summonData.mount.targetAsc !== undefined) safeSetVal('sum-mount-target-asc', d.summonData.mount.targetAsc);
                 safeSetVal('sum-mount-target-lv', d.summonData.mount.targetLv); 
             }
         }
@@ -494,8 +545,7 @@ function loadState(d) {
     if (document.getElementById('egg-date-desktop') && !document.getElementById('egg-date-desktop').value) safeSetVal('egg-date-desktop', nowIso);
     
     try { const treeToLoad = d.activeTree || 'forge'; if (typeof switchTree === 'function') switchTree(treeToLoad); } catch(e) {}
-    
-    // Trigger Updates
+
     try { if (typeof updateCalculations === 'function') updateCalculations(); } catch(e) {}
     try { if (typeof updateCalculator === 'function') updateCalculator(); } catch(e) {}
     try { if (typeof renderEggLog === 'function') renderEggLog(); } catch(e) {}
@@ -602,18 +652,10 @@ let isSyncing = false;
 function syncSharedInputs(sourceEl) {
     if (isSyncing) return;
 
-    // Define which IDs should mirror each other
-    // Notice wc-ticket and wc-mount-key are intentionally excluded
-    const syncMap = [
-        ['wc-skill-lv', 'asc-skill-lv', 'sum-skill-lvl'],
-        ['wc-skill-exp', 'asc-skill-exp', 'sum-skill-exp'],
-        ['wc-mount-lv', 'asc-mount-lv', 'sum-mount-lvl'],
-        ['wc-mount-exp', 'asc-mount-exp', 'sum-mount-exp'],
-        ['asc-pet-lv', 'sum-pet-lvl'],
-        ['asc-pet-exp', 'sum-pet-exp'],
-        ['asc-skill-inv', 'sum-skill-res'],
-        ['asc-pet-inv', 'sum-pet-res'],
-        ['asc-mount-inv', 'sum-mount-res']
+    // Added the '-asc' mappings for all 3 summon types
+    const syncMap = [['wc-skill-asc', 'asc-skill-asc', 'sum-skill-asc'],['wc-skill-lv', 'asc-skill-lv', 'sum-skill-lvl'],['wc-skill-exp', 'asc-skill-exp', 'sum-skill-exp'],['wc-mount-asc', 'asc-mount-asc', 'sum-mount-asc'],['wc-mount-lv', 'asc-mount-lv', 'sum-mount-lvl'],['wc-mount-exp', 'asc-mount-exp', 'sum-mount-exp'],
+        ['asc-pet-asc', 'sum-pet-asc'],['asc-pet-lv', 'sum-pet-lvl'],['asc-pet-exp', 'sum-pet-exp'],
+        ['asc-skill-inv', 'sum-skill-res'],['asc-pet-inv', 'sum-pet-res'],['asc-mount-inv', 'sum-mount-res']
     ];
 
     const sourceId = sourceEl.id;
@@ -633,7 +675,8 @@ function syncSharedInputs(sourceEl) {
                 targetEl.value = rawValue;
                 
                 if (targetId.startsWith('wc-')) {
-                    if (targetId.includes('-lv') || targetId.includes('-exp')) {
+                    // Added check for '-asc'
+                    if (targetId.includes('-lv') || targetId.includes('-exp') || targetId.includes('-asc')) {
                         if (targetId.includes('skill') && typeof updateWarSkillExpCap === 'function') updateWarSkillExpCap();
                         if (targetId.includes('mount') && typeof updateWarMountExpCap === 'function') updateWarMountExpCap();
                     }
@@ -641,19 +684,20 @@ function syncSharedInputs(sourceEl) {
                 } 
                 else if (targetId.startsWith('asc-')) {
                     const type = targetId.includes('skill') ? 'skill' : (targetId.includes('pet') ? 'pet' : 'mount');
-                    if (targetId.includes('-lv') || targetId.includes('-exp')) {
+                    // Added check for '-asc'
+                    if (targetId.includes('-lv') || targetId.includes('-exp') || targetId.includes('-asc')) {
                         if (typeof updateAscensionCaps === 'function') updateAscensionCaps(type);
                     }
                     if (typeof updateWeekly === 'function') updateWeekly();
                 } 
                 else if (targetId.startsWith('sum-')) {
                     const type = targetId.includes('skill') ? 'skill' : (targetId.includes('pet') ? 'pet' : 'mount');
-                    if (targetId.includes('-lvl') || targetId.includes('-exp')) {
+                    // Added check for '-asc'
+                    if (targetId.includes('-lvl') || targetId.includes('-exp') || targetId.includes('-asc')) {
                         if (typeof updateSummonCap === 'function') updateSummonCap(type);
                     }
                     if (typeof updateSummonCalc === 'function') updateSummonCalc(type);
                     
-                    // Re-apply commas if it's a resource box
                     if (targetId.includes('-res') && typeof formatInput === 'function') {
                         formatInput(targetEl); 
                     }

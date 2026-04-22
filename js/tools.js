@@ -127,7 +127,7 @@ function renderStats() {
                 infoBtnHTML = `<button class="btn-info" onclick="showForgeTable('cost',${curT * discVal},${projT * discVal})">i</button>`; 
             } 
             else if (key === 'forge' && ns.id === 'timer') { 
-                const timerVal = meta.val !== undefined ? meta.val : 2; // Pulls the '2' directly from your DATA.js
+                const timerVal = meta.val !== undefined ? meta.val : 2; 
                 infoBtnHTML = `<button class="btn-info" onclick="showForgeTable('timer',${curT * timerVal},${projT * timerVal})">i</button>`; 
             }
             
@@ -157,49 +157,90 @@ function renderStats() {
     });
 }
 
-
-
 // ==========================================
 // 2. FORGE CALCULATOR
 // ==========================================
 
 function populateForgeDropdown() {
-    const s = document.getElementById('calc-forge-lv'); 
-    if (!s) return;
-    s.innerHTML = ""; 
-    for (let i = 1; i <= 35; i++) s.add(new Option(i, i)); 
-    s.value = 20;
+    const ascEl = document.getElementById('calc-forge-asc');
+    const lvEl = document.getElementById('calc-forge-lv'); 
+    
+    if (!ascEl || !lvEl) return;
+    
+    ascEl.innerHTML = "";
+    for (let i = 0; i <= 3; i++) ascEl.add(new Option(`Asc ${i}`, i));
+    ascEl.value = 0;
+
+    lvEl.innerHTML = ""; 
+    for (let i = 1; i <= 35; i++) lvEl.add(new Option(i, i)); 
+    lvEl.value = 20;
 
     syncTargetForgeDropdown();
 }
 
 function syncTargetForgeDropdown() {
-    const curEl = document.getElementById('calc-forge-lv');
-    const targetEl = document.getElementById('calc-target-forge-lv');
-    if (!curEl || !targetEl) return;
+    const curAscEl = document.getElementById('calc-forge-asc');
+    const curLvEl = document.getElementById('calc-forge-lv');
+    const targetAscEl = document.getElementById('calc-target-forge-asc');
+    const targetLvEl = document.getElementById('calc-target-forge-lv');
     
-    let curVal = parseInt(curEl.value) || 1;
-    targetEl.innerHTML = "";
-  
-    targetEl.disabled = false;
-    targetEl.style.opacity = "1";
+    if (!curAscEl || !curLvEl || !targetAscEl || !targetLvEl) return;
     
-    let currentTarget = targetEl.value;
+    let curAsc = parseInt(curAscEl.value) || 0;
+    let curLv = parseInt(curLvEl.value) || 1;
+    
+    let oldTargetAsc = targetAscEl.value;
+    let oldTargetLv = targetLvEl.value;
 
-    for (let i = curVal + 1; i <= 35; i++) {
-        targetEl.add(new Option(i, i));
+    targetAscEl.innerHTML = "";
+    targetAscEl.disabled = false;
+    targetAscEl.style.opacity = "1";
+    
+    if (curAsc === 3 && curLv === 35) {
+        targetAscEl.add(new Option("Asc 3", 3));
+        targetAscEl.value = 3;
+        targetLvEl.innerHTML = "";
+        targetLvEl.add(new Option("MAX", 35));
+        targetLvEl.value = 35;
+        targetLvEl.disabled = true;
+        targetLvEl.style.opacity = "0.5";
+        return;
+    }
+
+    for (let i = curAsc; i <= 3; i++) {
+        targetAscEl.add(new Option(`Asc ${i}`, i));
+    }
+
+    if (oldTargetAsc !== "" && parseInt(oldTargetAsc) >= curAsc && parseInt(oldTargetAsc) <= 3) {
+        targetAscEl.value = oldTargetAsc;
+    } else {
+        targetAscEl.value = curAsc;
     }
     
-    targetEl.add(new Option("Ascension", "Ascension"));
+    let selTargetAsc = parseInt(targetAscEl.value);
+
+    targetLvEl.innerHTML = "";
+    targetLvEl.disabled = false;
+    targetLvEl.style.opacity = "1";
+
+    let startLv = (selTargetAsc === curAsc) ? curLv + 1 : 1;
     
-    if (currentTarget === "Ascension") {
-        targetEl.value = "Ascension";
+    for (let i = startLv; i <= 35; i++) {
+        targetLvEl.add(new Option(i, i));
+    }
+
+    if (selTargetAsc < 3) {
+        targetLvEl.add(new Option("Ascend", "Ascend"));
+    }
+
+    if (oldTargetLv === "Ascend") {
+        targetLvEl.value = (selTargetAsc < 3) ? "Ascend" : 35;
     } else {
-        let parsedTarget = parseInt(currentTarget);
-        if (isNaN(parsedTarget) || parsedTarget <= curVal) {
-            targetEl.value = curVal < 35 ? curVal + 1 : "Ascension";
+        let pLv = parseInt(oldTargetLv);
+        if (!isNaN(pLv) && pLv >= startLv && pLv <= 35) {
+            targetLvEl.value = pLv;
         } else {
-            targetEl.value = parsedTarget;
+            targetLvEl.value = (startLv <= 35) ? startLv : "Ascend";
         }
     }
 }
@@ -281,6 +322,8 @@ function updateCalculator() {
 
     const hIn = parseFloat(hammerEl.value.replace(/,/g, '')) || 0;
     const gTarget = parseFloat(targetEl.value.replace(/,/g, '')) || 0;
+    
+    const fAsc = parseInt(document.getElementById('calc-forge-asc').value) || 0;
     const fLv = parseInt(document.getElementById('calc-forge-lv').value) || 1; 
 
     if (document.activeElement !== hammerEl) hammerEl.value = hIn > 0 ? hIn.toLocaleString('en-US') : (hammerEl.value ? '0' : '');
@@ -326,6 +369,39 @@ function updateCalculator() {
         return `<div class="calc-line"><div class="calc-label">${label} ${tt}</div>${renderForgeGroup(v1, v2, iconKey, type)}</div>`;
     };
 
+    const formatDT = (d) => {
+        const dateStr = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+        const timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+        return `<span class="forge-date-text">${dateStr}, ${timeStr}</span>`; 
+    };
+
+    const sDateVal = document.getElementById('calc-start-date').value;
+    const mainStartTime = sDateVal ? new Date(sDateVal).getTime() : Date.now();
+
+    const planStartEl = document.getElementById('start-date');
+    const planStartMs = planStartEl && planStartEl.value ? new Date(planStartEl.value).getTime() : Date.now();
+    const state = calcState();
+    
+    let techSchedule = [];
+    let runningTimeOffset = 0;
+
+    const getVal = (id, fallback) => {
+        if (typeof TREES !== 'undefined' && TREES.forge && TREES.forge.meta && TREES.forge.meta[id] && TREES.forge.meta[id].val !== undefined) return TREES.forge.meta[id].val;
+        return fallback;
+    };
+
+    state.history.forEach(h => { 
+        const stepDuration = (h.type === 'delay' ? h.mins : h.added); 
+        runningTimeOffset += stepDuration; 
+        if (h.tree === 'forge' && h.id) { 
+            if (h.id.includes('timer')) {
+                techSchedule.push({ type: 'speed', time: planStartMs + (runningTimeOffset * 60000), val: getVal('timer', 2) }); 
+            } else if (h.id.includes('disc')) {
+                techSchedule.push({ type: 'disc', time: planStartMs + (runningTimeOffset * 60000), val: getVal('disc', 1) }); 
+            }
+        } 
+    });
+
     // ==========================================
     // 3rd CARD: HAMMER YIELD & GOLD CALC
     // ==========================================
@@ -369,105 +445,135 @@ function updateCalculator() {
     const res5 = document.getElementById('calc-res-5');
     const resTarget = document.getElementById('calc-res-target-forge');
 
-
-    if (fLv > 35 || typeof forgeLevelData === 'undefined' || (!forgeLevelData[fLv] && fLv !== 35)) {
-
+    if (fAsc === 3 && fLv === 35) {
         let h5 = genLine('Cost', '-', '-', 'fm_gold', 'standard');
         h5 += genLine('Finish', '-', '-', null, 'standard');
         h5 += genLine('Duration', '-', '-', null, 'standard');
         if (res5) res5.innerHTML = h5;
-        
-        let hTarget = genLine('Total Cost', '-', '-', 'fm_gold', 'standard');
-        hTarget += genLine('Total Duration', '-', '-', null, 'standard');
-        if (resTarget) resTarget.innerHTML = hTarget;
-
     } else if (fLv === 35) {
         let h5 = genLine('Cost', 3000000, 3000000, 'fm_gold', 'gold');
         h5 += genLine('Finish', '-', '-', null, 'standard');
-        h5 += genLine('Duration', 0, 0, null, 'time'); // Instant
+        h5 += genLine('Duration', 0, 0, null, 'time'); 
         if (res5) res5.innerHTML = h5;
-        
-        let hTarget = genLine('Total Cost', 3000000, 3000000, 'fm_gold', 'gold');
-        hTarget += genLine('Total Duration', 0, 0, null, 'time');
-        if (resTarget) resTarget.innerHTML = hTarget;
-
     } else {
-
         const cRaw = forgeLevelData[fLv][0];
-        let h5 = genLine('Cost', Math.round(cRaw * (1 - curStats.forgeDisc / 100)), Math.round(cRaw * (1 - projStats.forgeDisc / 100)), 'fm_gold', 'gold');
+        
+        let speedBonusAtStart = curStats.speed; 
+        let discBonusAtStart = curStats.forgeDisc;
+        techSchedule.forEach(t => { 
+            if (t.time <= mainStartTime) {
+                if (t.type === 'speed') speedBonusAtStart += t.val; 
+                if (t.type === 'disc') discBonusAtStart += t.val;
+            }
+        });
+
+        let h5 = genLine('Cost', Math.round(cRaw * (1 - curStats.forgeDisc / 100)), Math.round(cRaw * (1 - discBonusAtStart / 100)), 'fm_gold', 'gold');
 
         const baseMins = forgeLevelData[fLv][1] * 60;
-        const sDateVal = document.getElementById('calc-start-date').value;
-        const mainStartTime = sDateVal ? new Date(sDateVal).getTime() : Date.now();
-        let speedBonusAtStart = curStats.speed; 
-        let runningTimeOffset = 0;
-        
-        const planStartEl = document.getElementById('start-date');
-        const planStartMs = planStartEl && planStartEl.value ? new Date(planStartEl.value).getTime() : Date.now();
-        const state = calcState();
-        
-        state.history.forEach(h => { 
-            const stepDuration = (h.type === 'delay' ? h.mins : h.added); 
-            runningTimeOffset += stepDuration; 
-            if (h.tree === 'forge' && h.id && h.id.includes('timer')) { 
-                const techFinishTime = planStartMs + (runningTimeOffset * 60000); 
-                if (techFinishTime <= mainStartTime) { speedBonusAtStart += 2; } 
-            } 
-        });
-        
         const f1 = baseMins / (1 + curStats.speed / 100); 
         const f2 = baseMins / (1 + speedBonusAtStart / 100);
         const dFinish = new Date(mainStartTime + f1 * 60000); 
         const dFinishProj = new Date(mainStartTime + f2 * 60000);
         
-        const formatDT = (d) => {
-            const dateStr = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-            const timeStr = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-            return `<span class="forge-date-text">${dateStr} ${timeStr}</span>`; 
-        };
-        
         h5 += `<div class="calc-line"><div class="calc-label">Finish</div>${renderForgeGroup(formatDT(dFinish), formatDT(dFinishProj), null, 'date')}</div>`;
         h5 += genLine('Duration', f1, f2, null, 'time');
         if (res5) res5.innerHTML = h5;
-        
-        const tLvRaw = document.getElementById('calc-target-forge-lv').value;
-        const isAscensionTarget = tLvRaw === "Ascension";
-        
-        const tLv = isAscensionTarget ? 35 : (parseInt(tLvRaw) || (fLv + 1));
-        
-        let totalCostCur = 0;
-        let totalCostProj = 0;
-        let totalMinsCur = 0;
-        let totalMinsProj = 0;
-        let totalGemsCur = 0;
-        let totalGemsProj = 0;
-        
-        for (let i = fLv; i < tLv; i++) {
-            if (forgeLevelData[i]) {
-                
-                const baseCost = forgeLevelData[i][0];
-                const baseMins = forgeLevelData[i][1] * 60;
-                
-                totalCostCur += Math.round(baseCost * (1 - curStats.forgeDisc / 100));
-                totalCostProj += Math.round(baseCost * (1 - projStats.forgeDisc / 100));
+    }
 
-                const curLvlMins = baseMins / (1 + curStats.speed / 100);
-                const projLvlMins = baseMins / (1 + projStats.speed / 100);
+    if (fAsc === 3 && fLv === 35) {
+        let hTarget = genLine('Total Cost', '-', '-', 'fm_gold', 'standard');
+        hTarget += genLine('Finish', '-', '-', null, 'standard');
+        hTarget += genLine('Total Duration', '-', '-', null, 'standard');
+        hTarget += genLine('Total Gem', '-', '-', null, 'standard');
+        if (resTarget) resTarget.innerHTML = hTarget;
+    } else {
+        const tAscEl = document.getElementById('calc-target-forge-asc');
+        const tLvEl = document.getElementById('calc-target-forge-lv');
+        
+        const tAscRaw = tAscEl ? parseInt(tAscEl.value) : fAsc;
+        const tLvRaw = tLvEl ? tLvEl.value : (fLv + 1);
+        const isAscendTarget = tLvRaw === "Ascend";
+        
+        const tAsc = isNaN(tAscRaw) ? fAsc : tAscRaw;
+        const endLv = isAscendTarget ? 35 : (parseInt(tLvRaw) || (fLv + 1));
+
+        let totalCostCur = 0, totalCostProj = 0;
+        let totalMinsCur = 0, totalMinsProj = 0;
+        let totalGemsCur = 0, totalGemsProj = 0;
+
+        let cAsc = fAsc, cLv = fLv;
+        let currentTimeCur = mainStartTime;
+        let currentTimeProj = mainStartTime;
+
+        window.currentForgeSchedule = [];
+
+        while (cAsc < tAsc || (cAsc === tAsc && cLv < endLv)) {
+            if (cLv === 35) {
+                totalCostCur += 3000000;
+                totalCostProj += 3000000;
                 
-                totalMinsCur += curLvlMins;
-                totalMinsProj += projLvlMins;
-               
-                totalGemsCur += Math.round(curLvlMins / 7.25);
-                totalGemsProj += Math.round(projLvlMins / 7.25);
+                window.currentForgeSchedule.push({
+                    label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
+                    finish: currentTimeProj,
+                    isAscension: true
+                });
+                
+                cAsc++;
+                cLv = 1;
+            } else {
+                if (forgeLevelData[cLv]) {
+                    const baseCost = forgeLevelData[cLv][0];
+                    const baseMins = forgeLevelData[cLv][1] * 60;
+                    let activeProjSpeed = curStats.speed;
+                    let activeProjDisc = curStats.forgeDisc;
+                    techSchedule.forEach(t => { 
+                        if (t.time <= currentTimeProj) {
+                            if (t.type === 'speed') activeProjSpeed += t.val;
+                            if (t.type === 'disc') activeProjDisc += t.val;
+                        }
+                    });
+
+                    totalCostCur += Math.round(baseCost * (1 - curStats.forgeDisc / 100));
+                    totalCostProj += Math.round(baseCost * (1 - activeProjDisc / 100));
+
+                    const curLvlMins = baseMins / (1 + curStats.speed / 100);
+                    currentTimeCur += curLvlMins * 60000;
+                    totalMinsCur += curLvlMins;
+                    
+                    const projLvlMins = baseMins / (1 + activeProjSpeed / 100);
+                    currentTimeProj += projLvlMins * 60000;
+                    totalMinsProj += projLvlMins;
+                    
+                    totalGemsCur += Math.round(curLvlMins / 7.25);
+                    totalGemsProj += Math.round(projLvlMins / 7.25);
+
+                    window.currentForgeSchedule.push({
+                        label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
+                        finish: currentTimeProj,
+                        isAscension: false
+                    });
+                }
+                cLv++;
             }
         }
-        
-        if (isAscensionTarget) {
+
+        if (isAscendTarget && cAsc === tAsc && cLv === 35) {
             totalCostCur += 3000000;
             totalCostProj += 3000000;
+            window.currentForgeSchedule.push({
+                label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
+                finish: currentTimeProj,
+                isAscension: true
+            });
+        }
+
+        let finishLabel = 'Finish';
+        if (window.currentForgeSchedule && window.currentForgeSchedule.length > 1) {
+            finishLabel += ' <button class="btn-info" onclick="openForgeScheduleModal()" style="vertical-align: middle; margin-left: 6px;">i</button>';
         }
         
         let hTarget = genLine('Total Cost', totalCostCur, totalCostProj, 'fm_gold', 'gold');
+        hTarget += genLine(finishLabel, formatDT(new Date(currentTimeCur)), formatDT(new Date(currentTimeProj)), null, 'date');
         hTarget += genLine('Total Duration', totalMinsCur, totalMinsProj, null, 'time');
         hTarget += genLine('Total Gem', totalGemsCur, totalGemsProj, null, 'number');
         
@@ -478,15 +584,6 @@ function updateCalculator() {
 }
 
 function initCalcDateSelectors() {
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const mSel = document.getElementById('cm-month'); const dSel = document.getElementById('cm-day'); const hSel = document.getElementById('cm-hour'); const minSel = document.getElementById('cm-min');
-    if(!mSel) return; 
-    mSel.innerHTML = ""; months.forEach((m, i) => mSel.add(new Option(m, i + 1)));
-    dSel.innerHTML = ""; for(let i=1; i<=31; i++) dSel.add(new Option(i, i));
-    hSel.innerHTML = ""; for(let i=0; i<=23; i++) hSel.add(new Option(i, i));
-    minSel.innerHTML = ""; for(let i=0; i<=59; i++) minSel.add(new Option(i < 10 ? '0'+i : i, i));
-    const now = new Date(); mSel.value = now.getMonth(); dSel.value = now.getDate(); hSel.value = now.getHours(); minSel.value = now.getMinutes();
-    updateCalcFromDropdowns();
 }
 
 function updateCalcFromDropdowns() { updateFromDropdowns('calc'); }
@@ -581,33 +678,61 @@ function cancelEggInsert() {
 function toggleEggExp(i) { expandedEggIdx = expandedEggIdx === i ? -1 : i; renderEggLog(); }
 
 function renderEggLog() {
-    const list = document.getElementById('egg-log-list'); if (!list) return;
-    list.innerHTML = '';
-    const dateInput = document.getElementById('egg-date-desktop'); if (!dateInput || !dateInput.value) return;
-    let curTime = new Date(dateInput.value).getTime(); let totalQueueMins = 0; let totalPoints = 0;
-    eggPlanQueue.forEach((item, idx) => {
-        const div = document.createElement('div');
-        if (item.type === 'delay') {
-            totalQueueMins += item.mins; curTime += item.mins * 60000;
-            const finishDate = new Date(curTime); const timeStr = finishDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-            div.className = `log-row ${expandedEggIdx === idx ? 'expanded' : ''}`;
-            div.innerHTML = `<div class="log-entry delay" onclick="toggleEggExp(${idx})"><div class="log-left-group"><div class="log-icon-wrapper desktop-only" style="align-items: center; justify-content: center; height: 44px;"><span style="font-size:1.8em; line-height:1;">💤</span></div><div class="log-name">Delay (+${item.mins}m)</div></div><div class="log-right-group"><div class="log-time" style="color:#ccc">${timeStr}</div></div></div><div class="log-controls"><button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); deleteEggStep(${idx})">DEL</button></div>`;
-        } else {
-            const data = EGG_DATA[item.key]; const pts = EGG_POINTS[item.key] || 0; totalPoints += pts;
-            const techLvl = getEggSpeedAtTime(data.id, curTime); const speedMult = 1 + (techLvl * 0.1); const finalMins = data.t / speedMult;
-            totalQueueMins += finalMins; curTime += finalMins * 60000;
-            const finishDate = new Date(curTime); const finishTs = finishDate.getTime(); const timeStr = finishDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-            div.className = `log-row ${expandedEggIdx === idx ? 'expanded' : ''}`;
-            const detailsHtml = `<div class="log-details"><div class="ld-part pot"><img src="icons/warpoint.png" class="ld-icon"><span>${pts.toLocaleString('en-US')}</span></div><div class="ld-part time" style="width: auto;"><img src="icons/icon_time.png" class="ld-icon"><span>${formatEggTime(finalMins)}</span></div></div>`;
+    try {
+        const list = document.getElementById('egg-log-list'); 
+        if (!list) return;
+        
+        const dateInput = document.getElementById('egg-date-desktop'); 
+        if (!dateInput || !dateInput.value) return;
 
-            div.innerHTML = `<div class="log-entry ${data.c}" onclick="toggleEggExp(${idx})"><div class="log-left-group"><div class="log-icon-wrapper"><img src="${data.img}" style="width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));" onerror="this.style.display='none'"></div><div class="log-name">${data.n}</div> </div><div class="log-right-group"><div class="log-time">${timeStr}</div>${detailsHtml}</div></div><div class="log-controls"><button class="btn-game-ctrl btn-done" onclick="event.stopPropagation(); markEggDone(${idx}, ${finishTs})">DONE</button><button class="btn-game-ctrl btn-delay" onclick="event.stopPropagation(); addEggDelay(${idx})">DELAY</button><button class="btn-game-ctrl btn-insert" onclick="event.stopPropagation(); activateEggInsert(${idx})">INSERT</button><button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); deleteEggStep(${idx})">DELETE</button></div>`;
+        const fragment = document.createDocumentFragment();
+        let curTime = new Date(dateInput.value).getTime(); 
+        let totalQueueMins = 0; let totalPoints = 0;
+        
+        eggPlanQueue.forEach((item, idx) => {
+            const div = document.createElement('div');
+            if (item.type === 'delay') {
+                totalQueueMins += item.mins; curTime += item.mins * 60000;
+                const finishDate = new Date(curTime); const timeStr = finishDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                div.className = `log-row ${expandedEggIdx === idx ? 'expanded' : ''}`;
+                div.innerHTML = `<div class="log-entry delay" onclick="toggleEggExp(${idx})"><div class="log-left-group"><div class="log-icon-wrapper desktop-only" style="align-items: center; justify-content: center; height: 44px;"><span style="font-size:1.8em; line-height:1;">💤</span></div><div class="log-name">Delay (+${item.mins}m)</div></div><div class="log-right-group"><div class="log-time" style="color:#ccc">${timeStr}</div></div></div><div class="log-controls"><button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); deleteEggStep(${idx})">DEL</button></div>`;
+            } else {
+                const data = EGG_DATA[item.key]; 
+                
+                if (!data) {
+                    console.warn(`Egg Data missing for key: ${item.key}. Skipping row.`);
+                    return; 
+                }
+
+                const pts = EGG_POINTS[item.key] || 0; 
+                totalPoints += pts;
+                
+                const techLvl = getEggSpeedAtTime(data.id, curTime); 
+                const speedMult = 1 + (techLvl * 0.1); 
+                const finalMins = data.t / speedMult;
+                
+                totalQueueMins += finalMins; curTime += finalMins * 60000;
+                const finishDate = new Date(curTime); const finishTs = finishDate.getTime(); 
+                const timeStr = finishDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                
+                div.className = `log-row ${expandedEggIdx === idx ? 'expanded' : ''}`;
+                const detailsHtml = `<div class="log-details"><div class="ld-part pot"><img src="icons/warpoint.png" class="ld-icon"><span>${pts.toLocaleString('en-US')}</span></div><div class="ld-part time" style="width: auto;"><img src="icons/icon_time.png" class="ld-icon"><span>${formatEggTime(finalMins)}</span></div></div>`;
+
+                div.innerHTML = `<div class="log-entry ${data.c}" onclick="toggleEggExp(${idx})"><div class="log-left-group"><div class="log-icon-wrapper"><img src="${data.img}" style="width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));" onerror="this.style.display='none'"></div><div class="log-name">${data.n}</div> </div><div class="log-right-group"><div class="log-time">${timeStr}</div>${detailsHtml}</div></div><div class="log-controls"><button class="btn-game-ctrl btn-done" onclick="event.stopPropagation(); markEggDone(${idx}, ${finishTs})">DONE</button><button class="btn-game-ctrl btn-delay" onclick="event.stopPropagation(); addEggDelay(${idx})">DELAY</button><button class="btn-game-ctrl btn-insert" onclick="event.stopPropagation(); activateEggInsert(${idx})">INSERT</button><button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); deleteEggStep(${idx})">DELETE</button></div>`;
+            }
+            fragment.appendChild(div);
+        });
+
+        list.innerHTML = '';
+        list.appendChild(fragment);
+
+        const summaryBox = document.getElementById('egg-total-summary');
+        if (summaryBox) {
+            summaryBox.className = 'egg-stats-row'; 
+            summaryBox.innerHTML = `<div class="es-item type-points"><span class="es-value points">${totalPoints.toLocaleString('en-US')}</span></div><div class="es-item type-time"><span class="es-value time">${formatEggTime(totalQueueMins)}</span></div>`;
         }
-        list.appendChild(div);
-    });
-    const summaryBox = document.getElementById('egg-total-summary');
-    if (summaryBox) {
-        summaryBox.className = 'egg-stats-row'; 
-        summaryBox.innerHTML = `<div class="es-item type-points"><span class="es-value points">${totalPoints.toLocaleString('en-US')}</span></div><div class="es-item type-time"><span class="es-value time">${formatEggTime(totalQueueMins)}</span></div>`;
+    } catch (err) {
+        console.error("CRITICAL: Egg Planner crashed during rendering. The UI was protected.", err);
     }
 }
 

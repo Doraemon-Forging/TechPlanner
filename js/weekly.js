@@ -7,19 +7,36 @@
 // 1. UI CONTROLS & TOGGLES 
 // ==========================================
 function toggleWeeklyTab(tab) {
+    // Buttons
+    const btnDaily = document.getElementById('btn-weekly-daily');
     const btnTotal = document.getElementById('btn-weekly-total');
     const btnLeague = document.getElementById('btn-weekly-league');
+    
+    // View containers
+    const viewDaily = document.getElementById('weekly-tab-daily');
     const viewTotal = document.getElementById('weekly-tab-total');
     const viewLeague = document.getElementById('weekly-tab-league');
 
-    if (!btnTotal || !btnLeague || !viewTotal || !viewLeague) return;
+    // Reset all buttons
+    if (btnDaily) btnDaily.classList.remove('active');
+    if (btnTotal) btnTotal.classList.remove('active');
+    if (btnLeague) btnLeague.classList.remove('active');
 
-    if (tab === 'total') {
-        btnTotal.classList.add('active'); btnLeague.classList.remove('active');
-        viewTotal.style.display = 'block'; viewLeague.style.display = 'none';
-    } else {
-        btnLeague.classList.add('active'); btnTotal.classList.remove('active');
-        viewTotal.style.display = 'none'; viewLeague.style.display = 'block';
+    // Hide all views
+    if (viewDaily) viewDaily.style.display = 'none';
+    if (viewTotal) viewTotal.style.display = 'none';
+    if (viewLeague) viewLeague.style.display = 'none';
+
+    // Show selected
+    if (tab === 'daily') {
+        if (btnDaily) btnDaily.classList.add('active');
+        if (viewDaily) viewDaily.style.display = 'block';
+    } else if (tab === 'total') {
+        if (btnTotal) btnTotal.classList.add('active');
+        if (viewTotal) viewTotal.style.display = 'block';
+    } else if (tab === 'league') {
+        if (btnLeague) btnLeague.classList.add('active');
+        if (viewLeague) viewLeague.style.display = 'block';
     }
 }
 
@@ -90,6 +107,50 @@ function updateWeekly() {
             }
         }
     }
+
+    // ------------------------------------------
+    // Render Detailed Source Breakdown (League / War / Indiv)
+    // ------------------------------------------
+    const setBd = (id, val, formatType = 'whole') => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (!val || val === 0) {
+            el.innerText = "-";
+            return;
+        }
+        if (formatType === 'gold') {
+            if (val < 10000) el.innerText = Math.round(val).toLocaleString('en-US');
+            else if (val < 1000000) el.innerText = parseFloat((val / 1000).toFixed(1)) + 'k';
+            else el.innerText = parseFloat((val / 1000000).toFixed(2)) + 'm';
+        } else {
+            el.innerText = Math.round(val).toLocaleString('en-US');
+        }
+    };
+
+    // Index Map: 0=Hammer, 1=Gold, 2=Ticket, 3=Eggshell, 4=Potion, 5=MountKey
+    // League
+    setBd('bd-league-hammer', lRewards[0], 'whole');
+    setBd('bd-league-gold', lRewards[1], 'gold');
+    setBd('bd-league-ticket', lRewards[2], 'whole');
+    setBd('bd-league-eggshell', lRewards[3], 'whole');
+    setBd('bd-league-potion', lRewards[4], 'gold');
+    setBd('bd-league-mountkey', lRewards[5], 'whole');
+
+    // War
+    setBd('bd-war-hammer', cRewards[0], 'whole');
+    setBd('bd-war-gold', cRewards[1], 'gold');
+    setBd('bd-war-ticket', cRewards[2], 'whole');
+    setBd('bd-war-eggshell', cRewards[3], 'whole');
+    setBd('bd-war-potion', cRewards[4], 'gold');
+    setBd('bd-war-mountkey', cRewards[5], 'whole');
+
+    // Indiv
+    setBd('bd-indiv-hammer', iRewards[0], 'whole');
+    setBd('bd-indiv-gold', iRewards[1], 'gold');
+    setBd('bd-indiv-ticket', iRewards[2], 'whole');
+    setBd('bd-indiv-eggshell', iRewards[3], 'whole');
+    setBd('bd-indiv-potion', iRewards[4], 'gold');
+    setBd('bd-indiv-mountkey', iRewards[5], 'whole');
 
     const finalRewards = {
         hammer:   lRewards[0] + cRewards[0] + iRewards[0],

@@ -3,12 +3,14 @@
 const HTML_CALC = `
 <div id="panel-calc" class="sidebar-panel" style="display: none;">
     <div class="calc-container">
-        <!-- 1st Card: Current Upgrade -->
         <div class="calc-tool-card">
             <div class="calc-card-input-area">
                 <div class="calc-row-input">
                     <label>Current Forge Lv:</label>
-                    <select id="calc-forge-lv" class="calc-select-chunky" onchange="syncTargetForgeDropdown(); updateCalculator()"></select>
+                    <div style="display: flex; gap: 6px;">
+                        <select id="calc-forge-asc" class="calc-select-chunky" style="width: 85px;" onchange="syncTargetForgeDropdown(); updateCalculator()"></select>
+                        <select id="calc-forge-lv" class="calc-select-chunky" style="width: 85px;" onchange="syncTargetForgeDropdown(); updateCalculator()"></select>
+                    </div>
                 </div>
                 <div class="calc-row-input">
                     <label>Upgrade Start:</label>
@@ -25,18 +27,19 @@ const HTML_CALC = `
             <div id="calc-res-5" class="calc-result-box"></div>
         </div>
 
-        <!-- 2nd Card: Cumulative Target Level -->
         <div class="calc-tool-card">
             <div class="calc-card-input-area">
                 <div class="calc-row-input">
                     <label>Target Forge Lv:&nbsp; <button class="btn-info" onclick="openForgeProbModal()" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
-                    <select id="calc-target-forge-lv" class="calc-select-chunky" onchange="updateCalculator()"></select>
+                    <div style="display: flex; gap: 6px;">
+                        <select id="calc-target-forge-asc" class="calc-select-chunky" style="width: 85px;" onchange="syncTargetForgeDropdown(); updateCalculator()"></select>
+                        <select id="calc-target-forge-lv" class="calc-select-chunky" style="width: 85px;" onchange="updateCalculator()"></select>
+                    </div>
                 </div>
             </div>
             <div id="calc-res-target-forge" class="calc-result-box"></div>
         </div>
 
-        <!-- 3rd Card: Hammer Yield -->
         <div class="calc-tool-card">
             <div class="calc-card-input-area">
                 <div class="calc-row-input">
@@ -50,7 +53,6 @@ const HTML_CALC = `
             <div id="calc-res-1" class="calc-result-box"></div>
         </div>
 
-        <!-- 4th Card: Target Gold -->
         <div class="calc-tool-card">
             <div class="calc-card-input-area">
                 <div class="calc-row-input">
@@ -112,7 +114,15 @@ const HTML_WAR = `
 
                     <div class="wc-row">
                         <div class="wc-label">Skill Summon Lv:&nbsp;<button class="btn-info" onclick="openSkillLevelsModal()" style="vertical-align: middle; margin-bottom: 2px;">i</button></div>
-                        <input type="number" id="wc-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarSkillExpCap(); updateWarCalc()" style="width: 80px;">
+                        <div style="display: flex; gap: 6px; align-items: stretch;">
+                            <select id="wc-skill-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="updateWarSkillExpCap(); updateWarCalc()">
+                                <option value="0">Asc 0</option>
+                                <option value="1">Asc 1</option>
+                                <option value="2">Asc 2</option>
+                                <option value="3">Asc 3</option>
+                            </select>
+                            <input type="number" id="wc-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarSkillExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
+                        </div>
                     </div>
                     <div class="wc-row">
                         <div class="wc-label">Skill Summon Exp:</div>
@@ -129,7 +139,15 @@ const HTML_WAR = `
 
                     <div class="wc-row">
                         <div class="wc-label">Mount Summon Lv:</div>
-                        <input type="number" id="wc-mount-lv" placeholder="1" min="1" max="100" oninput="updateWarMountExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarMountExpCap(); updateWarCalc()" style="width: 80px;">
+                        <div style="display: flex; gap: 6px; align-items: stretch;">
+                            <select id="wc-mount-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="updateWarMountExpCap(); updateWarCalc()">
+                                <option value="0">Asc 0</option>
+                                <option value="1">Asc 1</option>
+                                <option value="2">Asc 2</option>
+                                <option value="3">Asc 3</option>
+                            </select>
+                            <input type="number" id="wc-mount-lv" placeholder="1" min="1" max="100" oninput="updateWarMountExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarMountExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
+                        </div>
                     </div>
                     <div class="wc-row">
                         <div class="wc-label">Mount Summon Exp:</div>
@@ -724,14 +742,13 @@ const HTML_EGG = `
 </div>
 `;
 
-const HTML_DAILY = `
-<div id="panel-daily" class="sidebar-panel" style="display: none;">
+const HTML_WEEKLY = `
+<div id="panel-weekly" class="sidebar-panel" style="display: none;">
     <div class="log-container">
-        <div class="daily-card config-card">          
-            <div class="daily-card-body">
-                <div class="daily-sub-desc text-clean-black">
-                    Enter the level you beat the dungeon
-                </div>
+        
+        <div class="daily-card config-card" style="margin-bottom: 15px;">          
+            <div class="daily-card-body" style="padding-bottom: 10px;">
+        
                 <div class="daily-input-row">
                     <label class="daily-label">Hammer Thief:</label>
                     <div class="war-select-group flex-center">
@@ -756,7 +773,7 @@ const HTML_DAILY = `
                         <select id="inv-sub" class="war-select select-mini" onchange="updateDaily()"></select>
                     </div>
                 </div>
-                <div class="daily-input-row" style="padding-bottom: 5px;">
+                <div class="daily-input-row" style="padding-bottom: 8px;">
                     <label class="daily-label">Zombie Rush:</label>
                     <div class="war-select-group flex-center">
                         <select id="zombie-lvl" class="war-select select-mini" onchange="updateDaily()"></select>
@@ -764,48 +781,7 @@ const HTML_DAILY = `
                         <select id="zombie-sub" class="war-select select-mini" onchange="updateDaily()"></select>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="daily-card card-compact">
-            <div class="daily-card-header strip-blue">
-                <span class="daily-header-title">DUNGEON REWARDS</span>
-            </div>
-            <div class="daily-card-body" id="daily-rewards-container">
-                <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="res-hammer-group"></div></div>
-                <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="res-gold-group"></div></div>
-                <div class="calc-line"><span class="calc-label">Green Ticket</span><div class="calc-val-group" id="res-ticket-group"></div></div>
-                <div class="calc-line"><span class="calc-label">Eggshell</span><div class="calc-val-group" id="res-eggshell-group"></div></div>
-                <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="res-potion-group"></div></div>
-            </div>
-        </div>
-
-        <div class="daily-card card-compact">
-            <div class="daily-card-header strip-green">
-                <span class="daily-header-title">TOTAL DAILY INCOME</span>
-            </div>
-            <div class="daily-card-body" id="calc-res-4">
-                <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="res-tot-hammer"></div></div>
-                <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="res-tot-gold"></div></div>
-                <div class="calc-line"><span class="calc-label">Gold after Hammering&nbsp;<button class="btn-info" id="btn-daily-info" style="vertical-align: middle; margin-bottom: 2px;">i</button></span><div class="calc-val-group" id="res-tot-grand"></div></div>
-                <div class="calc-line"><span class="calc-label">Skill Summoned</span><div class="calc-val-group" id="res-skill-cards"></div></div>
-                <div class="calc-line"><span class="calc-label">Egg</span><div class="calc-val-group" id="res-tot-egg"></div></div>                
-                <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="res-tot-potion"></div></div>
-            </div>
-        </div>
-        
-    </div>
-</div>
-`;
-
-const HTML_WEEKLY = `
-<div id="panel-weekly" class="sidebar-panel" style="display: none;">
-    <div class="log-container">
-        <div class="daily-card config-card">          
-            <div class="daily-card-body">
-                <div class="daily-sub-desc text-clean-black" style="font-size: 0.85rem !important; margin-bottom: 12px; line-height: 1.2;">
-                    Make sure you already entered the correct levels in Daily Gain page
-                </div>
                 <div class="daily-input-row">
                     <label class="daily-label">League:</label>
                     <div class="war-select-group flex-center">
@@ -836,9 +812,6 @@ const HTML_WEEKLY = `
                             <option value="S-Tier" selected>S-Tier</option>
                             <option value="A-Tier">A-Tier</option>
                             <option value="B-Tier">B-Tier</option>
-                            <option value="C-Tier">C-Tier</option>
-                            <option value="D-Tier">D-Tier</option>
-                            <option value="E-Tier">E-Tier</option>
                             <option value="None">None</option>
                         </select>
                         <select id="weekly-war-win" class="war-select select-small" style="width: 65px;" onchange="updateWeekly()">
@@ -871,10 +844,11 @@ const HTML_WEEKLY = `
             </div>
         </div>
 
-        <div class="weekly-toggle-wrapper" style="display: flex; justify-content: center; margin: 10px 15px 15px 15px;">
-            <div class="new-mode-switch" style="position: relative; z-index: 10; margin: 0 auto;">
-                <button class="seg-btn active" id="btn-weekly-total" onclick="toggleWeeklyTab('total')">WEEKLY<br>TOTAL</button>
-                <button class="seg-btn" id="btn-weekly-league" onclick="toggleWeeklyTab('league')">LEAGUE<br>& WAR</button>
+        <div style="display: flex; justify-content: center; width: 100%; margin: 25px 0 25px 0;">
+            <div class="segmented-control" style="width: calc(100% - 40px); max-width: 360px; height: 46px; margin: 0 auto; z-index: 10; display: flex;">
+                <button class="seg-btn active" id="btn-weekly-total" onclick="toggleWeeklyTab('total')" style="flex: 1; line-height: 1.15; font-size: 0.85rem; padding: 0 2px;">WEEKLY<br>TOTAL</button>
+                <button class="seg-btn" id="btn-weekly-daily" onclick="toggleWeeklyTab('daily')" style="flex: 1; line-height: 1.15; font-size: 0.85rem; padding: 0 2px;">DAILY<br>GAIN</button>
+                <button class="seg-btn" id="btn-weekly-league" onclick="toggleWeeklyTab('league')" style="flex: 1; line-height: 1.15; font-size: 0.85rem; padding: 0 2px;">LEAGUE<br>& WAR</button>
             </div>
         </div>
 
@@ -912,62 +886,62 @@ const HTML_WEEKLY = `
                 <div class="daily-card-body">                    
                     
                     <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
-        <div class="calc-row-input">
-            <label for="asc-skill-lv">Skill Summon Lv:</label>
-            <input type="number" id="asc-skill-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()">
-        </div>
-        <div class="calc-row-input">
-            <label for="asc-skill-exp">Skill Summon Exp:</label>
-            <div class="pet-flex-center" style="display: flex; align-items: center;">
-                <input type="number" id="asc-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('skill'); updateWeekly()">
-                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-skill-max">10</span></span>
-            </div>
-        </div>
-        <div class="calc-row-input">
-            <label for="asc-skill-inv">Green Tickets:</label>
-            <input type="text" id="asc-skill-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
-        </div>
-    </div>
+                        <div class="calc-row-input">
+                            <label for="asc-skill-lv">Skill Summon Lv:</label>
+                            <input type="number" id="asc-skill-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()">
+                        </div>
+                        <div class="calc-row-input">
+                            <label for="asc-skill-exp">Skill Summon Exp:</label>
+                            <div class="pet-flex-center" style="display: flex; align-items: center;">
+                                <input type="number" id="asc-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('skill'); updateWeekly()">
+                                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-skill-max">10</span></span>
+                            </div>
+                        </div>
+                        <div class="calc-row-input">
+                            <label for="asc-skill-inv">Green Tickets:</label>
+                            <input type="text" id="asc-skill-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
+                        </div>
+                    </div>
 
-    <hr class="pet-hr" style="margin: 10px 0;">
+                    <hr class="pet-hr" style="margin: 10px 0;">
 
-    <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
-        <div class="calc-row-input">
-            <label for="asc-pet-lv">Pet Summon Lv:</label>
-            <input type="number" id="asc-pet-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()">
-        </div>
-        <div class="calc-row-input">
-            <label for="asc-pet-exp">Pet Summon Exp:</label>
-            <div class="pet-flex-center" style="display: flex; align-items: center;">
-                <input type="number" id="asc-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('pet'); updateWeekly()">
-                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-pet-max">3</span></span>
-            </div>
-        </div>
-        <div class="calc-row-input">
-            <label for="asc-pet-inv">Eggshells:</label>
-            <input type="text" id="asc-pet-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
-        </div>
-    </div>
+                    <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
+                        <div class="calc-row-input">
+                            <label for="asc-pet-lv">Pet Summon Lv:</label>
+                            <input type="number" id="asc-pet-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()">
+                        </div>
+                        <div class="calc-row-input">
+                            <label for="asc-pet-exp">Pet Summon Exp:</label>
+                            <div class="pet-flex-center" style="display: flex; align-items: center;">
+                                <input type="number" id="asc-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('pet'); updateWeekly()">
+                                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-pet-max">3</span></span>
+                            </div>
+                        </div>
+                        <div class="calc-row-input">
+                            <label for="asc-pet-inv">Eggshells:</label>
+                            <input type="text" id="asc-pet-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
+                        </div>
+                    </div>
 
-    <hr class="pet-hr" style="margin: 10px 0;">
+                    <hr class="pet-hr" style="margin: 10px 0;">
 
-    <div class="pet-block" style="border: none; padding: 0; margin: 0;">
-        <div class="calc-row-input">
-            <label for="asc-mount-lv">Mount Summon Lv:</label>
-            <input type="number" id="asc-mount-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()">
-        </div>
-        <div class="calc-row-input">
-            <label for="asc-mount-exp">Mount Summon Exp:</label>
-            <div class="pet-flex-center" style="display: flex; align-items: center;">
-                <input type="number" id="asc-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('mount'); updateWeekly()">
-                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-mount-max">16</span></span>
-            </div>
-        </div>
-        <div class="calc-row-input">
-            <label for="asc-mount-inv">Mount Keys:</label>
-            <input type="text" id="asc-mount-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
-        </div>
-    </div>
+                    <div class="pet-block" style="border: none; padding: 0; margin: 0;">
+                        <div class="calc-row-input">
+                            <label for="asc-mount-lv">Mount Summon Lv:</label>
+                            <input type="number" id="asc-mount-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()">
+                        </div>
+                        <div class="calc-row-input">
+                            <label for="asc-mount-exp">Mount Summon Exp:</label>
+                            <div class="pet-flex-center" style="display: flex; align-items: center;">
+                                <input type="number" id="asc-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('mount'); updateWeekly()">
+                                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-mount-max">16</span></span>
+                            </div>
+                        </div>
+                        <div class="calc-row-input">
+                            <label for="asc-mount-inv">Mount Keys:</label>
+                            <input type="text" id="asc-mount-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
+                        </div>
+                    </div>
 
                     <hr class="pet-hr" style="margin: 15px 0;">
 
@@ -975,6 +949,35 @@ const HTML_WEEKLY = `
                     <div class="calc-line"><span class="calc-label">Skill</span><div class="calc-val-group" id="asc-res-skill" style="font-weight: bold; color: #ffeb3b;">--</div></div>
                     <div class="calc-line"><span class="calc-label">Pet</span><div class="calc-val-group" id="asc-res-pet" style="font-weight: bold; color: #ffeb3b;">--</div></div>
                     <div class="calc-line"><span class="calc-label">Mount</span><div class="calc-val-group" id="asc-res-mount" style="font-weight: bold; color: #ffeb3b;">--</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="weekly-tab-daily" style="display: none;">
+            <div class="daily-card card-compact">
+                <div class="daily-card-header strip-blue">
+                    <span class="daily-header-title">DUNGEON REWARDS</span>
+                </div>
+                <div class="daily-card-body" id="daily-rewards-container">
+                    <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="res-hammer-group"></div></div>
+                    <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="res-gold-group"></div></div>
+                    <div class="calc-line"><span class="calc-label">Green Ticket</span><div class="calc-val-group" id="res-ticket-group"></div></div>
+                    <div class="calc-line"><span class="calc-label">Eggshell</span><div class="calc-val-group" id="res-eggshell-group"></div></div>
+                    <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="res-potion-group"></div></div>
+                </div>
+            </div>
+
+            <div class="daily-card card-compact">
+                <div class="daily-card-header strip-green">
+                    <span class="daily-header-title">TOTAL DAILY INCOME</span>
+                </div>
+                <div class="daily-card-body" id="calc-res-4">
+                    <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="res-tot-hammer"></div></div>
+                    <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="res-tot-gold"></div></div>
+                    <div class="calc-line"><span class="calc-label">Gold after Hammering&nbsp;<button class="btn-info" id="btn-daily-info" style="vertical-align: middle; margin-bottom: 2px;">i</button></span><div class="calc-val-group" id="res-tot-grand"></div></div>
+                    <div class="calc-line"><span class="calc-label">Skill Summoned</span><div class="calc-val-group" id="res-skill-cards"></div></div>
+                    <div class="calc-line"><span class="calc-label">Egg</span><div class="calc-val-group" id="res-tot-egg"></div></div>                
+                    <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="res-tot-potion"></div></div>
                 </div>
             </div>
         </div>
@@ -993,6 +996,59 @@ const HTML_WEEKLY = `
                     <div class="calc-line"><span class="calc-label">Mount Key</span><div class="calc-val-group" id="league-base-mountkey"></div></div>
                 </div>
             </div>
+            
+            <div class="daily-card card-compact">
+                <div class="daily-card-body" style="padding: 12px 15px;">
+                    <div style="display: flex; margin-bottom: 8px; padding: 0 10px;">
+                        <div style="flex: 0 0 26px;"></div> <div style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 700; color: #ffffff; font-size: 0.8rem; text-transform: uppercase;">League</div>
+                        <div style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 700; color: #ffffff; font-size: 0.8rem; text-transform: uppercase;">War</div>
+                        <div style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 700; color: #ffffff; font-size: 0.8rem; text-transform: uppercase;">Indiv</div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
+                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/fm_hammer.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
+                        <div id="bd-league-hammer" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-war-hammer" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-indiv-hammer" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
+                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/fm_gold.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
+                        <div id="bd-league-gold" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-war-gold" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-indiv-gold" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
+                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/green_ticket.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
+                        <div id="bd-league-ticket" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-war-ticket" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-indiv-ticket" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
+                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/eggshell.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
+                        <div id="bd-league-eggshell" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-war-eggshell" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-indiv-eggshell" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
+                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/red_potion.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
+                        <div id="bd-league-potion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-war-potion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-indiv-potion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
+                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/mount_key.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
+                        <div id="bd-league-mountkey" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-war-mountkey" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-indiv-mountkey" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="daily-card card-compact">
                 <div class="daily-card-header strip-green">
                     <span class="daily-header-title">REWARDS BREAKDOWN</span>
@@ -1327,18 +1383,25 @@ const HTML_SUMMON = `
         </div>
 
         <div id="view-summon-skill">
-            
             <div class="daily-card" style="margin: 0 0 15px 0;">
                 <div class="daily-card-body" style="padding: 12px 15px;">
                     <div class="pet-block" style="border: none; padding: 0; margin: 0;">
                         <div class="calc-row-input">
                             <label>Summon Lv:</label>
-                            <input type="number" id="sum-skill-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('skill'); updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, false); updateSummonCap('skill'); updateSummonCalc('skill')">
+                            <div style="display: flex; gap: 6px;">
+                                <select id="sum-skill-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateSummonCap('skill'); updateSummonCalc('skill')">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="sum-skill-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('skill'); updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, false); updateSummonCap('skill'); updateSummonCalc('skill')">
+                            </div>
                         </div>
                         <div class="calc-row-input">
                             <label>Summon Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="sum-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateSummonCap('skill'); updateSummonCalc('skill')">
+                                <input type="number" id="sum-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateSummonCap('skill'); updateSummonCalc('skill')" onblur="validateExpOnBlur('skill'); updateSummonCalc('skill')">
                                 <span class="calc-label pet-label-sub">/ <span id="sum-skill-max">10</span></span>
                             </div>
                         </div>
@@ -1348,7 +1411,15 @@ const HTML_SUMMON = `
                         </div>
                         <div class="calc-row-input">
                             <label>Target Lv:&nbsp; <button class="btn-info" onclick="openSummonProbModal('skill')" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
-                            <input type="number" id="sum-skill-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('skill')">
+                            <div style="display: flex; gap: 6px;">
+                                <select id="sum-skill-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateSummonCalc('skill')">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="sum-skill-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('skill')">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1372,7 +1443,6 @@ const HTML_SUMMON = `
                     <div class="daily-header-title">Expected Yield & Probability</div>
                 </div>
                 <div class="daily-card-body" style="padding: 12px 15px;">
-                    
                     <div class="calc-row-input" style="margin-bottom: 15px; align-items: center;">
                         <div style="flex: 1; line-height: 1.2;">
                             <label style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000000; -webkit-text-stroke: 0px; display: block; margin-bottom: 2px;">Target Probability (%)</label>
@@ -1382,37 +1452,41 @@ const HTML_SUMMON = `
                             <input type="number" id="sum-skill-prob" class="calc-input-chunky" style="width: 70px; text-align: center;" value="90" min="0" max="99" oninput="validateProbability(this); updateSummonCalc('skill')">
                         </div>
                     </div>
-
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 10px 15px; background: #e6e9ed; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
                         <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">Skills Summoned</span>
                         <div id="sum-skill-total-yield" style="text-align: right;">-</div>
                     </div>
-
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 4px;">
-                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: left; -webkit-text-stroke: 0px; line-height: 1.3;">Yield</div>
-                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: right; -webkit-text-stroke: 0px; line-height: 1.3;">Cost to Reach Target %</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; align-items: center;">
+                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: left; -webkit-text-stroke: 0px; line-height: 1.3;">
+                            Yield <button id="btn-sum-skill-yield-info" class="btn-info" onclick="openSummonYieldModal('skill')" style="display:none; vertical-align: middle; margin-bottom: 2px; margin-left: 4px;">i</button>
+                        </div>
+                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: right; -webkit-text-stroke: 0px; line-height: 1.3;">How Many More Skills to Reach Target %</div>
                     </div>
-                    
                     <div id="sum-skill-yield-container"></div>
-                    
                 </div>
             </div>
-            
         </div>
 
         <div id="view-summon-pet" style="display: none;">
-            
             <div class="daily-card" style="margin: 0 0 15px 0;">
                 <div class="daily-card-body" style="padding: 12px 15px;">
                     <div class="pet-block" style="border: none; padding: 0; margin: 0;">
                         <div class="calc-row-input">
                             <label>Summon Lv:</label>
-                            <input type="number" id="sum-pet-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('pet'); updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, false); updateSummonCap('pet'); updateSummonCalc('pet')">
+                            <div style="display: flex; gap: 6px;">
+                                <select id="sum-pet-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateSummonCap('pet'); updateSummonCalc('pet')">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="sum-pet-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('pet'); updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, false); updateSummonCap('pet'); updateSummonCalc('pet')">
+                            </div>
                         </div>
                         <div class="calc-row-input">
                             <label>Summon Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="sum-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateSummonCap('pet'); updateSummonCalc('pet')">
+                                <input type="number" id="sum-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateSummonCap('pet'); updateSummonCalc('pet')" onblur="validateExpOnBlur('pet'); updateSummonCalc('pet')">
                                 <span class="calc-label pet-label-sub">/ <span id="sum-pet-max">3</span></span>
                             </div>
                         </div>
@@ -1422,7 +1496,15 @@ const HTML_SUMMON = `
                         </div>
                         <div class="calc-row-input">
                             <label>Target Lv:&nbsp; <button class="btn-info" onclick="openSummonProbModal('pet')" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
-                            <input type="number" id="sum-pet-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('pet')">
+                            <div style="display: flex; gap: 6px;">
+                                <select id="sum-pet-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateSummonCalc('pet')">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="sum-pet-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('pet')">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1446,7 +1528,6 @@ const HTML_SUMMON = `
                     <div class="daily-header-title">Expected Yield & Probability</div>
                 </div>
                 <div class="daily-card-body" style="padding: 12px 15px;">
-                    
                     <div class="calc-row-input" style="margin-bottom: 15px; align-items: center;">
                         <div style="flex: 1; line-height: 1.2;">
                             <label style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000000; -webkit-text-stroke: 0px; display: block; margin-bottom: 2px;">Target Probability (%)</label>
@@ -1456,32 +1537,36 @@ const HTML_SUMMON = `
                             <input type="number" id="sum-pet-prob" class="calc-input-chunky" style="width: 70px; text-align: center;" value="90" min="0" max="99" oninput="validateProbability(this); updateSummonCalc('pet')">
                         </div>
                     </div>
-
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 10px 15px; background: #e6e9ed; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
                         <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">Eggs Summoned</span>
                         <div id="sum-pet-total-yield" style="text-align: right;">-</div>
                     </div>
-
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 4px;">
-                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: left; -webkit-text-stroke: 0px; line-height: 1.3;">Yield</div>
-                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: right; -webkit-text-stroke: 0px; line-height: 1.3;">Cost to Reach Target %</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; align-items: center;">
+                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: left; -webkit-text-stroke: 0px; line-height: 1.3;">
+                            Yield <button id="btn-sum-pet-yield-info" class="btn-info" onclick="openSummonYieldModal('pet')" style="display:none; vertical-align: middle; margin-bottom: 2px; margin-left: 4px;">i</button>
+                        </div>
+                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: right; -webkit-text-stroke: 0px; line-height: 1.3;">How Many More Eggs to Reach Target %</div>
                     </div>
-                    
                     <div id="sum-pet-yield-container"></div>
-                    
                 </div>
             </div>
-            
         </div>
 
         <div id="view-summon-mount" style="display: none;">
-            
             <div class="daily-card" style="margin: 0 0 15px 0;">
                 <div class="daily-card-body" style="padding: 12px 15px;">
                     <div class="pet-block" style="border: none; padding: 0; margin: 0;">
                         <div class="calc-row-input">
                             <label>Summon Lv:</label>
-                            <input type="number" id="sum-mount-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('mount'); updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, false); updateSummonCap('mount'); updateSummonCalc('mount')">
+                            <div style="display: flex; gap: 6px;">
+                                <select id="sum-mount-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateSummonCap('mount'); updateSummonCalc('mount')">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="sum-mount-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('mount'); updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, false); updateSummonCap('mount'); updateSummonCalc('mount')">
+                            </div>
                         </div>
                         <div class="calc-row-input">
                             <label>Summon Exp:</label>
@@ -1496,7 +1581,15 @@ const HTML_SUMMON = `
                         </div>
                         <div class="calc-row-input">
                             <label>Target Lv:&nbsp; <button class="btn-info" onclick="openSummonProbModal('mount')" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
-                            <input type="number" id="sum-mount-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('mount')">
+                            <div style="display: flex; gap: 6px;">
+                                <select id="sum-mount-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateSummonCalc('mount')">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="sum-mount-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('mount')">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1511,7 +1604,6 @@ const HTML_SUMMON = `
                         <span class="merge-res-label">Summon Lv</span>
                         <div class="merge-res-val" id="sum-mount-res-lv" style="display: flex; flex-direction: column; align-items: flex-end;">-</div>
                     </div>
-                    
                     <div id="sum-mount-milestones-container"></div>
                 </div>
             </div>
@@ -1521,7 +1613,6 @@ const HTML_SUMMON = `
                     <div class="daily-header-title">Expected Yield & Probability</div>
                 </div>
                 <div class="daily-card-body" style="padding: 12px 15px;">
-                    
                     <div class="calc-row-input" style="margin-bottom: 15px; align-items: center;">
                         <div style="flex: 1; line-height: 1.2;">
                             <label style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000000; -webkit-text-stroke: 0px; display: block; margin-bottom: 2px;">Target Probability (%)</label>
@@ -1531,24 +1622,20 @@ const HTML_SUMMON = `
                             <input type="number" id="sum-mount-prob" class="calc-input-chunky" style="width: 70px; text-align: center;" value="90" min="0" max="99" oninput="validateProbability(this); updateSummonCalc('mount')">
                         </div>
                     </div>
-
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 10px 15px; background: #e6e9ed; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05);">
                         <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">Mounts Summoned</span>
                         <div id="sum-mount-total-yield" style="text-align: right;">-</div>
                     </div>
-
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 4px;">
-                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: left; -webkit-text-stroke: 0px; line-height: 1.3;">Yield</div>
-                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: right; -webkit-text-stroke: 0px; line-height: 1.3;">Cost to Reach Target %</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; align-items: center;">
+                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: left; -webkit-text-stroke: 0px; line-height: 1.3;">
+                            Yield <button id="btn-sum-mount-yield-info" class="btn-info" onclick="openSummonYieldModal('mount')" style="display:none; vertical-align: middle; margin-bottom: 2px; margin-left: 4px;">i</button>
+                        </div>
+                        <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: right; -webkit-text-stroke: 0px; line-height: 1.3;">How Many More Mounts to Reach Target %</div>
                     </div>
-                    
                     <div id="sum-mount-yield-container"></div>
-                    
                 </div>
             </div>
-            
         </div>
-        
     </div>
 </div>
 `;
@@ -1643,7 +1730,7 @@ const HTML_HELP = `
                     <span class="help-header-text">4. Review Stats & Yields</span>
                     <ul class="help-body-text help-ul">
                         <li><b>Overall Bonuses:</b> Open the <b>Stats</b> tab for a complete summary of all the stat boosts your current tech setup provides.</li>
-                        <li><b>Calculate Yields:</b> Head to the <b>Daily & Weekly Gain</b> tabs and input your in-game progression (like Dungeon levels or League ranks). You can see the expected value of the resources that you get. </li>
+                        <li><b>Calculate Yields:</b> Head to the <b>Weekly Gain</b> tabs and input your in-game progression (like Dungeon levels or League ranks). You can see the expected value of the resources that you get. </li>
                     </ul>
                 </div>
 
@@ -1665,15 +1752,13 @@ const HTML_HELP = `
                     <ul class="help-body-text help-ul" style="padding-left: 15px !important; margin-top: 0 !important;">
                         <li><b>Stats:</b> A complete summary of the overall boosts provided by each of your tech.</li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Daily Gain:</b> Calculates your daily resource generation from dungeons, idle gold, and idle hammers.</li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Weekly Gain:</b> Calculates resources earned from the weekly league and clan war, plus your total weekly haul (which includes 7x your Daily Gain).</li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>Equipment:</b> View expected HP and damage. See exactly how increasing your max item level affects the item levels you pull, your overall power, and your economy.</li>
+                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
+                        <li><b>Weekly Gain:</b> Calculates resources earned from the daily dungeons, weekly league and clan war, plus your total weekly haul (which includes 7x your Daily Gain).</li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>Summon Calc:</b> Calculate how many resources you need to reach certain level of Skill / Egg / Pet summoning and theirs expected yield.</li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Forge Calc:</b> Crunch the numbers to see the value of your hammer and stuffs related to Forge upgrades.</li>
+                        <li><b>Forge Calc:</b> Calculate how much cost and time needed to reach target Forge Lv. See how much gold are your hammers worth or how many hammers are needed to reach your target gold.</li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>War Calc:</b> Estimate your expected clan war points based on the resources you plan to spend.</li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
@@ -1746,8 +1831,6 @@ const HTML_HELP = `
         <span>Old Version</span>
     </a>
 
-
-
                 <div class="help-card-inner" style="text-align: center;">
                     <span class="help-header-text">Special Thanks</span>
                     <div class="help-body-text"><b>Nienna</b> and <b>Hibiscus</b></div>
@@ -1782,9 +1865,6 @@ function loadAllTemplates() {
     const cEgg = document.getElementById('container-egg');
     if (cEgg) cEgg.innerHTML = HTML_EGG;
 
-    const cDaily = document.getElementById('container-daily');
-    if (cDaily) cDaily.innerHTML = HTML_DAILY;
-
     const cWeekly = document.getElementById('container-weekly');
     if (cWeekly) cWeekly.innerHTML = HTML_WEEKLY;
 
@@ -1795,5 +1875,4 @@ function loadAllTemplates() {
     if (cHelp) cHelp.innerHTML = HTML_HELP;
 }
 
-// Run immediately when this script loads
 loadAllTemplates();

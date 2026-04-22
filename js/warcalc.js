@@ -12,11 +12,11 @@ function initWarCalc() {
 
     const forgeSelect = document.getElementById('wc-forge-lv');
     if (forgeSelect && forgeSelect.options.length === 0) {
-        for (let i = 1; i <= 35; i++) { // UPDATED: Now loops to 35
+        for (let i = 1; i <= 35; i++) { 
             const opt = document.createElement('option');
             opt.value = i;
             opt.text = i;
-            if (i === 20) opt.selected = true; // Default to 20
+            if (i === 20) opt.selected = true; 
             forgeSelect.appendChild(opt);
         }
     }
@@ -178,6 +178,58 @@ function calcWarSkillPulls(startLv, startExp, totalPulls) {
     return results;
 }
 
+function calcWarSummonYields(startLv, startExp, startAsc, totalPulls, dataTable) {
+    let results = [0, 0, 0, 0, 0, 0];
+    let cLv = parseInt(startLv) || 1;
+    let cExp = parseFloat(startExp) || 0;
+    let cAsc = parseInt(startAsc) || 0;
+    let rem = parseFloat(totalPulls) || 0;
+
+    while (rem > 0) {
+        let levelData = dataTable[cLv] || dataTable[100];
+        let maxExp = levelData[0];
+
+        if (maxExp === "MAX" || maxExp === 0 || maxExp === undefined) {
+            if (cAsc < 3) {
+                cAsc++;
+                cLv = 1;
+                cExp = 0;
+                continue; 
+            } else {
+                for (let i = 0; i < 6; i++) {
+                    results[i] += rem * ((levelData[i + 1] || 0) / 100);
+                }
+                break;
+            }
+        }
+
+        let expNeeded = Math.max(0, maxExp - cExp);
+        let applied = Math.min(rem, expNeeded);
+
+        if (applied > 0) {
+            for (let i = 0; i < 6; i++) {
+                results[i] += applied * ((levelData[i + 1] || 0) / 100);
+            }
+            rem -= applied;
+            cExp += applied;
+        }
+
+        if (cExp >= maxExp) {
+            if (cLv < 100) {
+                cLv++;
+                cExp = 0;
+            } else if (cAsc < 3) {
+                cAsc++;
+                cLv = 1;
+                cExp = 0;
+            } else {
+                cExp = 0; 
+            }
+        }
+    }
+    return results;
+}
+
 function updateWarCalc() {
     updateWarMountExpCap();
     updateWarSkillExpCap();
@@ -220,10 +272,10 @@ function updateWarCalc() {
         return { before: beforeLvl, after: afterLvl };
     };
 
-    const skillPointsMap = [125, 150, 175, 200, 225, 250];
-    const eggHatchPointsMap = [200, 800, 1600, 3200, 6400, 12800]; 
-    const eggMergePointsMap = [50, 200, 400, 800, 1600, 3200];
-    const mountPointsMap = [50, 100, 250, 500, 1500, 2500]; 
+    const skillPointsMap = [125, 125, 125, 125, 125, 125];
+    const eggHatchPointsMap = [400, 1600, 3200, 6400, 12800, 25600]; 
+    const eggMergePointsMap = [1250, 1250, 1250, 1250, 1250, 1250];
+    const mountPointsMap = [600, 600, 600, 600, 600, 600]; 
     const colors = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
 
     // 1. FORGE CALCULATION
@@ -267,18 +319,20 @@ function updateWarCalc() {
     const warDungeon = dungeonKeys * 3000; 
 
     // --- 2. SKILL SUMMON CALCULATION ---
+    const skillAsc = parseInt(document.getElementById('wc-skill-asc')?.value || 0); // NEW
     const techTicket = getTechVal('spt', 'ticket');
+    
     const costB = 200 * (1 - (techTicket.before * 1) / 100);
     const costA = 200 * (1 - (techTicket.after * 1) / 100);
 
     const totalSkillsB = Math.floor(tickets / (costB || 200)) * 5;
     const totalSkillsA = Math.floor(tickets / (costA || 200)) * 5;
 
-    const warSkillYieldB = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(skillLv, skillExp, totalSkillsB) : [0,0,0,0,0,0];
-    const warSkillYieldA = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(skillLv, skillExp, totalSkillsA) : [0,0,0,0,0,0];
+    const warSkillYieldB = calcWarSummonYields(skillLv, skillExp, skillAsc, totalSkillsB, SKILL_LEVEL_DATA);
+    const warSkillYieldA = calcWarSummonYields(skillLv, skillExp, skillAsc, totalSkillsA, SKILL_LEVEL_DATA);
 
     let warSkillB = 0, warSkillA = 0;
-    for (let i=0; i<6; i++) {
+    for (let i = 0; i < 6; i++) {
         warSkillB += warSkillYieldB[i] * skillPointsMap[i];
         warSkillA += warSkillYieldA[i] * skillPointsMap[i];
     }
@@ -287,18 +341,34 @@ function updateWarCalc() {
         skillB: warSkillYieldB, skillA: warSkillYieldA,
     };
 
-    // --- 2.5 SKILL UPGRADE CALCULATION (Fractional Math) ---
+    // --- 2.5 SKILL UPGRADE CALCULATION ---
     let skillUpgradePtsB = 0; let skillUpgradePtsA = 0;
-    
-    let historicalSkills = skillExp;
-    for (let i = 1; i < skillLv; i++) {
+
+    let expPerAsc = 0;
+    for (let i = 1; i <= 100; i++) {
         if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[i] && SKILL_LEVEL_DATA[i][0] !== "MAX") {
-            historicalSkills += SKILL_LEVEL_DATA[i][0];
+            expPerAsc += SKILL_LEVEL_DATA[i][0];
         }
     }
-    
-    const baseYields = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(1, 0, historicalSkills) : [0,0,0,0,0,0];
-    const UPGRADE_POINTS = [125, 150, 175, 200, 225, 250];
+
+    let historicalPulls = (skillAsc * expPerAsc);
+    for (let i = 1; i < skillLv; i++) {
+        if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[i] && SKILL_LEVEL_DATA[i][0] !== "MAX") {
+            historicalPulls += SKILL_LEVEL_DATA[i][0];
+        }
+    }
+    historicalPulls += skillExp;
+
+    const baseYields = calcWarSummonYields(1, 0, 0, historicalPulls, SKILL_LEVEL_DATA);
+
+    const config = { db: typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : null };
+    let phasesB = typeof simulatePhaseFlow === 'function' ? simulatePhaseFlow('skill', config, skillLv, skillExp, skillAsc, totalSkillsB, costB, 0, 0, 1) : [];
+    let phasesA = typeof simulatePhaseFlow === 'function' ? simulatePhaseFlow('skill', config, skillLv, skillExp, skillAsc, totalSkillsA, costA, 0, 0, 1) : [];
+
+    if (!phasesB.length) phasesB = [{ asc: skillAsc, yields: window.currentWarYields.skillB || [0,0,0,0,0,0] }];
+    if (!phasesA.length) phasesA = [{ asc: skillAsc, yields: window.currentWarYields.skillA || [0,0,0,0,0,0] }];
+
+    const UPGRADE_POINTS = [125, 125, 125, 125, 125, 125];
 
     const getFracLvl = (amt) => {
         let cur = 1; 
@@ -315,7 +385,7 @@ function updateWarCalc() {
                 else if (cur >= 15 && cur <= 21) cost = 5;
                 else if (cur >= 22 && cur <= 25) cost = 6;
                 else if (cur >= 26 && cur <= 29) cost = 7;
-                else cost = 8; // Lv 30+
+                else cost = 8; 
             }
 
             if (rem >= cost) { 
@@ -325,21 +395,36 @@ function updateWarCalc() {
                 return cur + (rem / cost); 
             }
         }
-        return 100; 
+        return 100.0; 
     };
 
-    for (let i = 0; i < 6; i++) {
-        const baseAmt = baseYields[i] / 3;
-        const bAmt = (baseYields[i] + (window.currentWarYields.skillB[i] || 0)) / 3;
-        const aAmt = (baseYields[i] + (window.currentWarYields.skillA[i] || 0)) / 3;
+    const ascMap = new Set();
+    phasesB.forEach(p => ascMap.add(p.asc));
+    phasesA.forEach(p => ascMap.add(p.asc));
+    const ascKeys = Array.from(ascMap).sort((a,b)=>a-b);
 
-        const fBase = getFracLvl(baseAmt);
-        const fB = getFracLvl(bAmt);
-        const fA = getFracLvl(aAmt);
+    ascKeys.forEach(asc => {
+        let pB = phasesB.find(p => p.asc === asc) || { yields: [0,0,0,0,0,0] };
+        let pA = phasesA.find(p => p.asc === asc) || { yields: [0,0,0,0,0,0] };
+        
+        const isBasePhase = (asc === skillAsc);
 
-        skillUpgradePtsB += (fB - fBase) * UPGRADE_POINTS[i] * 3;
-        skillUpgradePtsA += (fA - fBase) * UPGRADE_POINTS[i] * 3;
-    }
+        for (let i = 0; i < 6; i++) {
+            let copiesBase = isBasePhase ? (baseYields[i] / 3) : 0;
+            let copiesB = copiesBase + (pB.yields[i] / 3);
+            let copiesA = copiesBase + (pA.yields[i] / 3);
+
+            let fracBase = getFracLvl(copiesBase);
+            let fracB = getFracLvl(copiesB);
+            let fracA = getFracLvl(copiesA);
+
+            let gainedB = Math.max(0, fracB - fracBase);
+            let gainedA = Math.max(0, fracA - fracBase);
+
+            skillUpgradePtsB += gainedB * UPGRADE_POINTS[i] * 3;
+            skillUpgradePtsA += gainedA * UPGRADE_POINTS[i] * 3;
+        }
+    });
 
     const rndUpgradePtsB = Math.round(skillUpgradePtsB);
     const rndUpgradePtsA = Math.round(skillUpgradePtsA);
@@ -356,6 +441,7 @@ function updateWarCalc() {
     }
 
     // --- 4. MOUNT SUMMON CALCULATION ---
+    const mountAsc = parseInt(document.getElementById('wc-mount-asc')?.value || 0); // NEW
     const techMountCost = getTechVal('power', 'mount_cost');
     const techMountChance = getTechVal('power', 'mount_chance');
     
@@ -368,8 +454,8 @@ function updateWarCalc() {
     const mYieldB = mPullsB * (1 + (techMountChance.before * 2) / 100);
     const mYieldA = mPullsA * (1 + (techMountChance.after * 2) / 100);
 
-    const mountsB = typeof calcWarMountPulls === 'function' ? calcWarMountPulls(mntLv, mntExp, mYieldB) : [0,0,0,0,0,0];
-    const mountsA = typeof calcWarMountPulls === 'function' ? calcWarMountPulls(mntLv, mntExp, mYieldA) : [0,0,0,0,0,0];
+    const mountsB = calcWarSummonYields(mntLv, mntExp, mountAsc, mYieldB, MOUNT_LEVEL_DATA);
+    const mountsA = calcWarSummonYields(mntLv, mntExp, mountAsc, mYieldA, MOUNT_LEVEL_DATA);
 
     window.currentWarYields.mountB = mountsB;
     window.currentWarYields.mountA = mountsA;
@@ -377,15 +463,13 @@ function updateWarCalc() {
     window.currentWarYields.mountPullsA = mPullsA;
 
     let warMountB = 0, warMountA = 0;
-    for (let i=0; i<6; i++) {
+    for (let i = 0; i < 6; i++) {
         warMountB += mountsB[i] * mountPointsMap[i];
         warMountA += mountsA[i] * mountPointsMap[i];
     }
     const warMountMergeSummonB = warMountB;
     const warMountMergeSummonA = warMountA;
 
-    // --- DAILY BREAKDOWN ---
-    // NEW: Add warForgeGems to Day 2 and Day 4
     const d1B = warForgeB + warSkillB + rndUpgradePtsB + warTech;
     const d1A = warForgeA + warSkillA + rndUpgradePtsA + warTech;
 
@@ -463,7 +547,6 @@ function updateWarCalc() {
         `;
     };
 
-    // 1. RENDER SUMMARY
     let summaryHtml = `
     <div style="display: flex; flex-direction: column; width: 100%; box-sizing: border-box; padding: 0;">
         ${renderWarRow("Day 1", d1B, d1A)}
@@ -510,7 +593,6 @@ function updateWarCalc() {
         </div>
     </div>`;
 
-    // 2. RENDER BREAKDOWN 
     let resHtml = `
     <div style="display: flex; flex-direction: column; width: 100%; box-sizing: border-box; padding: 0;">
         ${customTotalRowHtml}
