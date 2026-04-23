@@ -671,11 +671,16 @@ function calculateUniversalYieldTable(type, config, sLv, sExp, sAsc, pullsB, pul
 
     const infoBtn = document.getElementById(`btn-sum-${type}-yield-info`);
     if (infoBtn) {  
-        const currentAsc = parseInt(sAsc, 10) || 0;
-        const targetAscB = parseInt(projB_Asc, 10) || 0;
-        const targetAscA = parseInt(projA_Asc, 10) || 0;
+        const activePhasesB = phasesB.filter(p => p.pullsUsed > 0.1);
+        const activePhasesA = phasesA.filter(p => p.pullsUsed > 0.1);
+        
+        let minAsc = 3, maxAsc = 0;
+        [...activePhasesB, ...activePhasesA].forEach(p => {
+            if (p.asc > maxAsc) maxAsc = p.asc;
+            if (p.asc < minAsc) minAsc = p.asc;
+        });
 
-        if (targetAscB > currentAsc || targetAscA > currentAsc) {
+        if (minAsc < maxAsc) {
             infoBtn.style.setProperty('display', 'inline-block', 'important');
         } else {
             infoBtn.style.setProperty('display', 'none', 'important');

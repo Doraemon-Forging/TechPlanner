@@ -812,6 +812,7 @@ const HTML_WEEKLY = `
                             <option value="S-Tier" selected>S-Tier</option>
                             <option value="A-Tier">A-Tier</option>
                             <option value="B-Tier">B-Tier</option>
+                            <option value="B-Tier">C-Tier</option>
                             <option value="None">None</option>
                         </select>
                         <select id="weekly-war-win" class="war-select select-small" style="width: 65px;" onchange="updateWeekly()">

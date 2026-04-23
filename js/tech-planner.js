@@ -40,20 +40,17 @@ function isUnlocked(id, lvls) { const p = getParents(id); return p.length === 0 
 function switchTree(key) {
     if (key === 'stats') return; 
     activeTreeKey = key;
-    
-    // Update Tabs
+
     const update = (id, check) => { const b = document.getElementById(id); if(b) check ? b.classList.add('active') : b.classList.remove('active'); };
     update('tab-forge', key === 'forge'); update('tab-spt', key === 'spt'); update('tab-power', key === 'power');
     update('mtab-forge', key === 'forge'); update('mtab-spt', key === 'spt'); update('mtab-power', key === 'power');
 
-    // Dynamic Theme
     const leftPane = document.querySelector('.pane.left-pane');
     if (leftPane) {
         leftPane.classList.remove('theme-forge', 'theme-spt', 'theme-power');
         leftPane.classList.add(`theme-${key}`);
     }
 
-    // Display
     const treeCont = document.getElementById('tree-container');
     if (treeCont) scrollPositions[key] = treeCont.scrollTop;
     treeCont.style.display = 'flex';
@@ -71,8 +68,7 @@ function renderTree(key) {
     const data = TREES[key];
     for (let t = 1; t <= 5; t++) {
         const block = document.createElement('div'); block.className = 'tier-block';
-        
-        // Tier Header
+
         const header = document.createElement('div'); header.className = 'tier-header';
         header.innerHTML = `<div class="tier-title">TIER ${toRoman(t)}</div><button class="tier-max-btn" onclick="event.stopPropagation(); maxTier('${key}', ${t})">MAX</button>`;
         block.appendChild(header);
@@ -118,8 +114,7 @@ function maxTier(tree, tier) {
 function calcState(customQueue) {
     const levels = { ...setupLevels };
     let totalMin = 0, history = [], speed = 0, totalPotions = 0, totalSellBonusCur = 0, currentDiscount = 0;
-    
-    // Dynamic Multipliers: Now reads from DATA.JS!
+
     Object.keys(setupLevels).forEach(id => { const m = getMeta(id); if (m && m.n === "Eq. Sell Price") totalSellBonusCur += (setupLevels[id] * (m.val !== undefined ? m.val : 1)); });
     Object.keys(levels).forEach(id => { const m = getMeta(id); if (m && m.speed) speed += m.speed * levels[id]; if (m && m.isDiscount) currentDiscount += levels[id] * (m.val !== undefined ? m.val : 2); });
     if (speed > 1) speed = 1; 
@@ -478,15 +473,9 @@ function handleClick(id, isRight) {
                     let insertedIndex = insertModeIndex; 
                     
                     planQueue.splice(insertedIndex, 0, { type: 'node', id }); 
-                    insertModeIndex = -1; 
                     
-                    ['capsule-logs', 'float-logs', 'float-tree'].forEach(elId => {
-                        const el = document.getElementById(elId);
-                        if (el) el.classList.remove('is-inserting');
-                    });
-                    
-                    setMode('plan'); 
-                    
+                    cancelMove(); 
+
                     if (window.innerWidth <= 768 && typeof switchMobileView === 'function') {
                         switchMobileView('logs');
                     }
@@ -554,11 +543,13 @@ function setMode(m) {
     
     if (m !== 'plan') {
         insertModeIndex = -1;
-        if (typeof cancelDeleteMode === 'function') cancelDeleteMode(); // Exits delete mode safely
+        if (typeof cancelDeleteMode === 'function') cancelDeleteMode(); 
         ['capsule-logs', 'float-logs', 'float-tree'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('is-inserting');
         });
+
+        document.querySelectorAll('.dynamic-insert-cancel-btn').forEach(btn => btn.remove());
     }
     const updateBtn = (id, isActive) => {
         const el = document.getElementById(id);
@@ -584,7 +575,6 @@ function delStep(i) {
     pushHistory(); planQueue = q; expandedLogIndex = -1; updateCalculations();
 }
 
-// --- SMART DROP LOGIC ---
 function startMove(idx) {
     movingStepIndex = idx;
     expandedLogIndex = -1; 
@@ -621,14 +611,31 @@ function startMove(idx) {
 function cancelMove() {
     movingStepIndex = -1;
     justMovedIndex = -1;
-    deleteModeActive = false; 
-    
+    deleteModeActive = false;
+    insertModeIndex = -1; 
+
     ['capsule-logs', 'float-logs', 'float-tree'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.classList.remove('is-moving');
+        if (el) {
+            el.classList.remove('is-moving');
+            el.classList.remove('is-inserting'); 
+        }
     });
-    
+
+    document.querySelectorAll('.dynamic-insert-cancel-btn').forEach(btn => btn.remove());
+
+    const updateBtn = (id) => {
+        const el = document.getElementById(id);
+        if (el) { el.innerHTML = "PLAN"; el.classList.remove('insert'); }
+    };
+    updateBtn('btn-plan');
+    updateBtn('btn-plan-mobile-new');
+
     updateCalculations();
+
+    if (window.innerWidth <= 768 && typeof switchMobileView === 'function') {
+        switchMobileView('logs');
+    }
 }
 
 function executeMove(targetIdx) {
@@ -714,9 +721,7 @@ function markDone(targetIdx, timestamp) {
         
         if (typeof syncMainDate === 'function') syncMainDate(localIso);
 
-        // --- SAFE VISUAL FEEDBACK & SCROLLING (HYBRID) ---
         setTimeout(() => {
-            // A. Safely scroll Schedule to top (Targets exact mobile & desktop containers)
             const wrappers = [
                 document.querySelector('.sidebar-scroll-wrapper'),
                 document.querySelector('.pane.right-pane-wrapper')
@@ -727,7 +732,6 @@ function markDone(targetIdx, timestamp) {
                 }
             });
             
-            // B. Double-Flash the Date Input Boxes
             const dateBoxes = document.querySelectorAll('#start-date, .cd-select');
             dateBoxes.forEach(box => {
                 box.classList.remove('ui-glow-success');
@@ -736,7 +740,6 @@ function markDone(targetIdx, timestamp) {
                 setTimeout(() => box.classList.remove('ui-glow-success'), 2600); 
             });
 
-            // C. Auto-scroll the Tree and Double-Flash the Node
             if (lastNodeId) {
                 const targetTree = lastNodeId.split('_')[0];
                 
@@ -747,7 +750,6 @@ function markDone(targetIdx, timestamp) {
                 setTimeout(() => {
                     const nodeEl = document.getElementById(lastNodeId);
                     if (nodeEl) {
-                        // HYBRID TREE SCROLLING
                         if (window.innerWidth <= 768) {
                             nodeEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
                         } else {
@@ -792,10 +794,12 @@ function activateInsert(idx) {
         if (el) el.classList.add('is-inserting');
     });
 
+    document.querySelectorAll('.dynamic-insert-cancel-btn').forEach(btn => btn.remove());
+
     const ftCapsule = document.querySelector('#float-tree .control-capsule');
-    if (ftCapsule && !ftCapsule.querySelector('.floating-cancel-btn')) {
+    if (ftCapsule) {
         const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'btn-move-action floating-cancel-btn';
+        cancelBtn.className = 'btn-move-action floating-cancel-btn dynamic-insert-cancel-btn';
         cancelBtn.onclick = (e) => { e.stopPropagation(); cancelMove(); };
         cancelBtn.innerHTML = '<img src="icons/icon_cancel.png" class="btn-icon" style="width:16px; height:16px; margin-right:6px; display:block; filter:none;"> CANCEL';
         ftCapsule.appendChild(cancelBtn);
@@ -870,14 +874,12 @@ function executeFullClear() {
 function activateDeleteMode() { 
     deleteModeActive = true; 
     expandedLogIndex = -1; 
-    
-    // Triggers the floating mobile CANCEL button
+
     ['capsule-logs', 'float-logs', 'float-tree'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('is-moving');
     });
-    
-    // We only need to override the color now. Your native CSS does the rest!
+
     if (!document.getElementById('delete-mode-styles')) {
         const style = document.createElement('style');
         style.id = 'delete-mode-styles';
