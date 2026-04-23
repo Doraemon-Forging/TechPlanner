@@ -430,7 +430,7 @@ function updateWarCalc() {
     const rndUpgradePtsA = Math.round(skillUpgradePtsA);
 
     // --- 3. TECH & HATCHING ---
-    const warTech = (techI*1000) + (techII*10000) + (techIII*30000) + (techIV*50000) + (techV*100000);
+    const warTech = (techI*920) + (techII*9000) + (techIII*26000) + (techIV*47800) + (techV*90700);
 
     let warEggHatch = 0, warEggMergeInput = 0, warMountMergeInput = 0;
     for (let i=0; i<6; i++) {
