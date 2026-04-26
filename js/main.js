@@ -288,17 +288,17 @@ function captureFullState() {
             league: getVal('weekly-league'), rank: getVal('weekly-rank'),
             warTier: getVal('weekly-war-tier'), warWin: getVal('weekly-war-win'),
             indiv: getVal('weekly-indiv'),
-            ascSkillLv: getVal('asc-skill-lv'), ascSkillExp: getVal('asc-skill-exp'), ascSkillInv: getVal('asc-skill-inv'),
-            ascPetLv: getVal('asc-pet-lv'), ascPetExp: getVal('asc-pet-exp'), ascPetInv: getVal('asc-pet-inv'),
-            ascMountLv: getVal('asc-mount-lv'), ascMountExp: getVal('asc-mount-exp'), ascMountInv: getVal('asc-mount-inv')
+            ascSkillAsc: getVal('asc-skill-asc'), ascSkillLv: getVal('asc-skill-lv'), ascSkillExp: getVal('asc-skill-exp'), ascSkillInv: getVal('asc-skill-inv'), ascSkillTargetAsc: getVal('asc-skill-target-asc'), ascSkillTargetLv: getVal('asc-skill-target-lv'),
+            ascPetAsc: getVal('asc-pet-asc'), ascPetLv: getVal('asc-pet-lv'), ascPetExp: getVal('asc-pet-exp'), ascPetInv: getVal('asc-pet-inv'), ascPetTargetAsc: getVal('asc-pet-target-asc'), ascPetTargetLv: getVal('asc-pet-target-lv'),
+            ascMountAsc: getVal('asc-mount-asc'), ascMountLv: getVal('asc-mount-lv'), ascMountExp: getVal('asc-mount-exp'), ascMountInv: getVal('asc-mount-inv'), ascMountTargetAsc: getVal('asc-mount-target-asc'), ascMountTargetLv: getVal('asc-mount-target-lv')
         },
         warCalcData: {
             forgeLv: getVal('wc-forge-lv'), forgeNodes: getVal('wc-forge-nodes'), forgeBonus: getVal('wc-forge-bonus'),
             hammer: getVal('wc-hammer'), forgeGem: getVal('wc-forge-gem'), dungeonKey: getVal('wc-dungeon-key'),
-            skillLv: getVal('wc-skill-lv'), skillExp: getVal('wc-skill-exp'),
+            skillAsc: getVal('wc-skill-asc'), skillLv: getVal('wc-skill-lv'), skillExp: getVal('wc-skill-exp'),
             ticket: getVal('wc-ticket'),
             techI: getVal('wc-tech-I'), techII: getVal('wc-tech-II'), techIII: getVal('wc-tech-III'), techIV: getVal('wc-tech-IV'), techV: getVal('wc-tech-V'),
-            mountKey: getVal('wc-mount-key'), mountLv: getVal('wc-mount-lv'), mountExp: getVal('wc-mount-exp'),
+            mountAsc: getVal('wc-mount-asc'), mountKey: getVal('wc-mount-key'), mountLv: getVal('wc-mount-lv'), mountExp: getVal('wc-mount-exp'),
             hatch:['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`wc-hatch-${c}`)),
             mergePet:['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`wc-merge-pet-${c}`)),
             mergeMount:['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`wc-merge-mount-${c}`))
@@ -343,45 +343,6 @@ function captureFullState() {
     };
 }
 
-function safeSetVal(id, val) { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; }
-function safeSyncDropdowns(isoDate, prefix) { 
-    if (!isoDate) return; 
-    const d = new Date(isoDate); 
-    if (isNaN(d.getTime())) return; 
-    
-    const monthVal = d.getFullYear() + '-' + d.getMonth();
-    const mEl = document.getElementById(prefix + '-month');
-    
-    if (mEl) {
-        let exists = false;
-        for (let i = 0; i < mEl.options.length; i++) {
-            if (mEl.options[i].value === monthVal) { exists = true; break; }
-        }
-        
-        if (!exists) {
-            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-            const yy = d.getFullYear().toString().slice(-2);
-            const shortName = monthNames[d.getMonth()];
-            const fullName = `${shortName} '${yy}`;
-            
-            const opt = new Option(fullName, monthVal);
-            opt.setAttribute('data-full', fullName);
-            opt.setAttribute('data-short', shortName);
-            mEl.add(opt);
-        }
-    }
-
-    safeSetVal(prefix + '-month', monthVal); 
-
-    if (mEl && mEl.selectedIndex > -1) {
-        Array.from(mEl.options).forEach(o => o.text = o.getAttribute('data-full'));
-        mEl.options[mEl.selectedIndex].text = mEl.options[mEl.selectedIndex].getAttribute('data-short');
-    }
-
-    safeSetVal(prefix + '-day', d.getDate()); 
-    safeSetVal(prefix + '-hour', d.getHours()); 
-    safeSetVal(prefix + '-min', d.getMinutes()); 
-}
 function loadState(d) {
     if (d.setupLevels && typeof setupLevels !== 'undefined') { Object.keys(setupLevels).forEach(k => delete setupLevels[k]); Object.assign(setupLevels, d.setupLevels); }
     if (d.planQueue && typeof planQueue !== 'undefined') { planQueue.length = 0; planQueue.push(...d.planQueue); }
@@ -433,9 +394,21 @@ function loadState(d) {
             safeSetVal('weekly-league', d.weeklyData.league); safeSetVal('weekly-rank', d.weeklyData.rank);
             safeSetVal('weekly-war-tier', d.weeklyData.warTier); safeSetVal('weekly-war-win', d.weeklyData.warWin);
             safeSetVal('weekly-indiv', d.weeklyData.indiv);
+            
+            if (d.weeklyData.ascSkillAsc !== undefined) safeSetVal('asc-skill-asc', d.weeklyData.ascSkillAsc);
             safeSetVal('asc-skill-lv', d.weeklyData.ascSkillLv); safeSetVal('asc-skill-exp', d.weeklyData.ascSkillExp); safeSetVal('asc-skill-inv', d.weeklyData.ascSkillInv);
+            if (d.weeklyData.ascSkillTargetAsc !== undefined) safeSetVal('asc-skill-target-asc', d.weeklyData.ascSkillTargetAsc);
+            safeSetVal('asc-skill-target-lv', d.weeklyData.ascSkillTargetLv);
+
+            if (d.weeklyData.ascPetAsc !== undefined) safeSetVal('asc-pet-asc', d.weeklyData.ascPetAsc);
             safeSetVal('asc-pet-lv', d.weeklyData.ascPetLv); safeSetVal('asc-pet-exp', d.weeklyData.ascPetExp); safeSetVal('asc-pet-inv', d.weeklyData.ascPetInv);
+            if (d.weeklyData.ascPetTargetAsc !== undefined) safeSetVal('asc-pet-target-asc', d.weeklyData.ascPetTargetAsc);
+            safeSetVal('asc-pet-target-lv', d.weeklyData.ascPetTargetLv);
+
+            if (d.weeklyData.ascMountAsc !== undefined) safeSetVal('asc-mount-asc', d.weeklyData.ascMountAsc);
             safeSetVal('asc-mount-lv', d.weeklyData.ascMountLv); safeSetVal('asc-mount-exp', d.weeklyData.ascMountExp); safeSetVal('asc-mount-inv', d.weeklyData.ascMountInv);
+            if (d.weeklyData.ascMountTargetAsc !== undefined) safeSetVal('asc-mount-target-asc', d.weeklyData.ascMountTargetAsc);
+            safeSetVal('asc-mount-target-lv', d.weeklyData.ascMountTargetLv);
         }
     } catch (e) {}
 
@@ -443,9 +416,14 @@ function loadState(d) {
         if (d.warCalcData) {
             safeSetVal('wc-forge-lv', d.warCalcData.forgeLv); safeSetVal('wc-forge-nodes', d.warCalcData.forgeNodes); safeSetVal('wc-forge-bonus', d.warCalcData.forgeBonus);
             safeSetVal('wc-hammer', d.warCalcData.hammer); safeSetVal('wc-forge-gem', d.warCalcData.forgeGem); safeSetVal('wc-dungeon-key', d.warCalcData.dungeonKey);
+            
+            if (d.warCalcData.skillAsc !== undefined) safeSetVal('wc-skill-asc', d.warCalcData.skillAsc);
             safeSetVal('wc-skill-lv', d.warCalcData.skillLv); safeSetVal('wc-skill-exp', d.warCalcData.skillExp);
             safeSetVal('wc-ticket', d.warCalcData.ticket);
+            
             safeSetVal('wc-tech-I', d.warCalcData.techI); safeSetVal('wc-tech-II', d.warCalcData.techII); safeSetVal('wc-tech-III', d.warCalcData.techIII); safeSetVal('wc-tech-IV', d.warCalcData.techIV); safeSetVal('wc-tech-V', d.warCalcData.techV);
+            
+            if (d.warCalcData.mountAsc !== undefined) safeSetVal('wc-mount-asc', d.warCalcData.mountAsc);
             safeSetVal('wc-mount-key', d.warCalcData.mountKey); safeSetVal('wc-mount-lv', d.warCalcData.mountLv); safeSetVal('wc-mount-exp', d.warCalcData.mountExp);
 
             const colors =['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
@@ -562,6 +540,46 @@ function loadState(d) {
         if (typeof updateSummonCap === 'function') { updateSummonCap('skill'); updateSummonCap('pet'); updateSummonCap('mount'); }
         if (typeof updateSummonCalc === 'function') { updateSummonCalc('skill'); updateSummonCalc('pet'); updateSummonCalc('mount'); }
     } catch(e) {}
+}
+
+function safeSetVal(id, val) { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; }
+function safeSyncDropdowns(isoDate, prefix) { 
+    if (!isoDate) return; 
+    const d = new Date(isoDate); 
+    if (isNaN(d.getTime())) return; 
+    
+    const monthVal = d.getFullYear() + '-' + d.getMonth();
+    const mEl = document.getElementById(prefix + '-month');
+    
+    if (mEl) {
+        let exists = false;
+        for (let i = 0; i < mEl.options.length; i++) {
+            if (mEl.options[i].value === monthVal) { exists = true; break; }
+        }
+        
+        if (!exists) {
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const yy = d.getFullYear().toString().slice(-2);
+            const shortName = monthNames[d.getMonth()];
+            const fullName = `${shortName} '${yy}`;
+            
+            const opt = new Option(fullName, monthVal);
+            opt.setAttribute('data-full', fullName);
+            opt.setAttribute('data-short', shortName);
+            mEl.add(opt);
+        }
+    }
+
+    safeSetVal(prefix + '-month', monthVal); 
+
+    if (mEl && mEl.selectedIndex > -1) {
+        Array.from(mEl.options).forEach(o => o.text = o.getAttribute('data-full'));
+        mEl.options[mEl.selectedIndex].text = mEl.options[mEl.selectedIndex].getAttribute('data-short');
+    }
+
+    safeSetVal(prefix + '-day', d.getDate()); 
+    safeSetVal(prefix + '-hour', d.getHours()); 
+    safeSetVal(prefix + '-min', d.getMinutes()); 
 }
 
 function saveToLocalStorage() {

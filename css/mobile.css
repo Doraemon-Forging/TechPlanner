@@ -407,7 +407,7 @@
 }
 
 /* ==========================================================================
-   11. MISSING FLOATING CAPSULE FIX (THE REAL CULPRIT)
+    MISSING FLOATING CAPSULE FIX 
    ========================================================================== */
 .mobile-floating-container { 
     display: none !important; 
@@ -417,4 +417,15 @@ body.view-planner #float-tree,
 body.view-log #float-logs,
 body.view-egg #float-egg { 
     display: block !important; 
+}
+
+/* =========================================
+   FIREFOX-ONLY BOTTOM NAV BAR
+   ========================================= */
+@-moz-document url-prefix() {
+    .bottom-nav {
+        padding-bottom: 0 !important; 
+        height: 70px !important; 
+        bottom: 0 !important; 
+    }
 }

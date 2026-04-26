@@ -7,27 +7,22 @@
 // 1. UI CONTROLS & TOGGLES 
 // ==========================================
 function toggleWeeklyTab(tab) {
-    // Buttons
     const btnDaily = document.getElementById('btn-weekly-daily');
     const btnTotal = document.getElementById('btn-weekly-total');
     const btnLeague = document.getElementById('btn-weekly-league');
-    
-    // View containers
+
     const viewDaily = document.getElementById('weekly-tab-daily');
     const viewTotal = document.getElementById('weekly-tab-total');
     const viewLeague = document.getElementById('weekly-tab-league');
 
-    // Reset all buttons
     if (btnDaily) btnDaily.classList.remove('active');
     if (btnTotal) btnTotal.classList.remove('active');
     if (btnLeague) btnLeague.classList.remove('active');
 
-    // Hide all views
     if (viewDaily) viewDaily.style.display = 'none';
     if (viewTotal) viewTotal.style.display = 'none';
     if (viewLeague) viewLeague.style.display = 'none';
 
-    // Show selected
     if (tab === 'daily') {
         if (btnDaily) btnDaily.classList.add('active');
         if (viewDaily) viewDaily.style.display = 'block';
@@ -108,9 +103,6 @@ function updateWeekly() {
         }
     }
 
-    // ------------------------------------------
-    // Render Detailed Source Breakdown (League / War / Indiv)
-    // ------------------------------------------
     const setBd = (id, val, formatType = 'whole') => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -127,8 +119,6 @@ function updateWeekly() {
         }
     };
 
-    // Index Map: 0=Hammer, 1=Gold, 2=Ticket, 3=Eggshell, 4=Potion, 5=MountKey
-    // League
     setBd('bd-league-hammer', lRewards[0], 'whole');
     setBd('bd-league-gold', lRewards[1], 'gold');
     setBd('bd-league-ticket', lRewards[2], 'whole');
@@ -136,7 +126,6 @@ function updateWeekly() {
     setBd('bd-league-potion', lRewards[4], 'gold');
     setBd('bd-league-mountkey', lRewards[5], 'whole');
 
-    // War
     setBd('bd-war-hammer', cRewards[0], 'whole');
     setBd('bd-war-gold', cRewards[1], 'gold');
     setBd('bd-war-ticket', cRewards[2], 'whole');
@@ -144,7 +133,6 @@ function updateWeekly() {
     setBd('bd-war-potion', cRewards[4], 'gold');
     setBd('bd-war-mountkey', cRewards[5], 'whole');
 
-    // Indiv
     setBd('bd-indiv-hammer', iRewards[0], 'whole');
     setBd('bd-indiv-gold', iRewards[1], 'gold');
     setBd('bd-indiv-ticket', iRewards[2], 'whole');
@@ -223,9 +211,6 @@ function updateWeekly() {
     const totalBaseEggshellB = finalRewards.eggshell + (dailyData.totEggshellB * 7);
     const totalBaseEggshellA = finalRewards.eggshell + (dailyData.totEggshellA * 7);
 
-    // ------------------------------------------
-    // Render Output
-    // ------------------------------------------
     const renderCalcGroup = (valBefore, valAfter, iconName, formatType = 'smart') => {
         const iconHtml = iconName ? `<img src="icons/${iconName}" class="calc-icon-left" style="margin-right: 4px;" onerror="this.style.display='none'">` : '';
         const fmt = (v) => {
@@ -306,33 +291,48 @@ function updateWeekly() {
     // ------------------------------------------
     // Ascension Progress (ETA) Math
     // ------------------------------------------
-    const calculateRemainingExp = (type, db) => {
-        if (!db) return 0;
-        let lv = parseInt(document.getElementById(`asc-${type}-lv`)?.value);
-        if (isNaN(lv) || lv < 1) lv = 1; 
+
+    const getExpDiff = (type, db, isTarget = false) => {
+        if (!db || typeof getCumulativePulls !== 'function') return isTarget ? null : 0;
         
-        let exp = parseInt(document.getElementById(`asc-${type}-exp`)?.value);
-        if (isNaN(exp) || exp < 0) exp = 0; 
+        let cLv = parseInt(document.getElementById(`asc-${type}-lv`)?.value) || 1;
+        let cExp = parseInt(document.getElementById(`asc-${type}-exp`)?.value) || 0;
+        let cAsc = parseInt(document.getElementById(`asc-${type}-asc`)?.value) || 0;
         
-        if (lv >= 100) return 0; 
+        let tLv, tAsc;
         
-        let totalNeeded = 0;
-        for (let i = lv; i < 100; i++) {
-            if (db[i] && db[i][0] !== "MAX") {
-                totalNeeded += db[i][0];
-            }
+        if (isTarget) {
+            tLv = parseInt(document.getElementById(`asc-${type}-target-lv`)?.value);
+            tAsc = parseInt(document.getElementById(`asc-${type}-target-asc`)?.value) || 0;
+            if (isNaN(tLv) || tLv < 1) return null; 
+        } else {
+            tLv = 100;
+            tAsc = cAsc; 
         }
-        return Math.max(0, totalNeeded - exp);
+
+        let currentCum = getCumulativePulls(cLv, cExp, db, cAsc);
+        let targetCum = getCumulativePulls(tLv, 0, db, tAsc);
+        
+        return Math.max(0, targetCum - currentCum);
     };
 
-    const skillRem = calculateRemainingExp('skill', typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : null);
-    const petRem = calculateRemainingExp('pet', typeof PET_LEVEL_DATA !== 'undefined' ? PET_LEVEL_DATA : null);
-    const mountRem = calculateRemainingExp('mount', typeof MOUNT_LEVEL_DATA !== 'undefined' ? MOUNT_LEVEL_DATA : null);
-    
+    const skillDb = typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : null;
+    const petDb = typeof PET_LEVEL_DATA !== 'undefined' ? PET_LEVEL_DATA : null;
+    const mountDb = typeof MOUNT_LEVEL_DATA !== 'undefined' ? MOUNT_LEVEL_DATA : null;
+
+    const skillRem = getExpDiff('skill', skillDb, false);
+    const petRem = getExpDiff('pet', petDb, false);
+    const mountRem = getExpDiff('mount', mountDb, false);
+
+    const skillRemTarget = getExpDiff('skill', skillDb, true);
+    const petRemTarget = getExpDiff('pet', petDb, true);
+    const mountRemTarget = getExpDiff('mount', mountDb, true);
+
     const getInvVal = (id) => {
         const el = document.getElementById(id);
         return el && el.value ? parseFloat(el.value.replace(/,/g, '')) || 0 : 0;
     };
+    
     const invSkill = getInvVal('asc-skill-inv');
     const invPet = getInvVal('asc-pet-inv');
     const invMount = getInvVal('asc-mount-inv');
@@ -348,29 +348,43 @@ function updateWeekly() {
 
     const adjSkillRemB = Math.max(0, skillRem - skillInvYieldB);
     const adjSkillRemA = Math.max(0, skillRem - skillInvYieldA);
-    
     const adjPetRemB = Math.max(0, petRem - petInvYieldB);
     const adjPetRemA = Math.max(0, petRem - petInvYieldA);
-    
     const adjMountRemB = Math.max(0, mountRem - mountInvYieldB);
     const adjMountRemA = Math.max(0, mountRem - mountInvYieldA);
 
+    const adjSkillRemTargetB = skillRemTarget !== null ? Math.max(0, skillRemTarget - skillInvYieldB) : null;
+    const adjSkillRemTargetA = skillRemTarget !== null ? Math.max(0, skillRemTarget - skillInvYieldA) : null;
+    const adjPetRemTargetB = petRemTarget !== null ? Math.max(0, petRemTarget - petInvYieldB) : null;
+    const adjPetRemTargetA = petRemTarget !== null ? Math.max(0, petRemTarget - petInvYieldA) : null;
+    const adjMountRemTargetB = mountRemTarget !== null ? Math.max(0, mountRemTarget - mountInvYieldB) : null;
+    const adjMountRemTargetA = mountRemTarget !== null ? Math.max(0, mountRemTarget - mountInvYieldA) : null;
+
     const weeksSkillB = totalCardsB > 0 ? (adjSkillRemB / totalCardsB) : Infinity;
     const weeksSkillA = totalCardsA > 0 ? (adjSkillRemA / totalCardsA) : Infinity;
-    
     const weeksPetB = totalEggsB > 0 ? (adjPetRemB / totalEggsB) : Infinity;
     const weeksPetA = totalEggsA > 0 ? (adjPetRemA / totalEggsA) : Infinity;
-    
     const weeksMountB = leagueMYieldB > 0 ? (adjMountRemB / leagueMYieldB) : Infinity;
     const weeksMountA = leagueMYieldA > 0 ? (adjMountRemA / leagueMYieldA) : Infinity;
 
-    const formatAsc = (wB, wA, remB, remA) => {
+    const weeksSkillTargetB = skillRemTarget !== null ? (totalCardsB > 0 ? (adjSkillRemTargetB / totalCardsB) : Infinity) : null;
+    const weeksSkillTargetA = skillRemTarget !== null ? (totalCardsA > 0 ? (adjSkillRemTargetA / totalCardsA) : Infinity) : null;
+    const weeksPetTargetB = petRemTarget !== null ? (totalEggsB > 0 ? (adjPetRemTargetB / totalEggsB) : Infinity) : null;
+    const weeksPetTargetA = petRemTarget !== null ? (totalEggsA > 0 ? (adjPetRemTargetA / totalEggsA) : Infinity) : null;
+    const weeksMountTargetB = mountRemTarget !== null ? (leagueMYieldB > 0 ? (adjMountRemTargetB / leagueMYieldB) : Infinity) : null;
+    const weeksMountTargetA = mountRemTarget !== null ? (leagueMYieldA > 0 ? (adjMountRemTargetA / leagueMYieldA) : Infinity) : null;
+
+    const formatAsc = (wB, wA, remB, remA, isTargetMode = false) => {
+        const doneText = isTargetMode ? "Reached" : "MAX";
         
-        if (remB <= 0 && remA <= 0) return `<span class="calc-val-before single-val">MAX</span>`;
+        if (isTargetMode && (remB === null || remA === null)) {
+            return `<span class="calc-val-before single-val" style="color: #bbb;">--</span>`;
+        }
+        if (remB <= 0 && remA <= 0) return `<span class="calc-val-before single-val">${doneText}</span>`;
         
         const fmt = (v, remainingExp) => {
-            if (remainingExp <= 0) return "MAX";
-            if (!v || v === Infinity || isNaN(v)) return "∞"; // Shows ∞ if weekly income is exactly 0
+            if (remainingExp <= 0) return doneText;
+            if (v === Infinity || isNaN(v)) return "∞";
             if (v < 10) return v.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             return v.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
         }
@@ -385,15 +399,23 @@ function updateWeekly() {
         }
     };
 
-    const elResSkill = document.getElementById('asc-res-skill');
-    const elResPet = document.getElementById('asc-res-pet');
-    const elResMount = document.getElementById('asc-res-mount');
+    const setText = (id, html) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+    };
 
-    if (elResSkill) elResSkill.innerHTML = formatAsc(weeksSkillB, weeksSkillA, adjSkillRemB, adjSkillRemA);
-    if (elResPet) elResPet.innerHTML = formatAsc(weeksPetB, weeksPetA, adjPetRemB, adjPetRemA);
-    if (elResMount) elResMount.innerHTML = formatAsc(weeksMountB, weeksMountA, adjMountRemB, adjMountRemA);
+    setText('asc-res-skill', formatAsc(weeksSkillB, weeksSkillA, adjSkillRemB, adjSkillRemA));
+    setText('asc-res-pet', formatAsc(weeksPetB, weeksPetA, adjPetRemB, adjPetRemA));
+    setText('asc-res-mount', formatAsc(weeksMountB, weeksMountA, adjMountRemB, adjMountRemA));
+
+    setText('asc-res-skill-target', formatAsc(weeksSkillTargetB, weeksSkillTargetA, adjSkillRemTargetB, adjSkillRemTargetA, true));
+    setText('asc-res-pet-target', formatAsc(weeksPetTargetB, weeksPetTargetA, adjPetRemTargetB, adjPetRemTargetA, true));
+    setText('asc-res-mount-target', formatAsc(weeksMountTargetB, weeksMountTargetA, adjMountRemTargetB, adjMountRemTargetA, true));
 }
 
+// ------------------------------------------
+// Initialize & Sync Listeners
+// ------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     updateAscensionCaps('skill');
     updateAscensionCaps('pet');

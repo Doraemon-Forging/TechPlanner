@@ -746,7 +746,7 @@ const HTML_WEEKLY = `
 <div id="panel-weekly" class="sidebar-panel" style="display: none;">
     <div class="log-container">
         
-        <div class="daily-card config-card" style="margin-bottom: 15px;">          
+        <div class="daily-card config-card" style="margin-bottom: 15px;">         
             <div class="daily-card-body" style="padding-bottom: 10px;">
         
                 <div class="daily-input-row">
@@ -813,6 +813,8 @@ const HTML_WEEKLY = `
                             <option value="A-Tier">A-Tier</option>
                             <option value="B-Tier">B-Tier</option>
                             <option value="B-Tier">C-Tier</option>
+                            <option value="B-Tier">D-Tier</option>
+                            <option value="B-Tier">E-Tier</option>
                             <option value="None">None</option>
                         </select>
                         <select id="weekly-war-win" class="war-select select-small" style="width: 65px;" onchange="updateWeekly()">
@@ -888,8 +890,16 @@ const HTML_WEEKLY = `
                     
                     <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
                         <div class="calc-row-input">
-                            <label for="asc-skill-lv">Skill Summon Lv:</label>
-                            <input type="number" id="asc-skill-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()">
+                            <label>Skill Summon Lv:</label>
+                            <div style="display: flex; gap: 6px;">
+                                <select id="asc-skill-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateAscensionCaps('skill'); updateWeekly()">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="asc-skill-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('skill'); updateWeekly()">
+                            </div>
                         </div>
                         <div class="calc-row-input">
                             <label for="asc-skill-exp">Skill Summon Exp:</label>
@@ -902,14 +912,34 @@ const HTML_WEEKLY = `
                             <label for="asc-skill-inv">Green Tickets:</label>
                             <input type="text" id="asc-skill-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
                         </div>
+                        <div class="calc-row-input">
+                            <label>Target Lv:</label>
+                            <div style="display: flex; gap: 6px;">
+                                <select id="asc-skill-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="asc-skill-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                            </div>
+                        </div>
                     </div>
 
                     <hr class="pet-hr" style="margin: 10px 0;">
 
                     <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
                         <div class="calc-row-input">
-                            <label for="asc-pet-lv">Pet Summon Lv:</label>
-                            <input type="number" id="asc-pet-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()">
+                            <label>Pet Summon Lv:</label>
+                            <div style="display: flex; gap: 6px;">
+                                <select id="asc-pet-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateAscensionCaps('pet'); updateWeekly()">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="asc-pet-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('pet'); updateWeekly()">
+                            </div>
                         </div>
                         <div class="calc-row-input">
                             <label for="asc-pet-exp">Pet Summon Exp:</label>
@@ -922,14 +952,34 @@ const HTML_WEEKLY = `
                             <label for="asc-pet-inv">Eggshells:</label>
                             <input type="text" id="asc-pet-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
                         </div>
+                        <div class="calc-row-input">
+                            <label>Target Lv:</label>
+                            <div style="display: flex; gap: 6px;">
+                                <select id="asc-pet-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="asc-pet-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                            </div>
+                        </div>
                     </div>
 
                     <hr class="pet-hr" style="margin: 10px 0;">
 
                     <div class="pet-block" style="border: none; padding: 0; margin: 0;">
                         <div class="calc-row-input">
-                            <label for="asc-mount-lv">Mount Summon Lv:</label>
-                            <input type="number" id="asc-mount-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()">
+                            <label>Mount Summon Lv:</label>
+                            <div style="display: flex; gap: 6px;">
+                                <select id="asc-mount-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateAscensionCaps('mount'); updateWeekly()">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="asc-mount-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('mount'); updateWeekly()">
+                            </div>
                         </div>
                         <div class="calc-row-input">
                             <label for="asc-mount-exp">Mount Summon Exp:</label>
@@ -942,11 +992,30 @@ const HTML_WEEKLY = `
                             <label for="asc-mount-inv">Mount Keys:</label>
                             <input type="text" id="asc-mount-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
                         </div>
+                        <div class="calc-row-input">
+                            <label>Target Lv:</label>
+                            <div style="display: flex; gap: 6px;">
+                                <select id="asc-mount-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="asc-mount-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                            </div>
+                        </div>
                     </div>
 
                     <hr class="pet-hr" style="margin: 15px 0;">
 
-                    <div style="text-align: center; margin: 5px 0 15px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">How many weeks to reach Lv 100?</div>
+                    <div style="text-align: center; margin: 5px 0 15px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">Estimated Weeks to Target Lv</div>
+                    <div class="calc-line"><span class="calc-label">Skill</span><div class="calc-val-group" id="asc-res-skill-target" style="font-weight: bold; color: #ffeb3b;">--</div></div>
+                    <div class="calc-line"><span class="calc-label">Pet</span><div class="calc-val-group" id="asc-res-pet-target" style="font-weight: bold; color: #ffeb3b;">--</div></div>
+                    <div class="calc-line"><span class="calc-label">Mount</span><div class="calc-val-group" id="asc-res-mount-target" style="font-weight: bold; color: #ffeb3b;">--</div></div>
+
+                    <hr class="pet-hr" style="margin: 15px 0;">
+
+                    <div style="text-align: center; margin: 5px 0 15px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">Estimated Weeks to Lv 100</div>
                     <div class="calc-line"><span class="calc-label">Skill</span><div class="calc-val-group" id="asc-res-skill" style="font-weight: bold; color: #ffeb3b;">--</div></div>
                     <div class="calc-line"><span class="calc-label">Pet</span><div class="calc-val-group" id="asc-res-pet" style="font-weight: bold; color: #ffeb3b;">--</div></div>
                     <div class="calc-line"><span class="calc-label">Mount</span><div class="calc-val-group" id="asc-res-mount" style="font-weight: bold; color: #ffeb3b;">--</div></div>
