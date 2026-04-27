@@ -95,21 +95,21 @@ const node = document.createElement('div'); node.className = 'node'; node.id = f
 }
 
 function maxTier(tree, tier) {
-    openConfirmModal(`Max all nodes in ${tree.toUpperCase()} tier ${toRoman(tier)} ?`, () => {
-        pushHistory();
-        TREES[tree].structure.forEach(nDef => {
-            const fullId = `${tree}_T${tier}_${nDef.id}`;
-            const meta = getMeta(fullId);
-            if (meta) {
-                setupLevels[fullId] = meta.m;
-                const ensure = (cid) => getParents(cid).forEach(pid => { if ((setupLevels[pid] || 0) === 0) { setupLevels[pid] = 1; ensure(pid); } });
-                ensure(fullId);
-            }
-        });
-        updateCalculations();
-    });
+    openConfirmModal(`Max all nodes in ${tree.toUpperCase()} tier ${toRoman(tier)} ?`, () => {
+        window.ongoingForgeSnapshot = null; 
+        pushHistory();
+        TREES[tree].structure.forEach(nDef => {
+            const fullId = `${tree}_T${tier}_${nDef.id}`;
+            const meta = getMeta(fullId);
+            if (meta) {
+                setupLevels[fullId] = meta.m;
+                const ensure = (cid) => getParents(cid).forEach(pid => { if ((setupLevels[pid] || 0) === 0) { setupLevels[pid] = 1; ensure(pid); } });
+                ensure(fullId);
+            }
+        });
+        updateCalculations();
+    });
 }
-
 // --- CALCULATION ENGINE ---
 function calcState(customQueue) {
     const levels = { ...setupLevels };
@@ -405,122 +405,124 @@ function drawLines() {
 }
 
 function handleClick(id, isRight) {
-    showFloatingLabel(id); 
-    const meta = getMeta(id);
-    
-    if (currentMode === 'setup') {
-        const currentLvl = setupLevels[id] || 0;
-        
-        if (isRight) {
-            if (currentLvl > 0) {
-                pushHistory(); 
-                if (currentLvl > 1) setupLevels[id]--; 
-                else delete setupLevels[id];
-                
-                if (!setupLevels[id]) {
-                    let changed = true;
-                    while (changed) { 
-                        changed = false; 
-                        Object.keys(setupLevels).forEach(k => { 
-                            if (setupLevels[k] > 0 && !isUnlocked(k, setupLevels)) { 
-                                delete setupLevels[k]; changed = true; 
-                            } 
-                        }); 
-                    }
-                    const sim = calcState(); 
-                    if (sim.brokenSteps.length > 0) {
-                        for (let i = sim.brokenSteps.length - 1; i >= 0; i--) {
-                            planQueue.splice(sim.brokenSteps[i], 1);
-                        }
-                    }
-                }
-            }
-        } else { 
-            if (currentLvl < meta.m) { 
-                pushHistory(); 
-                setupLevels[id] = currentLvl + 1; 
-                if ((setupLevels[id] || 0) === 1) autoUnlock(id); 
-            } 
-        }
-    } else {
-        if (isRight) {
-            let idx = -1; 
-            for (let i = planQueue.length - 1; i >= 0; i--) {
-                if (planQueue[i].id === id) { idx = i; break; }
-            }
-            if (idx > -1) {
-                pushHistory(); 
-                planQueue.splice(idx, 1);
-                let clean = false; 
-                while (!clean) { 
-                    const sim = calcState(planQueue); 
-                    if (sim.brokenSteps.length > 0) {
-                        for (let j = sim.brokenSteps.length - 1; j >= 0; j--) {
-                            planQueue.splice(sim.brokenSteps[j], 1);
-                        }
-                    } else {
-                        clean = true;
-                    }
-                }
-            }
-        } else {
-            let checkState = insertModeIndex > -1 ? calcState(planQueue.slice(0, insertModeIndex)) : calcState();
-            
-            if ((checkState.levels[id] || 0) < meta.m && isUnlocked(id, checkState.levels)) {
-                pushHistory();
-                
-                if (insertModeIndex > -1) { 
-                    let insertedIndex = insertModeIndex; 
-                    
-                    planQueue.splice(insertedIndex, 0, { type: 'node', id }); 
-                    
-                    cancelMove(); 
+    showFloatingLabel(id); 
+    const meta = getMeta(id);
+    
+    if (currentMode === 'setup') {
+        window.ongoingForgeSnapshot = null;
+        const currentLvl = setupLevels[id] || 0;
+        
+        if (isRight) {
+            if (currentLvl > 0) {
+                pushHistory(); 
+                if (currentLvl > 1) setupLevels[id]--; 
+                else delete setupLevels[id];
+                
+                if (!setupLevels[id]) {
+                    let changed = true;
+                    while (changed) { 
+                        changed = false; 
+                        Object.keys(setupLevels).forEach(k => { 
+                            if (setupLevels[k] > 0 && !isUnlocked(k, setupLevels)) { 
+                                delete setupLevels[k]; changed = true; 
+                            } 
+                        }); 
+                    }
+                    const sim = calcState(); 
+                    if (sim.brokenSteps.length > 0) {
+                        for (let i = sim.brokenSteps.length - 1; i >= 0; i--) {
+                            planQueue.splice(sim.brokenSteps[i], 1);
+                        }
+                    }
+                }
+            }
+        } else { 
+            if (currentLvl < meta.m) { 
+                pushHistory(); 
+                setupLevels[id] = currentLvl + 1; 
+                if ((setupLevels[id] || 0) === 1) autoUnlock(id); 
+            } 
+        }
+    } else {
+        if (isRight) {
+            let idx = -1; 
+            for (let i = planQueue.length - 1; i >= 0; i--) {
+                if (planQueue[i].id === id) { idx = i; break; }
+            }
+            if (idx > -1) {
+                pushHistory(); 
+                planQueue.splice(idx, 1);
+                let clean = false; 
+                while (!clean) { 
+                    const sim = calcState(planQueue); 
+                    if (sim.brokenSteps.length > 0) {
+                        for (let j = sim.brokenSteps.length - 1; j >= 0; j--) {
+                            planQueue.splice(sim.brokenSteps[j], 1);
+                        }
+                    } else {
+                        clean = true;
+                    }
+                }
+            }
+        } else {
+            let checkState = insertModeIndex > -1 ? calcState(planQueue.slice(0, insertModeIndex)) : calcState();
+            
+            if ((checkState.levels[id] || 0) < meta.m && isUnlocked(id, checkState.levels)) {
+                pushHistory();
+                
+                if (insertModeIndex > -1) { 
+                    let insertedIndex = insertModeIndex; 
+                    
+                    planQueue.splice(insertedIndex, 0, { type: 'node', id }); 
+                    
+                    cancelMove(); 
 
-                    if (window.innerWidth <= 768 && typeof switchMobileView === 'function') {
-                        switchMobileView('logs');
-                    }
-                    
-                    justMovedIndex = insertedIndex;
-                    
-                    setTimeout(() => {
-                        const rows = document.querySelectorAll('#log-list .log-row');
-                        if (rows[insertedIndex]) {
-                            if (window.innerWidth <= 768) {
-                                rows[insertedIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            } else {
-                                const scrollWrapper = document.querySelector('.sidebar-scroll-wrapper');
-                                if (scrollWrapper) {
-                                    const targetY = rows[insertedIndex].offsetTop - (scrollWrapper.clientHeight / 2) + (rows[insertedIndex].clientHeight / 2);
-                                    scrollWrapper.scrollTo({ top: targetY, behavior: 'smooth' });
-                                }
-                            }
-                        }
-                        
-                        const nodeEl = document.getElementById(id);
-                        if (nodeEl) {
-                            nodeEl.classList.remove('flash-success');
-                            void nodeEl.offsetWidth; 
-                            nodeEl.classList.add('flash-success');
-                            setTimeout(() => nodeEl.classList.remove('flash-success'), 2600);
-                        }
-                        
-                    }, 50);
-                    
-                } else {
-                    planQueue.push({ type: 'node', id });
-                }
-            }
-        }
-    }
-    
-    updateCalculations();
-    justMovedIndex = -1; 
+                    if (window.innerWidth <= 768 && typeof switchMobileView === 'function') {
+                        switchMobileView('logs');
+                    }
+                    
+                    justMovedIndex = insertedIndex;
+                    
+                    setTimeout(() => {
+                        const rows = document.querySelectorAll('#log-list .log-row');
+                        if (rows[insertedIndex]) {
+                            if (window.innerWidth <= 768) {
+                                rows[insertedIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            } else {
+                                const scrollWrapper = document.querySelector('.sidebar-scroll-wrapper');
+                                if (scrollWrapper) {
+                                    const targetY = rows[insertedIndex].offsetTop - (scrollWrapper.clientHeight / 2) + (rows[insertedIndex].clientHeight / 2);
+                                    scrollWrapper.scrollTo({ top: targetY, behavior: 'smooth' });
+                                }
+                            }
+                        }
+                        
+                        const nodeEl = document.getElementById(id);
+                        if (nodeEl) {
+                            nodeEl.classList.remove('flash-success');
+                            void nodeEl.offsetWidth; 
+                            nodeEl.classList.add('flash-success');
+                            setTimeout(() => nodeEl.classList.remove('flash-success'), 2600);
+                        }
+                        
+                    }, 50);
+                    
+                } else {
+                    planQueue.push({ type: 'node', id });
+                }
+            }
+        }
+    }
+    
+    updateCalculations();
+    justMovedIndex = -1; 
 }
 
 function handleShiftClick(id) {
-    pushHistory(); setupLevels[id] = getMeta(id).m;
-    const ensure = (cid) => getParents(cid).forEach(pid => { if ((setupLevels[pid] || 0) === 0) { setupLevels[pid] = 1; ensure(pid); } });
-    ensure(id); updateCalculations();
+    window.ongoingForgeSnapshot = null;
+    pushHistory(); setupLevels[id] = getMeta(id).m;
+    const ensure = (cid) => getParents(cid).forEach(pid => { if ((setupLevels[pid] || 0) === 0) { setupLevels[pid] = 1; ensure(pid); } });
+    ensure(id); updateCalculations();
 }
 
 function autoUnlock(id) { getParents(id).forEach(p => { if ((setupLevels[p] || 0) === 0) { setupLevels[p] = 1; autoUnlock(p); } }); }
@@ -921,19 +923,20 @@ function executeCut(idx) {
 }
 
 function resetCurrentTree() {
-    openConfirmModal(`Reset ${activeTreeKey.toUpperCase()} tree?`, () => {
-        pushHistory();
-        Object.keys(setupLevels).forEach(id => { if (id.startsWith(activeTreeKey + "_")) delete setupLevels[id]; });
-        planQueue = planQueue.filter(item => (item.type === 'node') ? !item.id.startsWith(activeTreeKey + "_") : true);
-        let clean = false; 
-        while (!clean) { 
-            const sim = calcState(planQueue); 
-            if (sim.brokenSteps.length > 0) 
-                for (let j = sim.brokenSteps.length - 1; j >= 0; j--) planQueue.splice(sim.brokenSteps[j], 1); 
-            else clean = true; 
-        }
-        updateCalculations();
-    });
+    openConfirmModal(`Reset ${activeTreeKey.toUpperCase()} tree?`, () => {
+        window.ongoingForgeSnapshot = null; 
+        pushHistory();
+        Object.keys(setupLevels).forEach(id => { if (id.startsWith(activeTreeKey + "_")) delete setupLevels[id]; });
+        planQueue = planQueue.filter(item => (item.type === 'node') ? !item.id.startsWith(activeTreeKey + "_") : true);
+        let clean = false; 
+        while (!clean) { 
+            const sim = calcState(planQueue); 
+            if (sim.brokenSteps.length > 0) 
+                for (let j = sim.brokenSteps.length - 1; j >= 0; j--) planQueue.splice(sim.brokenSteps[j], 1); 
+            else clean = true; 
+        }
+        updateCalculations();
+    });
 }
 
 // --- UNDO / REDO ---

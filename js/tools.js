@@ -440,147 +440,209 @@ function updateCalculator() {
     if (res2) res2.innerHTML = genLine('Hammer Needed', gTarget / curStats.avgGold * (1 - curStats.free / 100), gTarget / projStats.avgGold * (1 - projStats.free / 100), 'fm_hammer', 'hammer');
     
     // ==========================================
-    // 1st & 2nd CARDS: FORGE UPGRADES
-    // ==========================================
-    const res5 = document.getElementById('calc-res-5');
-    const resTarget = document.getElementById('calc-res-target-forge');
+    // 1st & 2nd CARDS: FORGE UPGRADES
+    // ==========================================
+    const res5 = document.getElementById('calc-res-5');
+    const resTarget = document.getElementById('calc-res-target-forge');
 
-    if (fAsc === 3 && fLv === 35) {
-        let h5 = genLine('Cost', '-', '-', 'fm_gold', 'standard');
-        h5 += genLine('Finish', '-', '-', null, 'standard');
-        h5 += genLine('Duration', '-', '-', null, 'standard');
-        if (res5) res5.innerHTML = h5;
-    } else if (fLv === 35) {
-        let h5 = genLine('Cost', 3000000, 3000000, 'fm_gold', 'gold');
-        h5 += genLine('Finish', '-', '-', null, 'standard');
-        h5 += genLine('Duration', 0, 0, null, 'time'); 
-        if (res5) res5.innerHTML = h5;
-    } else {
-        const cRaw = forgeLevelData[fLv][0];
-        
-        let speedBonusAtStart = curStats.speed; 
-        let discBonusAtStart = curStats.forgeDisc;
-        techSchedule.forEach(t => { 
-            if (t.time <= mainStartTime) {
-                if (t.type === 'speed') speedBonusAtStart += t.val; 
-                if (t.type === 'disc') discBonusAtStart += t.val;
-            }
-        });
+    let useSnapshot = false;
+    if (window.ongoingForgeSnapshot && 
+        window.ongoingForgeSnapshot.startDate === sDateVal && 
+        window.ongoingForgeSnapshot.startAsc === fAsc && 
+        window.ongoingForgeSnapshot.startLv === fLv) {
+        useSnapshot = true;
+    } else {
+        window.ongoingForgeSnapshot = null;
+    }
 
-        let h5 = genLine('Cost', Math.round(cRaw * (1 - curStats.forgeDisc / 100)), Math.round(cRaw * (1 - discBonusAtStart / 100)), 'fm_gold', 'gold');
+    if (fAsc === 3 && fLv === 35) {
+        let h5 = genLine('Cost', '-', '-', 'fm_gold', 'standard');
+        h5 += genLine('Finish', '-', '-', null, 'standard');
+        h5 += genLine('Duration', '-', '-', null, 'standard');
+        if (res5) res5.innerHTML = h5;
+    } else if (fLv === 35) {
+        let h5 = genLine('Cost', 3000000, 3000000, 'fm_gold', 'gold');
+        h5 += genLine('Finish', '-', '-', null, 'standard');
+        h5 += genLine('Duration', 0, 0, null, 'time'); 
+        if (res5) res5.innerHTML = h5;
+    } else {
+        const cRaw = forgeLevelData[fLv][0];
+        const baseMins = forgeLevelData[fLv][1] * 60;
+        
+        let costB, costA, f1, f2, dFinish, dFinishProj;
 
-        const baseMins = forgeLevelData[fLv][1] * 60;
-        const f1 = baseMins / (1 + curStats.speed / 100); 
-        const f2 = baseMins / (1 + speedBonusAtStart / 100);
-        const dFinish = new Date(mainStartTime + f1 * 60000); 
-        const dFinishProj = new Date(mainStartTime + f2 * 60000);
-        
-        h5 += `<div class="calc-line"><div class="calc-label">Finish</div>${renderForgeGroup(formatDT(dFinish), formatDT(dFinishProj), null, 'date')}</div>`;
-        h5 += genLine('Duration', f1, f2, null, 'time');
-        if (res5) res5.innerHTML = h5;
-    }
+        if (useSnapshot) {
+            costB = window.ongoingForgeSnapshot.costCur;
+            costA = window.ongoingForgeSnapshot.costProj;
+            f1 = window.ongoingForgeSnapshot.minsCur;
+            f2 = window.ongoingForgeSnapshot.minsProj;
+            dFinish = new Date(window.ongoingForgeSnapshot.finishTimeCur);
+            dFinishProj = new Date(window.ongoingForgeSnapshot.finishTimeProj);
+        } else {
+            let speedBonusAtStart = curStats.speed; 
+            let discBonusAtStart = curStats.forgeDisc;
+            techSchedule.forEach(t => { 
+                if (t.time <= mainStartTime) {
+                    if (t.type === 'speed') speedBonusAtStart += t.val; 
+                    if (t.type === 'disc') discBonusAtStart += t.val;
+                }
+            });
 
-    if (fAsc === 3 && fLv === 35) {
-        let hTarget = genLine('Total Cost', '-', '-', 'fm_gold', 'standard');
-        hTarget += genLine('Finish', '-', '-', null, 'standard');
-        hTarget += genLine('Total Duration', '-', '-', null, 'standard');
-        hTarget += genLine('Total Gem', '-', '-', null, 'standard');
-        if (resTarget) resTarget.innerHTML = hTarget;
-    } else {
-        const tAscEl = document.getElementById('calc-target-forge-asc');
-        const tLvEl = document.getElementById('calc-target-forge-lv');
-        
-        const tAscRaw = tAscEl ? parseInt(tAscEl.value) : fAsc;
-        const tLvRaw = tLvEl ? tLvEl.value : (fLv + 1);
-        const isAscendTarget = tLvRaw === "Ascend";
-        
-        const tAsc = isNaN(tAscRaw) ? fAsc : tAscRaw;
-        const endLv = isAscendTarget ? 35 : (parseInt(tLvRaw) || (fLv + 1));
+            costB = Math.round(cRaw * (1 - curStats.forgeDisc / 100));
+            costA = Math.round(cRaw * (1 - discBonusAtStart / 100));
+            f1 = baseMins / (1 + curStats.speed / 100); 
+            f2 = baseMins / (1 + speedBonusAtStart / 100);
+            dFinish = new Date(mainStartTime + f1 * 60000); 
+            dFinishProj = new Date(mainStartTime + f2 * 60000);
+        }
 
-        let totalCostCur = 0, totalCostProj = 0;
-        let totalMinsCur = 0, totalMinsProj = 0;
-        let totalGemsCur = 0, totalGemsProj = 0;
+        let h5 = genLine('Cost', costB, costA, 'fm_gold', 'gold');
+        h5 += `<div class="calc-line"><div class="calc-label">Finish</div>${renderForgeGroup(formatDT(dFinish), formatDT(dFinishProj), null, 'date')}</div>`;
+        h5 += genLine('Duration', f1, f2, null, 'time');
+        if (res5) res5.innerHTML = h5;
+    }
 
-        let cAsc = fAsc, cLv = fLv;
-        let currentTimeCur = mainStartTime;
-        let currentTimeProj = mainStartTime;
+    if (fAsc === 3 && fLv === 35) {
+        let hTarget = genLine('Total Cost', '-', '-', 'fm_gold', 'standard');
+        hTarget += genLine('Finish', '-', '-', null, 'standard');
+        hTarget += genLine('Total Duration', '-', '-', null, 'standard');
+        hTarget += genLine('Total Gem', '-', '-', null, 'standard');
+        if (resTarget) resTarget.innerHTML = hTarget;
+    } else {
+        const tAscEl = document.getElementById('calc-target-forge-asc');
+        const tLvEl = document.getElementById('calc-target-forge-lv');
+        
+        const tAscRaw = tAscEl ? parseInt(tAscEl.value) : fAsc;
+        const tLvRaw = tLvEl ? tLvEl.value : (fLv + 1);
+        const isAscendTarget = tLvRaw === "Ascend";
+        
+        const tAsc = isNaN(tAscRaw) ? fAsc : tAscRaw;
+        const endLv = isAscendTarget ? 35 : (parseInt(tLvRaw) || (fLv + 1));
 
-        window.currentForgeSchedule = [];
+        let totalCostCur = 0, totalCostProj = 0;
+        let totalMinsCur = 0, totalMinsProj = 0;
+        let totalGemsCur = 0, totalGemsProj = 0;
 
-        while (cAsc < tAsc || (cAsc === tAsc && cLv < endLv)) {
-            if (cLv === 35) {
-                totalCostCur += 3000000;
-                totalCostProj += 3000000;
-                
-                window.currentForgeSchedule.push({
-                    label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
-                    finish: currentTimeProj,
-                    isAscension: true
-                });
-                
-                cAsc++;
-                cLv = 1;
-            } else {
-                if (forgeLevelData[cLv]) {
-                    const baseCost = forgeLevelData[cLv][0];
-                    const baseMins = forgeLevelData[cLv][1] * 60;
-                    let activeProjSpeed = curStats.speed;
-                    let activeProjDisc = curStats.forgeDisc;
-                    techSchedule.forEach(t => { 
-                        if (t.time <= currentTimeProj) {
-                            if (t.type === 'speed') activeProjSpeed += t.val;
-                            if (t.type === 'disc') activeProjDisc += t.val;
-                        }
-                    });
+        let cAsc = fAsc, cLv = fLv;
+        let currentTimeCur = mainStartTime;
+        let currentTimeProj = mainStartTime;
 
-                    totalCostCur += Math.round(baseCost * (1 - curStats.forgeDisc / 100));
-                    totalCostProj += Math.round(baseCost * (1 - activeProjDisc / 100));
+        window.currentForgeSchedule = [];
 
-                    const curLvlMins = baseMins / (1 + curStats.speed / 100);
-                    currentTimeCur += curLvlMins * 60000;
-                    totalMinsCur += curLvlMins;
-                    
-                    const projLvlMins = baseMins / (1 + activeProjSpeed / 100);
-                    currentTimeProj += projLvlMins * 60000;
-                    totalMinsProj += projLvlMins;
-                    
-                    totalGemsCur += Math.round(curLvlMins / 7.25);
-                    totalGemsProj += Math.round(projLvlMins / 7.25);
+        while (cAsc < tAsc || (cAsc === tAsc && cLv < endLv)) {
+            if (cLv === 35) {
+                totalCostCur += 3000000;
+                totalCostProj += 3000000;
+                
+                window.currentForgeSchedule.push({
+                    label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
+                    finish: currentTimeProj,
+                    isAscension: true
+                });
+                
+                cAsc++;
+                cLv = 1;
+            } else {
+                if (forgeLevelData[cLv]) {
+                    const baseCost = forgeLevelData[cLv][0];
+                    const baseMins = forgeLevelData[cLv][1] * 60;
+                    
+                    let activeProjSpeed = curStats.speed;
+                    let activeProjDisc = curStats.forgeDisc;
+                    techSchedule.forEach(t => { 
+                        if (t.time <= currentTimeProj) {
+                            if (t.type === 'speed') activeProjSpeed += t.val;
+                            if (t.type === 'disc') activeProjDisc += t.val;
+                        }
+                    });
 
-                    window.currentForgeSchedule.push({
-                        label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
-                        finish: currentTimeProj,
-                        isAscension: false
-                    });
-                }
-                cLv++;
-            }
-        }
+                    if (cAsc === fAsc && cLv === fLv && useSnapshot) {
+                        currentTimeProj = window.ongoingForgeSnapshot.finishTimeProj;
+                        currentTimeCur = window.ongoingForgeSnapshot.finishTimeCur;
+                        
+                        totalCostCur += window.ongoingForgeSnapshot.costCur;
+                        totalCostProj += window.ongoingForgeSnapshot.costProj;
+                        
+                        totalMinsCur += window.ongoingForgeSnapshot.minsCur;
+                        totalMinsProj += window.ongoingForgeSnapshot.minsProj;
+                        
+                        totalGemsCur += Math.round(window.ongoingForgeSnapshot.minsCur / 7.25);
+                        totalGemsProj += Math.round(window.ongoingForgeSnapshot.minsProj / 7.25);
 
-        if (isAscendTarget && cAsc === tAsc && cLv === 35) {
-            totalCostCur += 3000000;
-            totalCostProj += 3000000;
-            window.currentForgeSchedule.push({
-                label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
-                finish: currentTimeProj,
-                isAscension: true
-            });
-        }
+                        window.currentForgeSchedule.push({
+                            label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
+                            finish: currentTimeProj,
+                            isAscension: false
+                        });
+                        cLv++;
+                        continue; 
+                    }
 
-        let finishLabel = 'Finish';
-        if (window.currentForgeSchedule && window.currentForgeSchedule.length > 1) {
-            finishLabel += ' <button class="btn-info" onclick="openForgeScheduleModal()" style="vertical-align: middle; margin-left: 6px;">i</button>';
-        }
-        
-        let hTarget = genLine('Total Cost', totalCostCur, totalCostProj, 'fm_gold', 'gold');
-        hTarget += genLine(finishLabel, formatDT(new Date(currentTimeCur)), formatDT(new Date(currentTimeProj)), null, 'date');
-        hTarget += genLine('Total Duration', totalMinsCur, totalMinsProj, null, 'time');
-        hTarget += genLine('Total Gem', totalGemsCur, totalGemsProj, null, 'number');
-        
-        if (resTarget) resTarget.innerHTML = hTarget;
-    }
+                    let stepCostCur = Math.round(baseCost * (1 - curStats.forgeDisc / 100));
+                    let stepCostProj = Math.round(baseCost * (1 - activeProjDisc / 100));
+                    
+                    totalCostCur += stepCostCur;
+                    totalCostProj += stepCostProj;
 
-    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+                    const curLvlMins = baseMins / (1 + curStats.speed / 100);
+                    currentTimeCur += curLvlMins * 60000;
+                    totalMinsCur += curLvlMins;
+                    
+                    const projLvlMins = baseMins / (1 + activeProjSpeed / 100);
+                    currentTimeProj += projLvlMins * 60000;
+                    totalMinsProj += projLvlMins;
+                    
+                    totalGemsCur += Math.round(curLvlMins / 7.25);
+                    totalGemsProj += Math.round(projLvlMins / 7.25);
+
+                    window.currentForgeSchedule.push({
+                        label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
+                        finish: currentTimeProj,
+                        isAscension: false
+                    });
+                    
+                    if (cAsc === fAsc && cLv === fLv && !useSnapshot) {
+                        window.ongoingForgeSnapshot = {
+                            startDate: sDateVal,
+                            startAsc: fAsc,
+                            startLv: fLv,
+                            finishTimeProj: currentTimeProj,
+                            finishTimeCur: currentTimeCur,
+                            costProj: stepCostProj,
+                            costCur: stepCostCur,
+                            minsProj: projLvlMins,
+                            minsCur: curLvlMins
+                        };
+                    }
+                }
+                cLv++;
+            }
+        }
+
+        if (isAscendTarget && cAsc === tAsc && cLv === 35) {
+            totalCostCur += 3000000;
+            totalCostProj += 3000000;
+            window.currentForgeSchedule.push({
+                label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
+                finish: currentTimeProj,
+                isAscension: true
+            });
+        }
+
+        let finishLabel = 'Finish';
+        if (window.currentForgeSchedule && window.currentForgeSchedule.length > 1) {
+            finishLabel += ' <button class="btn-info" onclick="openForgeScheduleModal()" style="vertical-align: middle; margin-left: 6px;">i</button>';
+        }
+        
+        let hTarget = genLine('Total Cost', totalCostCur, totalCostProj, 'fm_gold', 'gold');
+        hTarget += genLine(finishLabel, formatDT(new Date(currentTimeCur)), formatDT(new Date(currentTimeProj)), null, 'date');
+        hTarget += genLine('Total Duration', totalMinsCur, totalMinsProj, null, 'time');
+        hTarget += genLine('Total Gem', totalGemsCur, totalGemsProj, null, 'number');
+        
+        if (resTarget) resTarget.innerHTML = hTarget;
+    }
+
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
 }
 
 function initCalcDateSelectors() {
