@@ -184,9 +184,31 @@ function isWarTime(date) {
 
 function updateCalculations() {
     const state = calcState();
-    const sVal = document.getElementById('start-date').value;
-    const start = sVal ? new Date(sVal) : new Date();
-    const startTime = start.getTime();
+    const dateInput = document.getElementById('start-date');
+    const sVal = dateInput ? dateInput.value : '';
+    let startTime;
+
+    if (sVal) {
+        const inputDate = new Date(sVal);
+        const exactTimeStr = dateInput.getAttribute('data-exact-time');
+        if (exactTimeStr) {
+            const exactDate = new Date(parseFloat(exactTimeStr));
+            if (exactDate.getFullYear() === inputDate.getFullYear() &&
+                exactDate.getMonth() === inputDate.getMonth() &&
+                exactDate.getDate() === inputDate.getDate() &&
+                exactDate.getHours() === inputDate.getHours() &&
+                exactDate.getMinutes() === inputDate.getMinutes()) {
+                startTime = exactDate.getTime(); 
+            } else {
+                startTime = inputDate.getTime();
+                dateInput.removeAttribute('data-exact-time'); 
+            }
+        } else {
+            startTime = inputDate.getTime();
+        }
+    } else {
+        startTime = new Date().getTime();
+    }
 
     const potStr = state.totalPotions.toLocaleString('en-US');
     const timeStr = formatSmartTime(state.totalMin);
@@ -235,7 +257,22 @@ function updateCalculations() {
             
             let classNames = ['log-row'];
             if (typeof expandedLogIndex !== 'undefined' && expandedLogIndex === h.idx) classNames.push('expanded'); 
-            if (typeof isWarTime === 'function' && isWarTime(finishDate)) classNames.push('war-active');
+            
+            if (typeof isWarTime === 'function' && isWarTime(finishDate)) {
+                const d = new Date(finishDate);
+                const dayOfWeek = d.getDay() || 7; 
+                d.setDate(d.getDate() - dayOfWeek + 1); 
+
+                const daysSinceEpoch = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+
+                const absoluteWeeks = Math.floor((daysSinceEpoch - 3) / 7);
+
+                if (absoluteWeeks % 2 === 0) {
+                    classNames.push('war-active-w2'); 
+                } else {
+                    classNames.push('war-active-w1'); 
+                }
+            }
             
             if (isMovingThis) {
                 classNames.push('moving-active');
@@ -716,6 +753,11 @@ function markDone(targetIdx, timestamp) {
             else clean = true; 
         }
         
+        const dateInput = document.getElementById('start-date');
+        if (dateInput) {
+            dateInput.setAttribute('data-exact-time', timestamp);
+        }
+
         const d = new Date(timestamp); 
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         const localIso = d.toISOString().slice(0, 16); 
@@ -724,7 +766,7 @@ function markDone(targetIdx, timestamp) {
         if (typeof syncMainDate === 'function') syncMainDate(localIso);
 
         setTimeout(() => {
-            const wrappers = [
+            const wrappers =[
                 document.querySelector('.sidebar-scroll-wrapper'),
                 document.querySelector('.pane.right-pane-wrapper')
             ];

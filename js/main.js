@@ -262,10 +262,14 @@ function toggleDashboard() {
 // =========================================
 function captureFullState() {
     const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const dateInput = document.getElementById('start-date');
+    const exactTime = dateInput ? dateInput.getAttribute('data-exact-time') : null;
+
     return {
         setupLevels: (typeof setupLevels !== 'undefined') ? JSON.parse(JSON.stringify(setupLevels)) : {},
         planQueue: (typeof planQueue !== 'undefined') ? JSON.parse(JSON.stringify(planQueue)) :[],
         startDate: getVal('start-date'),
+        exactStartDate: exactTime,
         calcData: { 
             world: getVal('calc-world'), 
             stage: getVal('calc-stage'), 
@@ -316,7 +320,7 @@ function captureFullState() {
             mergeMount: {
                 tRarity: getVal('mount-target-rarity'), tLvl: getVal('mount-target-lvl'), tExp: getVal('mount-target-exp'),
                 fRarity: getVal('mount-fodder-rarity'), fLvl: getVal('mount-fodder-lvl'), fExp: getVal('mount-fodder-exp'),
-                bulk: ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`bulk-mount-${c}`))
+                bulk:['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`bulk-mount-${c}`))
             }
         },
         summonData: {
@@ -347,7 +351,15 @@ function captureFullState() {
 function loadState(d) {
     if (d.setupLevels && typeof setupLevels !== 'undefined') { Object.keys(setupLevels).forEach(k => delete setupLevels[k]); Object.assign(setupLevels, d.setupLevels); }
     if (d.planQueue && typeof planQueue !== 'undefined') { planQueue.length = 0; planQueue.push(...d.planQueue); }
-    const sDate = d.startDate || d.start; if (sDate) { safeSetVal('start-date', sDate); safeSyncDropdowns(sDate, 'dm'); }
+    const sDate = d.startDate || d.start; 
+    if (sDate) { 
+        safeSetVal('start-date', sDate); 
+        safeSyncDropdowns(sDate, 'dm'); 
+        if (d.exactStartDate) {
+            const dateInput = document.getElementById('start-date');
+            if (dateInput) dateInput.setAttribute('data-exact-time', d.exactStartDate);
+        }
+    }
     if (d.warConfig && typeof warConfig !== 'undefined') { 
         warConfig = d.warConfig; 
         if (warConfig.min === undefined) warConfig.min = 0; 
@@ -464,7 +476,7 @@ function loadState(d) {
             if (d.petData.mergeMount) {
                 safeSetVal('mount-target-rarity', d.petData.mergeMount.tRarity); safeSetVal('mount-target-lvl', d.petData.mergeMount.tLvl); safeSetVal('mount-target-exp', d.petData.mergeMount.tExp);
                 safeSetVal('mount-fodder-rarity', d.petData.mergeMount.fRarity); safeSetVal('mount-fodder-lvl', d.petData.mergeMount.fLvl); safeSetVal('mount-fodder-exp', d.petData.mergeMount.fExp);
-                const colors = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+                const colors =['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
                 if (d.petData.mergeMount.bulk) colors.forEach((c, i) => safeSetVal(`bulk-mount-${c}`, d.petData.mergeMount.bulk[i]));
             }
         }

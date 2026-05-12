@@ -342,8 +342,8 @@ const HTML_PET = `
                     </div>
                     <div class="pet-stat-row">
                         <span class="pet-row-label">Total</span>
-                        <div class="pet-val-box"><span id="pet-total-hp">-</span></div>
                         <div class="pet-val-box"><span id="pet-total-dmg">-</span></div>
+                        <div class="pet-val-box"><span id="pet-total-hp">-</span></div>
                     </div>
                     
                     <hr class="pet-hr">
@@ -809,12 +809,13 @@ const HTML_WEEKLY = `
                     <label class="daily-label">Clan War:</label>
                     <div class="war-select-group flex-center">
                         <select id="weekly-war-tier" class="war-select" style="width: 75px;" onchange="updateWeekly()">
-                            <option value="S-Tier" selected>S-Tier</option>
+                            <option value="SS-Tier" selected>SS-Tier</option>
+                            <option value="S-Tier">S-Tier</option>
                             <option value="A-Tier">A-Tier</option>
                             <option value="B-Tier">B-Tier</option>
-                            <option value="B-Tier">C-Tier</option>
-                            <option value="B-Tier">D-Tier</option>
-                            <option value="B-Tier">E-Tier</option>
+                            <option value="C-Tier">C-Tier</option>
+                            <option value="D-Tier">D-Tier</option>
+                            <option value="E-Tier">E-Tier</option>
                             <option value="None">None</option>
                         </select>
                         <select id="weekly-war-win" class="war-select select-small" style="width: 65px;" onchange="updateWeekly()">
@@ -827,7 +828,12 @@ const HTML_WEEKLY = `
                     <label class="daily-label">Indiv. Rewards:</label>
                     <div class="war-select-group flex-center">
                         <select id="weekly-indiv" class="war-select select-small" style="width: 75px;" onchange="updateWeekly()">
-                            <option value="500k" selected>500k</option>
+                            <option value="1m" selected>1m</option>
+                            <option value="900k">900k</option>
+                            <option value="800k">800k</option>
+                            <option value="700k">700k</option>
+                            <option value="600k">600k</option>
+                            <option value="500k">500k</option>
                             <option value="450k">450k</option>
                             <option value="400k">400k</option>
                             <option value="350k">350k</option>
@@ -867,6 +873,7 @@ const HTML_WEEKLY = `
                     <div class="calc-line"><span class="calc-label">Eggshell</span><div class="calc-val-group" id="weekly-base-eggshell"></div></div>
                     <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="weekly-base-potion"></div></div>
                     <div class="calc-line"><span class="calc-label">Mount Key</span><div class="calc-val-group" id="weekly-base-mountkey"></div></div>
+                    <div class="calc-line"><span class="calc-label">Green Potion</span><div class="calc-val-group" id="weekly-base-greenpotion"></div></div>
                 </div>
             </div>
             <div class="daily-card card-compact">
@@ -1064,6 +1071,7 @@ const HTML_WEEKLY = `
                     <div class="calc-line"><span class="calc-label">Eggshells</span><div class="calc-val-group" id="league-base-eggshell"></div></div>
                     <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="league-base-potion"></div></div>
                     <div class="calc-line"><span class="calc-label">Mount Key</span><div class="calc-val-group" id="league-base-mountkey"></div></div>
+                    <div class="calc-line"><span class="calc-label">Green Potion</span><div class="calc-val-group" id="league-base-greenpotion"></div></div>
                 </div>
             </div>
             
@@ -1110,11 +1118,18 @@ const HTML_WEEKLY = `
                         <div id="bd-indiv-potion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
                     </div>
 
-                    <div style="display: flex; align-items: center; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
                         <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/mount_key.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
                         <div id="bd-league-mountkey" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
                         <div id="bd-war-mountkey" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
                         <div id="bd-indiv-mountkey" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
+                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/green_potion.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
+                        <div id="bd-league-greenpotion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-war-greenpotion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
+                        <div id="bd-indiv-greenpotion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
                     </div>
                 </div>
             </div>
@@ -1790,7 +1805,7 @@ const HTML_HELP = `
                     <span class="help-header-text">3. Organize the Schedule</span>
                     <div class="help-body-text">Open the <b>Schedule</b> tab to manage your queue.</div>
                     <ul class="help-body-text help-ul">
-                        <li><b>War Start:</b> Set the time when Day 1 of clan war starts. Tech upgrades that finish on Day 1 or Day 4 of war will be highlighted in blue.</li>
+                        <li><b>War Start:</b> Set the time when Day 1 of clan war starts. Tech upgrades finishing on Day 1 or Day 4 of war will be highlighted based on the matchmaking cycle: <b style="color: #5d9cec;">Steel Blue</b> for a similar strength opponent, and <b style="color: #00a2ff;">Standard Blue</b> for a random same-tier opponent. <i>Note: This tool isn't smart enough to automatically adjust the blue highlights for Daylight Saving Time! Since game servers don't observe DST, you will need to manually update your War Start time here twice a year when your local clocks shift.</i></li>
                         <li><b>Mark Done:</b> Click an item in your schedule to reveal its controls, then hit "DONE" to clear it and update your start time and tech.</li>
                         <li><b>Manage Upgrades:</b> Reorder tasks, insert new ones, or add custom delays (like when you are sleeping or working).</li>
                     </ul>

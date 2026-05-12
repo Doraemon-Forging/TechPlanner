@@ -94,10 +94,18 @@ function renderStats() {
         treeData.structure.forEach(ns => {
             const meta = treeData.meta[ns.id];
             if (!meta || !meta.stat) return;
-            let curT = 0, projT = 0;
-            for (let t = 1; t <= 5; t++) { const id = `${key}_T${t}_${ns.id}`; curT += (setupLevels[id] || 0); projT += (state.levels[id] || 0); }
+            let curT = 0, projT = 0, curW = 0, projW = 0;
+            for (let t = 1; t <= 5; t++) { 
+                const id = `${key}_T${t}_${ns.id}`; 
+                const cLvl = (setupLevels[id] || 0);
+                const pLvl = (state.levels[id] || 0);
+                curT += cLvl; 
+                projT += pLvl; 
+                curW += cLvl * t;
+                projW += pLvl * t;
+            }
             hasStats = true;
-            let txtCur = meta.stat(curT); let txtProj = meta.stat(projT);
+            let txtCur = meta.stat(curT, curW); let txtProj = meta.stat(projT, projW);
             if (txtProj.includes('%') && txtCur.includes('%')) { const match = txtProj.match(/([+\-]?\d+%?)$/); if (match) txtProj = match[0]; }
             const iconRegex = /([\d\.\,kmb]+)\s*(<img[^>]+>)/g;
             if (txtCur && typeof txtCur === 'string') txtCur = txtCur.replace(iconRegex, '$2 $1');
@@ -566,8 +574,8 @@ function updateCalculator() {
                         totalMinsCur += window.ongoingForgeSnapshot.minsCur;
                         totalMinsProj += window.ongoingForgeSnapshot.minsProj;
                         
-                        totalGemsCur += Math.round(window.ongoingForgeSnapshot.minsCur / 7.25);
-                        totalGemsProj += Math.round(window.ongoingForgeSnapshot.minsProj / 7.25);
+                        totalGemsCur += Math.round(window.ongoingForgeSnapshot.minsCur / 7.24643);
+                        totalGemsProj += Math.round(window.ongoingForgeSnapshot.minsProj / 7.24643);
 
                         window.currentForgeSchedule.push({
                             label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
@@ -592,8 +600,8 @@ function updateCalculator() {
                     currentTimeProj += projLvlMins * 60000;
                     totalMinsProj += projLvlMins;
                     
-                    totalGemsCur += Math.round(curLvlMins / 7.25);
-                    totalGemsProj += Math.round(projLvlMins / 7.25);
+                    totalGemsCur += Math.round(curLvlMins / 7.24643);
+                    totalGemsProj += Math.round(projLvlMins / 7.24643);
 
                     window.currentForgeSchedule.push({
                         label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,

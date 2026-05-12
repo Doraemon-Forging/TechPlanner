@@ -89,16 +89,16 @@ function updateWeekly() {
     const clanWin = getStrVal('weekly-war-win', 'Lose');
     const indivTier = getStrVal('weekly-indiv', 'None');
 
-    const lRewards = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league] && LEAGUE_REWARDS[league][rank]) ? LEAGUE_REWARDS[league][rank] : [0,0,0,0,0,0];
-    const cRewards = (typeof CLAN_WAR_REWARDS !== 'undefined' && CLAN_WAR_REWARDS[clanTier] && CLAN_WAR_REWARDS[clanTier][clanWin]) ? CLAN_WAR_REWARDS[clanTier][clanWin] : [0,0,0,0,0,0];
+    const lRewards = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league] && LEAGUE_REWARDS[league][rank]) ? LEAGUE_REWARDS[league][rank] : [0,0,0,0,0,0,0];
+    const cRewards = (typeof CLAN_WAR_REWARDS !== 'undefined' && CLAN_WAR_REWARDS[clanTier] && CLAN_WAR_REWARDS[clanTier][clanWin]) ? CLAN_WAR_REWARDS[clanTier][clanWin] : [0,0,0,0,0,0,0];
 
-    let iRewards = [0, 0, 0, 0, 0, 0];
+    let iRewards = [0, 0, 0, 0, 0, 0, 0];
     if (typeof INDIV_REWARDS !== 'undefined') {
         const targetVal = INDIV_REWARDS[indivTier] ? INDIV_REWARDS[indivTier].val : 0;
         for (const key in INDIV_REWARDS) {
             if (INDIV_REWARDS[key].val <= targetVal) {
-                const tierRew = INDIV_REWARDS[key].rewards || [0,0,0,0,0,0];
-                for (let i = 0; i < 6; i++) iRewards[i] += tierRew[i];
+                const tierRew = INDIV_REWARDS[key].rewards || [0,0,0,0,0,0,0];
+                for (let i = 0; i < 7; i++) iRewards[i] += tierRew[i];
             }
         }
     }
@@ -125,6 +125,7 @@ function updateWeekly() {
     setBd('bd-league-eggshell', lRewards[3], 'whole');
     setBd('bd-league-potion', lRewards[4], 'gold');
     setBd('bd-league-mountkey', lRewards[5], 'whole');
+    setBd('bd-league-greenpotion', lRewards[6], 'whole');
 
     setBd('bd-war-hammer', cRewards[0], 'whole');
     setBd('bd-war-gold', cRewards[1], 'gold');
@@ -132,6 +133,7 @@ function updateWeekly() {
     setBd('bd-war-eggshell', cRewards[3], 'whole');
     setBd('bd-war-potion', cRewards[4], 'gold');
     setBd('bd-war-mountkey', cRewards[5], 'whole');
+    setBd('bd-war-greenpotion', cRewards[6], 'whole');
 
     setBd('bd-indiv-hammer', iRewards[0], 'whole');
     setBd('bd-indiv-gold', iRewards[1], 'gold');
@@ -139,6 +141,7 @@ function updateWeekly() {
     setBd('bd-indiv-eggshell', iRewards[3], 'whole');
     setBd('bd-indiv-potion', iRewards[4], 'gold');
     setBd('bd-indiv-mountkey', iRewards[5], 'whole');
+    setBd('bd-indiv-greenpotion', iRewards[6], 'whole');
 
     const finalRewards = {
         hammer:   lRewards[0] + cRewards[0] + iRewards[0],
@@ -146,7 +149,8 @@ function updateWeekly() {
         ticket:   lRewards[2] + cRewards[2] + iRewards[2],
         eggshell: lRewards[3] + cRewards[3] + iRewards[3],
         potion:   lRewards[4] + cRewards[4] + iRewards[4],
-        mountKey: lRewards[5] + cRewards[5] + iRewards[5]
+        mountKey: lRewards[5] + cRewards[5] + iRewards[5],
+        greenPotion: lRewards[6] + cRewards[6] + iRewards[6]
     };
 
     const getWeeklyTechVal = (tree, nodeId) => {
@@ -252,6 +256,7 @@ function updateWeekly() {
         setBreakdown(`${prefix}-base-eggshell`, stats.baseEggshellB, stats.baseEggshellA, 'eggshell.png', 'whole');
         setBreakdown(`${prefix}-base-potion`, stats.basePotionB, stats.basePotionA, 'red_potion.png', 'gold');
         setBreakdown(`${prefix}-base-mountkey`, stats.baseMountKeyB, stats.baseMountKeyA, 'mount_key.png', 'whole');
+        setBreakdown(`${prefix}-base-greenpotion`, stats.baseGreenPotionB, stats.baseGreenPotionA, 'green_potion.png', 'whole');
 
         setBreakdown(`res-${prefix}-eff-hammer`, stats.effHB, stats.effHA, 'fm_hammer.png', 'whole');
         setBreakdown(`res-${prefix}-grand`, stats.grandB, stats.grandA, 'fm_gold.png', 'gold');
@@ -267,6 +272,7 @@ function updateWeekly() {
         baseEggshellB: totalBaseEggshellB, baseEggshellA: totalBaseEggshellA,
         basePotionB: totalPotionB,         basePotionA: totalPotionA,
         baseMountKeyB: finalRewards.mountKey, baseMountKeyA: finalRewards.mountKey,
+        baseGreenPotionB: finalRewards.greenPotion, baseGreenPotionA: finalRewards.greenPotion,
         effHB: totalEffHB,                 effHA: totalEffHA,
         grandB: totalGrandGoldB,           grandA: totalGrandGoldA,
         cardsB: totalCardsB,               cardsA: totalCardsA,
@@ -281,6 +287,7 @@ function updateWeekly() {
         baseEggshellB: finalRewards.eggshell, baseEggshellA: finalRewards.eggshell,
         basePotionB: finalRewards.potion,  basePotionA: finalRewards.potion,
         baseMountKeyB: finalRewards.mountKey, baseMountKeyA: finalRewards.mountKey,
+        baseGreenPotionB: finalRewards.greenPotion, baseGreenPotionA: finalRewards.greenPotion,
         effHB: leagueEffHB,                effHA: leagueEffHA,
         grandB: leagueGrandGoldB,          grandA: leagueGrandGoldA,
         cardsB: leagueCardsB,              cardsA: leagueCardsA,

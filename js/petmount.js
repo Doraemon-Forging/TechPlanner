@@ -135,6 +135,12 @@ function formatMountStats(val) {
     return (val / 1000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'k'; 
 }
 
+function formatPetExp(val) {
+    if (val < 1000) return Math.round(val).toString();
+    if (val < 1000000) return (val / 1000).toFixed(1) + 'k';
+    return (val / 1000000).toFixed(1) + 'm';
+}
+
 function generateStatString(v1, v2) {
     const s1 = formatPetStats(v1);
     const s2 = formatPetStats(v2);
@@ -460,7 +466,7 @@ function updatePetMount() {
             
             if (maxExpForLvl === "Max" || maxPossible === 0) {
                 barFill.style.width = "100%";
-                barText.innerText = `${maxPossible.toLocaleString()} / ${maxPossible.toLocaleString()} xp (100%)`;
+                barText.innerText = `${formatPetExp(maxPossible)} / ${formatPetExp(maxPossible)} xp (100%)`;
             } else {
                 const baseTotal = getRecursiveExp(rarity, lvl);
                 const absoluteTotal = baseTotal + exp;
@@ -470,7 +476,7 @@ function updatePetMount() {
                 if (pct > 100) pct = 100;
                 
                 barFill.style.width = `${pct}%`;
-                barText.innerText = `${absoluteTotal.toLocaleString()} / ${maxPossible.toLocaleString()} xp (${pct.toFixed(1)}%)`;
+                barText.innerText = `${formatPetExp(absoluteTotal)} / ${formatPetExp(maxPossible)} xp (${pct.toFixed(1)}%)`;
             }
         }
 
@@ -485,11 +491,10 @@ function updatePetMount() {
                 const baseRawHp = (base.hp * typeMult.hp) * levelMult;
                 const baseRawDmg = (base.dmg * typeMult.dmg) * levelMult;
 
-                // Game bug/quirk: Mastery % applies ONLY to the Ascension 0 stat value
-                const finalHpCur = Math.round(baseRawHp * (ascMult + curMultHP - 1));
-                const finalHpProj = Math.round(baseRawHp * (ascMult + projMultHP - 1));
-                const finalDmgCur = Math.round(baseRawDmg * (ascMult + curMultDmg - 1));
-                const finalDmgProj = Math.round(baseRawDmg * (ascMult + projMultDmg - 1));
+                const finalHpCur = Math.round(baseRawHp * ascMult * curMultHP);
+                const finalHpProj = Math.round(baseRawHp * ascMult * projMultHP);
+                const finalDmgCur = Math.round(baseRawDmg * ascMult * curMultDmg);
+                const finalDmgProj = Math.round(baseRawDmg * ascMult * projMultDmg);
 
                 totalHpCur += finalHpCur;
                 totalHpProj += finalHpProj;
@@ -642,13 +647,12 @@ function updateMergeResult() {
         
         const baseRawHp = (base.hp * typeMult.hp) * levelMult;
         const baseRawDmg = (base.dmg * typeMult.dmg) * levelMult;
-       
-        // Game bug/quirk: Mastery % applies ONLY to the Ascension 0 stat value
-        finalHp = Math.round(baseRawHp * (ascMult + curMultHP - 1));
-        finalDmg = Math.round(baseRawDmg * (ascMult + curMultDmg - 1));
 
-        finalHpProj = Math.round(baseRawHp * (ascMult + projMultHP - 1));
-        finalDmgProj = Math.round(baseRawDmg * (ascMult + projMultDmg - 1));
+        finalHp = Math.round(baseRawHp * ascMult * curMultHP);
+        finalDmg = Math.round(baseRawDmg * ascMult * curMultDmg);
+
+        finalHpProj = Math.round(baseRawHp * ascMult * projMultHP);
+        finalDmgProj = Math.round(baseRawDmg * ascMult * projMultDmg);
     }
 
     const resName = document.getElementById('merge-res-name');
@@ -675,14 +679,14 @@ function updateMergeResult() {
         if (barFill && barText) {
             if (newLvl >= 100 || maxPossible === 0) {
                 barFill.style.width = "100%";
-                barText.innerText = `${maxPossible.toLocaleString()} / ${maxPossible.toLocaleString()} xp (100%)`;
+                barText.innerText = `${formatPetExp(maxPossible)} / ${formatPetExp(maxPossible)} xp (100%)`;
             } else {
                 let pct = 0;
                 if (maxPossible > 0) pct = (grandTotal / maxPossible) * 100;
                 if (pct > 100) pct = 100;
                
                 barFill.style.width = `${pct}%`;
-                barText.innerText = `${Math.round(grandTotal).toLocaleString()} / ${maxPossible.toLocaleString()} xp (${pct.toFixed(1)}%)`;
+                barText.innerText = `${formatPetExp(Math.round(grandTotal))} / ${formatPetExp(maxPossible)} xp (${pct.toFixed(1)}%)`;
             }
         }
         
@@ -697,7 +701,7 @@ function updateMergeResult() {
                 if (pct > 100) pct = 100;
                 
                 curBarFill.style.width = `${pct}%`;
-                curBarText.innerText = `${Math.round(newExp).toLocaleString()} / ${maxForLevel.toLocaleString()} xp (${pct.toFixed(1)}%)`;
+                curBarText.innerText = `${formatPetExp(Math.round(newExp))} / ${formatPetExp(maxForLevel)} xp (${pct.toFixed(1)}%)`;
             }
         }
     }
@@ -894,19 +898,18 @@ function updateMountMergeResult() {
         const levelMultB = Math.pow(1.006, newLvlBefore - 1);
         const baseRawHpB = baseMount.hp * levelMultB;
         const baseRawDmgB = baseMount.dmg * levelMultB;
-        
-        // Game bug/quirk: Mastery % applies ONLY to the Ascension 0 stat value
-        finalHp = Math.round(baseRawHpB * (ascMult + curMultHP - 1));
-        finalDmg = Math.round(baseRawDmgB * (ascMult + curMultDmg - 1));
+
+        finalHp = Math.round(baseRawHpB * ascMult * curMultHP);
+        finalDmg = Math.round(baseRawDmgB * ascMult * curMultDmg);
     }
 
     if (baseMount && newLvl > 0) {
         const levelMultA = Math.pow(1.006, newLvl - 1);
         const baseRawHpA = baseMount.hp * levelMultA;
         const baseRawDmgA = baseMount.dmg * levelMultA;
-        
-        finalHpProj = Math.round(baseRawHpA * (ascMult + projMultHP - 1));
-        finalDmgProj = Math.round(baseRawDmgA * (ascMult + projMultDmg - 1));
+
+        finalHpProj = Math.round(baseRawHpA * ascMult * projMultHP);
+        finalDmgProj = Math.round(baseRawDmgA * ascMult * projMultDmg);
     }
 
     const resName = document.getElementById('mount-merge-res-name');
@@ -1254,68 +1257,6 @@ function calculateMountSummoning() {
         }
     }
     document.getElementById('mount-res-mexp').innerHTML = generateBeforeAfterStrInline(formatExpVal(mexpB), formatExpVal(mexpA));
-
-    const formatKeys = (val) => {
-        if (val < 1000) return val.toString();
-        if (val < 1000000) return (val / 1000).toFixed(1) + 'k';
-        return (val / 1000000).toFixed(1) + 'm';
-    };
-
-    let milestones = [
-        { name: "Rare", targetLv: 2, color: '#5dd9ff' },
-        { name: "Epic", targetLv: 24, color: '#5dfe8a' },
-        { name: "Legendary", targetLv: 40, color: '#fdff5e' },
-        { name: "Ultimate", targetLv: 57, color: '#ff5d5e' },
-        { name: "Mythic", targetLv: 73, color: '#d55cff' },
-        { name: "Max", targetLv: 100, color: '#fe9e0c' }
-    ];
-
-    let milestoneData = milestones.map(m => {
-        let isUnlockedBefore = beforeState.level >= m.targetLv;
-        let reqBefore = isUnlockedBefore ? { pulls: 0, keys: 0 } : getRequirementsToLevel(beforeState.level, beforeState.exp, m.targetLv, currentKeyCost, currentExtraChance);
-        
-        let isUnlockedAfter = afterState.level >= m.targetLv;
-        let reqAfter = isUnlockedAfter ? { pulls: 0, keys: 0 } : getRequirementsToLevel(afterState.level, afterState.exp, m.targetLv, plannedKeyCost, plannedExtraChance);
-        
-        return {
-            name: m.name,
-            targetLv: m.targetLv,
-            unlockedBefore: isUnlockedBefore,
-            mountsBefore: reqBefore.pulls,
-            keysBefore: formatKeys(reqBefore.keys),
-            unlockedAfter: isUnlockedAfter,
-            mountsAfter: reqAfter.pulls,
-            keysAfter: formatKeys(reqAfter.keys),
-            color: m.color
-        };
-    });
-
-    const getCumulativeExp = (lvl, exp) => {
-        let total = 0;
-        for (let i = 1; i < lvl; i++) {
-            if (MOUNT_LEVEL_DATA[i] && typeof MOUNT_LEVEL_DATA[i][0] === 'number') {
-                total += MOUNT_LEVEL_DATA[i][0];
-            }
-        }
-        return total + exp;
-    };
-
-    let MAX_EXP = 0;
-    for (let i = 1; i < 100; i++) {
-    MAX_EXP += MOUNT_LEVEL_DATA[i][0];
-    }
-    let totalExpBefore = getCumulativeExp(beforeState.level, beforeState.exp);
-    let totalExpAfter = getCumulativeExp(afterState.level, afterState.exp);
-    
-    if (totalExpBefore > MAX_EXP) totalExpBefore = MAX_EXP;
-    if (totalExpAfter > MAX_EXP) totalExpAfter = MAX_EXP;
-
-    window.currentMountData = {
-        milestones: milestoneData,
-        expBefore: totalExpBefore,
-        expAfter: totalExpAfter,
-        maxExp: MAX_EXP
-    };
 }
 
 function simulateSummons(startLv, startExp, keysOwned, keyCost, extraChance) {

@@ -623,7 +623,7 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
         <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px;">
             <div class="pet-progress-wrapper" style="margin-left: 0; margin-bottom: 0; height: 32px;">
                 <div class="pet-progress-fill" style="width: ${Math.min(pctB, 100)}%;"></div>
-                <div class="pet-progress-text">${formatExp(loopExpB)} / ${absoluteMaxExp.toLocaleString()} xp (${pctB.toFixed(1)}%)</div>
+                <div class="pet-progress-text">${formatExp(loopExpB)} / ${absoluteMaxExp.toLocaleString()} (${pctB.toFixed(1)}%)</div>
             </div>`;
 
     if (formatExp(loopExpB) !== formatExp(loopExpA) || projB.ascension !== projA.ascension) {
@@ -644,7 +644,7 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
             ${transitionHtml}
             <div class="pet-progress-wrapper" style="margin-left: 0; margin-bottom: 0; height: 32px;">
                 <div class="pet-progress-fill" style="width: ${Math.min(pctA, 100)}%; background-color: #00e676;"></div>
-                <div class="pet-progress-text">${formatExp(loopExpA)} / ${absoluteMaxExp.toLocaleString()} xp (${pctA.toFixed(1)}%)</div>
+                <div class="pet-progress-text">${formatExp(loopExpA)} / ${absoluteMaxExp.toLocaleString()} (${pctA.toFixed(1)}%)</div>
             </div>`;
     }
     html += `</div>`;
