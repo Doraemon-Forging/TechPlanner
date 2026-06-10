@@ -19,6 +19,7 @@ let movingStepIndex = -1;
 let validDropTargets = [];
 let justMovedIndex = -1;
 let deleteModeActive = false;
+let currentGemMode = 0;
 
 // --- HELPERS (Logic) ---
 function getMeta(id) { const p = id.split('_'); return TREES[p[0]].meta[p.slice(2).join('_')]; }
@@ -113,7 +114,7 @@ function maxTier(tree, tier) {
 // --- CALCULATION ENGINE ---
 function calcState(customQueue) {
     const levels = { ...setupLevels };
-    let totalMin = 0, history = [], speed = 0, totalPotions = 0, totalSellBonusCur = 0, currentDiscount = 0;
+    let totalMin = 0, history = [], speed = 0, totalPotions = 0, totalGems = 0, totalSellBonusCur = 0, currentDiscount = 0;
 
     Object.keys(setupLevels).forEach(id => { const m = getMeta(id); if (m && m.n === "Eq. Sell Price") totalSellBonusCur += (setupLevels[id] * (m.val !== undefined ? m.val : 1)); });
     Object.keys(levels).forEach(id => { const m = getMeta(id); if (m && m.speed) speed += m.speed * levels[id]; if (m && m.isDiscount) currentDiscount += levels[id] * (m.val !== undefined ? m.val : 2); });
@@ -129,20 +130,85 @@ function calcState(customQueue) {
             const cur = levels[item.id] || 0; const m = getMeta(item.id);
             if (cur >= m.m) return;
             const tier = getTier(item.id);
-            const timeBase = tierTimes[tier][cur]; const finalTime = timeBase / (1 + speed);
+
+            let finalTime = tierTimes[tier][cur] / (1 + speed);
+            let gemReduction = 0;
+            let effectiveGems = 0; 
+
+            if (item.gems && item.gems > 0) {
+                const maxGemsNeeded = Math.max(0, Math.ceil((finalTime / 7.24643) - 0.5));
+                effectiveGems = Math.min(item.gems, maxGemsNeeded);
+                
+                totalGems += effectiveGems; 
+                gemReduction = (effectiveGems + 0.5) * 7.24643;
+                finalTime = Math.max(0, finalTime - gemReduction);
+            }
+
             const potionBase = potionCosts[tier][cur]; const finalPotion = Math.round(potionBase * (1 - (currentDiscount / 100)));
             totalMin += finalTime; totalPotions += finalPotion; levels[item.id] = cur + 1;
             const spStr = Math.round(speed * 100);
+            
             if (m.speed) { speed += m.speed; if (speed > 1) speed = 1; }
             if (m.isDiscount) currentDiscount += (m.val !== undefined ? m.val : 2);
-            history.push({ type: 'node', id: item.id, name: m.n, lvl: levels[item.id], added: finalTime, cost: finalPotion, speedStr: `+${spStr}% Speed`, idx: i, tree: item.id.split('_')[0] });
+            
+            history.push({ 
+                type: 'node', id: item.id, name: m.n, lvl: levels[item.id], 
+                added: finalTime, cost: finalPotion, speedStr: `+${spStr}% Speed`, 
+                idx: i, tree: item.id.split('_')[0], gems: effectiveGems // Pass the capped value to the log
+            });
         }
     });
     
     let totalSellBonusProj = 0;
     Object.keys(levels).forEach(id => { const m = getMeta(id); if (m && m.n === "Eq. Sell Price") totalSellBonusProj += (levels[id] * (m.val !== undefined ? m.val : 1)); });
     
-    return { levels, totalMin, history, finalSpeed: speed, brokenSteps, totalPotions, totalSellBonusCur, totalSellBonusProj };
+    return { levels, totalMin, history, finalSpeed: speed, brokenSteps, totalPotions, totalGems, totalSellBonusCur, totalSellBonusProj };
+}
+
+// --- NEW GEM FUNCTIONS ---
+function toggleGemMode() {
+    let promptMsg = "Enter Gem amount to use per upgrade (0 or blank to disable):";
+    if (currentGemMode > 0) {
+        promptMsg = `Currently using ${currentGemMode} Gems per upgrade.\nEnter new amount (0 to disable):`;
+    }
+    
+    openPromptModal(promptMsg, (val) => {
+        if (val === null) return; 
+        const parsed = parseInt(val);
+        if (isNaN(parsed) || parsed <= 0) {
+            currentGemMode = 0;
+        } else {
+            currentGemMode = parsed;
+        }
+        updateGemButtonUI();
+    });
+}
+
+function updateGemButtonUI() {
+    ['btn-gem-toggle', 'btn-gem-toggle-mobile'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        btn.innerHTML = `<img src="icons/Gem.png"><span class="gem-val-text">${currentGemMode}</span>`;
+        btn.classList.remove('gem-off'); 
+    });
+}
+
+function editGem(idx) {
+    const item = planQueue[idx];
+    if (!item || item.type !== 'node') return;
+    
+    const currentGems = item.gems || 0;
+    openPromptModal(`Edit Gem amount for this upgrade (currently ${currentGems}):\nEnter 0 to remove.`, (val) => {
+        if (val === null) return;
+        const parsed = parseInt(val);
+        const newGems = (isNaN(parsed) || parsed < 0) ? 0 : parsed;
+        
+        if (newGems !== currentGems) {
+            pushHistory();
+            planQueue[idx].gems = newGems;
+            updateCalculations();
+        }
+    });
 }
 
 // --- CLAN WAR & RENDER LOOP ---
@@ -210,10 +276,21 @@ function updateCalculations() {
         startTime = new Date().getTime();
     }
 
-    const potStr = state.totalPotions.toLocaleString('en-US');
+    const potStr = state.totalPotions >= 10000 
+        ? (state.totalPotions / 1000).toFixed(1) + 'k' 
+        : state.totalPotions.toLocaleString('en-US');
+    const gemStr = (state.totalGems || 0).toLocaleString('en-US'); 
     const timeStr = formatSmartTime(state.totalMin);
+    
     const updateVal = (id, txt) => { const el = document.getElementById(id); if(el) el.innerText = txt; };
-    updateVal('res-val', potStr); updateVal('time-val', timeStr); updateVal('res-val-desktop', potStr); updateVal('time-val-desktop', timeStr);
+    
+    updateVal('res-val', potStr); 
+    updateVal('time-val', timeStr); 
+    updateVal('gem-val', gemStr);
+    
+    updateVal('res-val-desktop', potStr); 
+    updateVal('time-val-desktop', timeStr);
+    updateVal('gem-val-desktop', gemStr);
 
     let vLvls;
     if (currentMode === 'setup') {
@@ -237,7 +314,6 @@ function updateCalculations() {
     if (list) {
         list.innerHTML = '';
         let curTime = startTime;
-        
         const fragment = document.createDocumentFragment();
 
         state.history.forEach(h => {
@@ -274,15 +350,11 @@ function updateCalculations() {
                 }
             }
             
-            if (isMovingThis) {
-                classNames.push('moving-active');
-            } else if (isValidDrop) {
-                classNames.push('drop-valid');
-            } else if (typeof movingStepIndex !== 'undefined' && movingStepIndex > -1) {
-                classNames.push('drop-invalid');
-            } else if (typeof deleteModeActive !== 'undefined' && deleteModeActive) {
-                classNames.push('drop-valid'); 
-                classNames.push('delete-mode-row'); 
+            if (isMovingThis) { classNames.push('moving-active'); } 
+            else if (isValidDrop) { classNames.push('drop-valid'); } 
+            else if (typeof movingStepIndex !== 'undefined' && movingStepIndex > -1) { classNames.push('drop-invalid'); } 
+            else if (typeof deleteModeActive !== 'undefined' && deleteModeActive) {
+                classNames.push('drop-valid'); classNames.push('delete-mode-row'); 
             }
 
             if (typeof justMovedIndex !== 'undefined' && justMovedIndex === h.idx) classNames.push('flash-success');
@@ -295,7 +367,6 @@ function updateCalculations() {
             }
 
             let iconHtml, nameHtml, rightGroupHtml;
-            
             let compactTimeHtml = `
                 <div class="move-time-group">
                     <div class="mt-row log-time-style">${dayStr}</div>
@@ -314,12 +385,22 @@ function updateCalculations() {
                 const iconPath = `icons/${parts[0]}_${parts.slice(2).join('_')}.png`;
                 iconHtml = `<div class="log-node-preview"><img src="${iconPath}" class="lnp-img" onerror="this.style.display='none'"></div><div class="log-tier-text">${typeof toRoman === 'function' ? toRoman(tierNum) : tierNum}-${h.lvl}</div>`;
                 nameHtml = `<div class="log-name">${h.name} ${typeof toRoman === 'function' ? toRoman(tierNum) : tierNum}-${h.lvl}</div>`;
+
+                const displayGems = h.gems || 0;
                 
+                let gemHtml = `
+                    <div class="ld-part gem" onclick="event.stopPropagation(); editGem(${h.idx})" style="cursor: pointer; transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Click to edit Gem amount">
+                        <img src="icons/Gem.png" class="ld-icon">
+                        <span>${displayGems}</span>
+                    </div>
+                `;
+
                 rightGroupHtml = `
                     <div class="log-right-group">
                         <div class="log-time">${finishDateStr}</div>
                         <div class="log-details">
                             <div class="ld-part pot"><img src="icons/red_potion.png" class="ld-icon"><span>${h.cost.toLocaleString('en-US')}</span></div>
+                            ${gemHtml}
                             <div class="ld-part time"><img src="icons/icon_time.png" class="ld-icon"><span>${durStr}</span></div>
                         </div>
                     </div>
@@ -383,7 +464,6 @@ function updateCalculations() {
             fragment.appendChild(row);
         });
         
-
         list.appendChild(fragment);
     }
     
@@ -442,117 +522,116 @@ function drawLines() {
 }
 
 function handleClick(id, isRight) {
-    showFloatingLabel(id); 
-    const meta = getMeta(id);
-    
-    if (currentMode === 'setup') {
-        window.ongoingForgeSnapshot = null;
-        const currentLvl = setupLevels[id] || 0;
-        
-        if (isRight) {
-            if (currentLvl > 0) {
-                pushHistory(); 
-                if (currentLvl > 1) setupLevels[id]--; 
-                else delete setupLevels[id];
-                
-                if (!setupLevels[id]) {
-                    let changed = true;
-                    while (changed) { 
-                        changed = false; 
-                        Object.keys(setupLevels).forEach(k => { 
-                            if (setupLevels[k] > 0 && !isUnlocked(k, setupLevels)) { 
-                                delete setupLevels[k]; changed = true; 
-                            } 
-                        }); 
-                    }
-                    const sim = calcState(); 
-                    if (sim.brokenSteps.length > 0) {
-                        for (let i = sim.brokenSteps.length - 1; i >= 0; i--) {
-                            planQueue.splice(sim.brokenSteps[i], 1);
-                        }
-                    }
-                }
-            }
-        } else { 
-            if (currentLvl < meta.m) { 
-                pushHistory(); 
-                setupLevels[id] = currentLvl + 1; 
-                if ((setupLevels[id] || 0) === 1) autoUnlock(id); 
-            } 
-        }
-    } else {
-        if (isRight) {
-            let idx = -1; 
-            for (let i = planQueue.length - 1; i >= 0; i--) {
-                if (planQueue[i].id === id) { idx = i; break; }
-            }
-            if (idx > -1) {
-                pushHistory(); 
-                planQueue.splice(idx, 1);
-                let clean = false; 
-                while (!clean) { 
-                    const sim = calcState(planQueue); 
-                    if (sim.brokenSteps.length > 0) {
-                        for (let j = sim.brokenSteps.length - 1; j >= 0; j--) {
-                            planQueue.splice(sim.brokenSteps[j], 1);
-                        }
-                    } else {
-                        clean = true;
-                    }
-                }
-            }
-        } else {
-            let checkState = insertModeIndex > -1 ? calcState(planQueue.slice(0, insertModeIndex)) : calcState();
-            
-            if ((checkState.levels[id] || 0) < meta.m && isUnlocked(id, checkState.levels)) {
-                pushHistory();
-                
-                if (insertModeIndex > -1) { 
-                    let insertedIndex = insertModeIndex; 
-                    
-                    planQueue.splice(insertedIndex, 0, { type: 'node', id }); 
-                    
-                    cancelMove(); 
+    showFloatingLabel(id); 
+    const meta = getMeta(id);
+    
+    if (currentMode === 'setup') {
+        window.ongoingForgeSnapshot = null;
+        const currentLvl = setupLevels[id] || 0;
+        
+        if (isRight) {
+            if (currentLvl > 0) {
+                pushHistory(); 
+                if (currentLvl > 1) setupLevels[id]--; 
+                else delete setupLevels[id];
+                
+                if (!setupLevels[id]) {
+                    let changed = true;
+                    while (changed) { 
+                        changed = false; 
+                        Object.keys(setupLevels).forEach(k => { 
+                            if (setupLevels[k] > 0 && !isUnlocked(k, setupLevels)) { 
+                                delete setupLevels[k]; changed = true; 
+                            } 
+                        }); 
+                    }
+                    const sim = calcState(); 
+                    if (sim.brokenSteps.length > 0) {
+                        for (let i = sim.brokenSteps.length - 1; i >= 0; i--) {
+                            planQueue.splice(sim.brokenSteps[i], 1);
+                        }
+                    }
+                }
+            }
+        } else { 
+            if (currentLvl < meta.m) { 
+                pushHistory(); 
+                setupLevels[id] = currentLvl + 1; 
+                if ((setupLevels[id] || 0) === 1) autoUnlock(id); 
+            } 
+        }
+    } else {
+        if (isRight) {
+            let idx = -1; 
+            for (let i = planQueue.length - 1; i >= 0; i--) {
+                if (planQueue[i].id === id) { idx = i; break; }
+            }
+            if (idx > -1) {
+                pushHistory(); 
+                planQueue.splice(idx, 1);
+                let clean = false; 
+                while (!clean) { 
+                    const sim = calcState(planQueue); 
+                    if (sim.brokenSteps.length > 0) {
+                        for (let j = sim.brokenSteps.length - 1; j >= 0; j--) {
+                            planQueue.splice(sim.brokenSteps[j], 1);
+                        }
+                    } else {
+                        clean = true;
+                    }
+                }
+            }
+        } else {
+            let checkState = insertModeIndex > -1 ? calcState(planQueue.slice(0, insertModeIndex)) : calcState();
+            
+            if ((checkState.levels[id] || 0) < meta.m && isUnlocked(id, checkState.levels)) {
+                pushHistory();
+                
+                if (insertModeIndex > -1) { 
+                    let insertedIndex = insertModeIndex; 
+                    // ATTACH ACTIVE GEMS HERE
+                    planQueue.splice(insertedIndex, 0, { type: 'node', id, gems: currentGemMode }); 
+                    cancelMove(); 
 
-                    if (window.innerWidth <= 768 && typeof switchMobileView === 'function') {
-                        switchMobileView('logs');
-                    }
-                    
-                    justMovedIndex = insertedIndex;
-                    
-                    setTimeout(() => {
-                        const rows = document.querySelectorAll('#log-list .log-row');
-                        if (rows[insertedIndex]) {
-                            if (window.innerWidth <= 768) {
-                                rows[insertedIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            } else {
-                                const scrollWrapper = document.querySelector('.sidebar-scroll-wrapper');
-                                if (scrollWrapper) {
-                                    const targetY = rows[insertedIndex].offsetTop - (scrollWrapper.clientHeight / 2) + (rows[insertedIndex].clientHeight / 2);
-                                    scrollWrapper.scrollTo({ top: targetY, behavior: 'smooth' });
-                                }
-                            }
-                        }
-                        
-                        const nodeEl = document.getElementById(id);
-                        if (nodeEl) {
-                            nodeEl.classList.remove('flash-success');
-                            void nodeEl.offsetWidth; 
-                            nodeEl.classList.add('flash-success');
-                            setTimeout(() => nodeEl.classList.remove('flash-success'), 2600);
-                        }
-                        
-                    }, 50);
-                    
-                } else {
-                    planQueue.push({ type: 'node', id });
-                }
-            }
-        }
-    }
-    
-    updateCalculations();
-    justMovedIndex = -1; 
+                    if (window.innerWidth <= 768 && typeof switchMobileView === 'function') {
+                        switchMobileView('logs');
+                    }
+                    
+                    justMovedIndex = insertedIndex;
+                    
+                    setTimeout(() => {
+                        const rows = document.querySelectorAll('#log-list .log-row');
+                        if (rows[insertedIndex]) {
+                            if (window.innerWidth <= 768) {
+                                rows[insertedIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            } else {
+                                const scrollWrapper = document.querySelector('.sidebar-scroll-wrapper');
+                                if (scrollWrapper) {
+                                    const targetY = rows[insertedIndex].offsetTop - (scrollWrapper.clientHeight / 2) + (rows[insertedIndex].clientHeight / 2);
+                                    scrollWrapper.scrollTo({ top: targetY, behavior: 'smooth' });
+                                }
+                            }
+                        }
+                        
+                        const nodeEl = document.getElementById(id);
+                        if (nodeEl) {
+                            nodeEl.classList.remove('flash-success');
+                            void nodeEl.offsetWidth; 
+                            nodeEl.classList.add('flash-success');
+                            setTimeout(() => nodeEl.classList.remove('flash-success'), 2600);
+                        }
+                    }, 50);
+                    
+                } else {
+                    // ATTACH ACTIVE GEMS HERE
+                    planQueue.push({ type: 'node', id, gems: currentGemMode });
+                }
+            }
+        }
+    }
+    
+    updateCalculations();
+    justMovedIndex = -1; 
 }
 
 function handleShiftClick(id) {
@@ -757,7 +836,7 @@ function markDone(targetIdx, timestamp) {
         if (dateInput) {
             dateInput.setAttribute('data-exact-time', timestamp);
         }
-
+        
         const d = new Date(timestamp); 
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
         const localIso = d.toISOString().slice(0, 16); 

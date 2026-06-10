@@ -125,7 +125,7 @@ span.stat-arrow {
 .sb-item::before { content: ''; display: inline-block; width: 24px; height: 24px; background-size: contain; background-repeat: no-repeat; background-position: center; position: static; margin-right: 5px; filter: none !important; }
 .sb-item.type-res::before { background-image: url('../icons/red_potion.png'); }
 .sb-item.type-time::before { background-image: url('../icons/icon_time.png'); }
-.sb-value { color: #ffffff !important; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 650; -webkit-text-stroke: 2.5px #000000; paint-order: stroke fill; background: none !important; border: none !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; }
+.sb-value { color: #ffffff !important; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 2.5px #000000; paint-order: stroke fill; background: none !important; border: none !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; }
 
 .date-row-styled { display: flex; align-items: center; justify-content: space-between; margin: 0 15px 10px 15px; height: 40px; }
 .drs-label, .war-setup-row label { color: #ffffff; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 800; -webkit-text-stroke: 3px #000000; paint-order: stroke fill; margin-right: 5px; }
@@ -343,6 +343,101 @@ span.stat-arrow {
 
 #capsule-logs.is-moving button:not(.floating-cancel-btn), #capsule-logs.is-inserting button:not(.floating-cancel-btn), #float-logs.is-moving .control-capsule button:not(.floating-cancel-btn), #float-logs.is-inserting .control-capsule button:not(.floating-cancel-btn), #float-tree.is-inserting .control-capsule button:not(.floating-cancel-btn), #capsule-egg.is-inserting button:not(.floating-cancel-btn) { display: none !important; }
 #capsule-logs.is-moving button.floating-cancel-btn, #capsule-logs.is-inserting button.floating-cancel-btn, #float-logs.is-moving button.floating-cancel-btn, #float-logs.is-inserting button.floating-cancel-btn, #float-logs.is-inserting .control-capsule button.floating-cancel-btn, #float-tree.is-inserting .control-capsule button.floating-cancel-btn { display: flex !important; }
+
+/* ==========================================================================
+   GEM MODE STYLES (Button & Logs)
+   ========================================================================== */
+
+.ld-part.gem { 
+    order: 1; 
+    min-width: auto !important; 
+    justify-content: flex-end; 
+    align-items: center !important; 
+}
+
+.ld-part.gem .ld-icon {
+    width: 20px !important;  
+    height: 20px !important; 
+    margin-top: 2.5px !important; 
+    display: block !important;
+}
+
+.ld-part.gem span { 
+    color: #fa8c71 !important; 
+    line-height: 1 !important;
+    display: inline-block !important;
+    transform: translateY(1px) !important; 
+}
+
+.gem-toggle-container {
+    display: flex;
+    z-index: 500;
+    pointer-events: none; 
+}
+
+.gem-toggle-container.desktop-only {
+    position: absolute;
+    bottom: 30px; 
+    left: 0;
+    width: 100%;
+    justify-content: center;
+}
+
+.gem-toggle-container.mobile-only {
+    margin-bottom: 15px !important;
+}
+
+body[data-mode="setup"] .gem-toggle-container.desktop-only,
+body[data-mode="setup"] .gem-toggle-container.mobile-only,
+body[data-mode="setup"] .gem-toggle-container {
+    display: none !important;
+}
+
+.btn-gem-style {
+    pointer-events: auto; 
+    width: 90px !important;      
+    min-width: 90px !important;   
+    height: 46px !important;      
+    padding: 0 8px !important; 
+    display: inline-flex; 
+    justify-content: center; 
+    align-items: center; 
+    
+    background-color: #00b0ff !important; 
+    border: 2px solid #000000 !important; 
+    border-radius: 12px !important; 
+    box-shadow: inset 0 -6px 0 0 #005680 !important; 
+    
+    cursor: pointer; 
+    transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.2s ease;
+}
+
+.btn-gem-style img {
+    width: 20px !important;  
+    height: 20px !important; 
+    object-fit: contain !important; 
+    filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)) !important;
+    transform: translateY(-2px) !important;
+}
+
+.btn-gem-style span {
+    font-family: 'Fredoka One', sans-serif !important; 
+    font-size: 1.1rem !important; 
+    color: #ffffff !important; 
+    -webkit-text-stroke: 2.5px #000 !important; 
+    margin-left: 4px !important;
+    display: inline-block !important;
+    transform: translateY(-2.5px) !important; 
+}
+
+.btn-gem-style:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+}
+.btn-gem-style:active {
+    transform: translateY(3px) !important;
+    box-shadow: inset 0 -2px 0 0 rgba(0,0,0,0.3) !important;
+}
 
 /* Styling for Frugal/Standard Toggles */
 .gem-toggle-btn { display: flex !important; align-items: center; justify-content: center; height: 45px !important; width: 90px !important; font-family: 'Fredoka One', 'Fredoka', sans-serif !important; font-size: 0.9rem !important; color: #ffffff !important; text-transform: uppercase !important; -webkit-text-stroke: 1.5px #000000; background-color: #02a2ff !important; box-shadow: inset 0 -5px 0 0 #005d96 !important; border: 2px solid #000000 !important; border-radius: 12px !important; padding: 0px 20px 5px 20px !important; cursor: pointer; margin: 0 !important; min-height: 46px; box-sizing: border-box !important; z-index: 2; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease !important; }

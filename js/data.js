@@ -381,7 +381,6 @@ const CLAN_WAR_REWARDS = {
     "None":     { "Win":[0, 0, 0, 0, 0, 0, 0],                  "Lose":[0, 0, 0, 0, 0, 0, 0] }
 };
 
-
 const INDIV_REWARDS = {
     "None": { val: 0,       rewards:[0, 0, 0, 0, 0, 0, 0] }, 
     "10k":  { val: 10000,   rewards:[70, 0, 250, 165, 0, 0, 0] },

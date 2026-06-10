@@ -1187,7 +1187,7 @@ function openMountExpModal() {
     renderMasterModal('mountExpBreakdown', window.mountYieldTableHtml);
 }
 
-// --- FORGE SCHEDULE MODAL ---
+// --- FORGE SCHEDULE MODAL (FORGE CALC)---
 function openForgeScheduleModal() {
     if (!window.currentForgeSchedule || window.currentForgeSchedule.length === 0) return;
 
@@ -1207,18 +1207,83 @@ function openForgeScheduleModal() {
         return `${dateStr}, ${timeStr}`;
     };
 
+    let globalIndex = 0;
+    window.currentForgeSchedule.forEach(step => {
+        step.globalIndex = globalIndex++;
+
+        let memoryKey = step.label; 
+        if (typeof step.gems === 'undefined') {
+            step.gems = window.forgeGemsMemory[memoryKey] || 0;
+        }
+        if (typeof step.originalFinish === 'undefined') step.originalFinish = step.finish;
+    });
+
+    window.promptGlobalForgeGems = function() {
+        let val = prompt("Enter Gem amount to use for ALL levels (0 to clear):");
+        if (val === null) return;
+        let gems = parseInt(val);
+        if (isNaN(gems) || gems < 0) gems = 0;
+        
+        window.currentForgeSchedule.forEach(step => {
+            if (!step.isAscension) {
+                step.gems = gems;
+                window.forgeGemsMemory[step.label] = gems; // Save to global memory
+            }
+        });
+        
+        if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+        window.recalcAndRenderForgeScheduleGems();
+    };
+
+    window.promptRowForgeGems = function(idx) {
+        let currentGems = window.currentForgeSchedule[idx].gems || 0;
+        let val = prompt(`Enter Gem amount for this level:`, currentGems);
+        if (val === null) return;
+        let gems = parseInt(val);
+        if (isNaN(gems) || gems < 0) gems = 0;
+        
+        window.currentForgeSchedule[idx].gems = gems;
+        window.forgeGemsMemory[window.currentForgeSchedule[idx].label] = gems; // Save to global memory
+
+        if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+        window.recalcAndRenderForgeScheduleGems();
+    };
+
+    window.recalcAndRenderForgeScheduleGems = function() {
+        let cumulativeSavedMs = 0;
+        
+        window.currentForgeSchedule.forEach(step => {
+            if (!step.isAscension) {
+                let savedMs = 0;
+                if (step.gems && step.gems > 0) {
+                    savedMs = (step.gems + 0.5) * 7.24643 * 60000;
+                }
+                cumulativeSavedMs += savedMs;
+            }
+
+            let newFinishMs = step.originalFinish - cumulativeSavedMs;
+
+            let dateEl = document.getElementById(`fs-date-${step.globalIndex}`);
+            let gemEl = document.getElementById(`fs-gem-${step.globalIndex}`);
+
+            if (dateEl) {
+                dateEl.innerHTML = formatScheduleDT(newFinishMs);
+            }
+            if (gemEl && !step.isAscension) {
+                gemEl.innerHTML = step.gems > 0 ? step.gems : '-';
+                gemEl.style.color = step.gems > 0 ? '#2980b9' : '#95a5a6';
+                gemEl.style.fontWeight = step.gems > 0 ? 'bold' : 'normal';
+            }
+        });
+    };
+
     const groupedSchedule = {};
-    
     window.currentForgeSchedule.forEach(step => {
         let ascMatch = step.label.match(/Asc (\d+)/);
         let asc = 0;
-        if (ascMatch) {
-            asc = parseInt(ascMatch[1]);
-        }
+        if (ascMatch) asc = parseInt(ascMatch[1]);
         
-        if (!groupedSchedule[asc]) {
-            groupedSchedule[asc] = [];
-        }
+        if (!groupedSchedule[asc]) groupedSchedule[asc] = [];
         groupedSchedule[asc].push(step);
     });
 
@@ -1259,22 +1324,30 @@ function openForgeScheduleModal() {
             }
 
             let textStyle = `color: #000 !important; font-family: 'Fredoka', sans-serif; font-weight: 600;`;
+            let gemStyle = step.gems > 0 ? 'color: #2980b9; font-weight: bold;' : 'color: #95a5a6;';
+            let gemDisplay = step.gems > 0 ? step.gems : '-';
 
-            let leftCol = `<div style="${textStyle} display: block; width: 100%; box-sizing: border-box; text-align: center;">${displayLabel}</div>`;
-            let rightCol = `<div style="${textStyle} display: block; width: 100%; box-sizing: border-box; text-align: center;">${formatScheduleDT(step.finish)}</div>`;
+            let leftCol = `<div style="${textStyle} display: block; width: 100%; box-sizing: border-box; text-align: center; white-space: nowrap;">${displayLabel}</div>`;
+
+            let midCol = `<div id="fs-gem-${step.globalIndex}" style="cursor: pointer; ${textStyle} ${gemStyle} display: block; width: 100%; text-align: center;" onclick="promptRowForgeGems(${step.globalIndex})" title="Click to edit gems">${gemDisplay}</div>`;
+            let rightCol = `<div id="fs-date-${step.globalIndex}" style="${textStyle} display: block; width: 100%; box-sizing: border-box; text-align: center; font-size: 0.9em;">${formatScheduleDT(step.originalFinish)}</div>`;
 
             rowsHtml += `<tr>
-                <td style="width: 45%;">${leftCol}</td>
-                <td style="width: 55%;">${rightCol}</td>
+                <td style="width: 35%; padding: 8px 2px;">${leftCol}</td>
+                <td style="width: 12%; padding: 8px 2px;">${midCol}</td>
+                <td style="width: 53%; padding: 8px 2px;">${rightCol}</td>
             </tr>`;
         });
 
         let tableHtml = `
-        <table class="clean-table" style="${showTabs ? 'margin-top: 10px;' : 'margin-top: 5px;'} width: 100%;">
+        <table class="clean-table" style="${showTabs ? 'margin-top: 10px;' : 'margin-top: 5px;'} width: 100%; table-layout: fixed;">
             <thead>
                 <tr>
-                    <th style="text-align: center; width: 45%;">Level</th>
-                    <th style="text-align: center; width: 55%;">Finish Date</th>
+                    <th style="text-align: center; width: 35%; padding: 8px 2px;">Level</th>
+                    <th style="text-align: center; width: 12%; padding: 8px 2px; cursor: pointer;" onclick="promptGlobalForgeGems()" title="Click to set gems for ALL levels">
+                        <img src="icons/Gem.png" style="height: 1.2em; vertical-align: middle; filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.3));">
+                    </th>
+                    <th style="text-align: center; width: 53%; padding: 8px 2px;">Finish Date</th>
                 </tr>
             </thead>
             <tbody>
@@ -1290,6 +1363,147 @@ function openForgeScheduleModal() {
     }
 
     renderMasterModal('forgeSchedule', tabsHtml + contentHtml);
+    
+    window.recalcAndRenderForgeScheduleGems();
+}
+
+// --- FORGE COST BREAKDOWN MODAL (FORGE CALC)---
+function openForgeCostBreakdownModal() {
+    if (!window.currentForgeSchedule || window.currentForgeSchedule.length === 0) return;
+
+    if (!MODAL_SETTINGS.forgeCostBreakdown) {
+        MODAL_SETTINGS.forgeCostBreakdown = {
+            title: "TARGET COST BREAKDOWN",
+            headerColor: "#ebf8fa",
+            titleColor: "#000000",
+            disclaimer: "Takes into account the timing of the finished Forge Discount tech."
+        };
+    }
+
+    const groupedSchedule = {};
+    window.currentForgeSchedule.forEach(step => {
+        let ascMatch = step.label.match(/Asc (\d+)/);
+        let asc = 0;
+        if (ascMatch) asc = parseInt(ascMatch[1]);
+        
+        if (!groupedSchedule[asc]) groupedSchedule[asc] = [];
+        groupedSchedule[asc].push(step);
+    });
+
+    const ascKeys = Object.keys(groupedSchedule).map(Number).sort((a, b) => a - b);
+    const showTabs = ascKeys.length > 1;
+
+    let tabsHtml = '';
+    if (showTabs) {
+        tabsHtml = `<div style="display: flex; justify-content: center; width: 100%;">
+                        <div id="modal-tabs-container" style="display: flex; flex-wrap: nowrap; margin: 12px 0 15px 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box;">`;
+    }
+    
+    let contentHtml = ``;
+    const btnClass = `seg-btn-forge-cost`;
+    const contentClass = `tab-content-forge-cost`;
+
+    // Common styles
+    const fontStyle = "font-family: 'Fredoka', sans-serif; font-weight: 600; -webkit-text-stroke: 0px;";
+    const arrowStyle = "font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 1.1rem; color: #198754; margin: 0 4px;";
+    const afterColor = "color: #198754;";
+
+    ascKeys.forEach((asc, index) => {
+        const isActive = (index === 0) ? 'active' : '';
+        const tabId = `forge-cost-tab-${asc}`;
+        
+        if (showTabs) {
+            const tabLabel = asc === 0 ? 'No Asc' : `<img src="icons/asc${asc}.png" style="height: 1.1em; vertical-align: -2px;" onerror="this.style.display='none'; this.nextSibling.textContent='Asc ${asc}';"><span style="display:none;"></span>`;
+            const switchJs = `document.querySelectorAll('.${contentClass}').forEach(el => el.style.display='none'); document.getElementById('${tabId}').style.display='block'; document.querySelectorAll('.${btnClass}').forEach(el => el.classList.remove('active')); this.classList.add('active');`;
+
+            tabsHtml += `<button class="${btnClass} seg-btn ${isActive}" onclick="${switchJs}" style="flex: 1 1 0 !important; min-width: 0 !important; padding: 0 2px !important; display: flex !important; justify-content: center !important; align-items: center !important;">${tabLabel}</button>`;
+        }
+
+        let rowsHtml = '';
+        let ascTotalCur = 0;
+        let ascTotalProj = 0;
+
+        groupedSchedule[asc].forEach(step => {
+            let displayLabel = "";
+            if (step.isAscension) {
+                displayLabel = `Ascension`;
+            } else {
+                let lvMatch = step.label.match(/Lv (\d+ ➜ \d+)/);
+                displayLabel = lvMatch ? lvMatch[1] : step.label;
+            }
+
+            ascTotalCur += step.costCur || 0;
+            ascTotalProj += step.costProj || 0;
+
+            const costCurStr = formatCompactGold(step.costCur || 0);
+            const costProjStr = formatCompactGold(step.costProj || 0);
+            
+            let costDisplay = '';
+            if (costCurStr === costProjStr) {
+                costDisplay = `<div style="display: flex; align-items: center; justify-content: center; color: #000;"><img src="icons/fm_gold.png" style="height: 1.1em; margin-right: 4px;"> ${costCurStr}</div>`;
+            } else {
+                costDisplay = `
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 2px;">
+                        <span style="color: #000;">${costCurStr}</span>
+                        <span style="${arrowStyle}">➜</span>
+                        <span style="${afterColor}"><img src="icons/fm_gold.png" style="height: 1.1em; margin-right: 4px; vertical-align: -2px;">${costProjStr}</span>
+                    </div>`;
+            }
+
+            rowsHtml += `<tr style="border-bottom: 1px solid #f0f0f0;">
+                <td style="width: 40%; padding: 8px 10px; text-align: center; ${fontStyle} color: #000;">${displayLabel}</td>
+                <td style="width: 60%; padding: 8px 10px; text-align: center; ${fontStyle}">${costDisplay}</td>
+            </tr>`;
+        });
+
+        // Summary Total Box (Now centered and split 40/60 to perfectly match the rows below)
+        const totalCurStr = formatCompactGold(ascTotalCur);
+        const totalProjStr = formatCompactGold(ascTotalProj);
+        let totalDisplay = '';
+        
+        if (totalCurStr === totalProjStr) {
+            totalDisplay = `<div style="display: flex; align-items: center; justify-content: center; color: #000;"><img src="icons/fm_gold.png" style="height: 1.1em; margin-right: 4px;"> ${totalCurStr}</div>`;
+        } else {
+            totalDisplay = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 2px;">
+                    <span style="color: #000;">${totalCurStr}</span>
+                    <span style="${arrowStyle}">➜</span>
+                    <span style="${afterColor}"><img src="icons/fm_gold.png" style="height: 1.1em; margin-right: 4px; vertical-align: -2px;">${totalProjStr}</span>
+                </div>`;
+        }
+
+        let summaryHtml = `
+        <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px 0; margin-bottom: 10px; display: flex; align-items: center;">
+            <div style="width: 40%; text-align: center;">
+                <span style="${fontStyle} color: #000; font-size: 0.95rem;">Total (Asc ${asc})</span>
+            </div>
+            <div style="width: 60%; text-align: center;">
+                <span style="${fontStyle} color: #000; font-size: 0.95rem;">${totalDisplay}</span>
+            </div>
+        </div>`;
+
+        let tableHtml = `
+        ${summaryHtml}
+        <table class="clean-table" style="width: 100%; table-layout: fixed; margin-top: 5px;">
+            <thead>
+                <tr>
+                    <th style="text-align: center; width: 40%; padding: 8px 10px;">Level</th>
+                    <th style="text-align: center; width: 60%; padding: 8px 10px;">Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rowsHtml}
+            </tbody>
+        </table>`;
+
+        contentHtml += `<div id="${tabId}" class="tab-content-area ${contentClass}" style="display: ${index === 0 ? 'block' : 'none'};">${tableHtml}</div>`;
+    });
+
+    if (showTabs) {
+        tabsHtml += `</div></div>`;
+    }
+
+    renderMasterModal('forgeCostBreakdown', tabsHtml + contentHtml);
 }
 
 // --- FORGE PROBABILITY MODAL ---

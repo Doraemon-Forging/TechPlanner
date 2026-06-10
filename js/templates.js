@@ -808,7 +808,7 @@ const HTML_WEEKLY = `
                 <div class="daily-input-row">
                     <label class="daily-label">Clan War:</label>
                     <div class="war-select-group flex-center">
-                        <select id="weekly-war-tier" class="war-select" style="width: 75px;" onchange="updateWeekly()">
+                        <select id="weekly-war-tier" class="war-select" style="width: 95px;" onchange="updateWeekly()">
                             <option value="SSS-Tier" selected>SSS-Tier</option>
                             <option value="SS-Tier">SS-Tier</option>
                             <option value="S-Tier">S-Tier</option>
@@ -819,7 +819,7 @@ const HTML_WEEKLY = `
                             <option value="E-Tier">E-Tier</option>
                             <option value="None">None</option>
                         </select>
-                        <select id="weekly-war-win" class="war-select select-small" style="width: 65px;" onchange="updateWeekly()">
+                        <select id="weekly-war-win" class="war-select select-small" style="width: 75px;" onchange="updateWeekly()">
                             <option value="Win" selected>Win</option>
                             <option value="Lose">Lose</option>
                         </select>
@@ -1748,7 +1748,7 @@ const HTML_GEM = `
             </div>
         </div>
 
-        <div class="daily-card config-card">
+        <div class="daily-card config-card" style="margin-bottom: 15px;">
             <div class="daily-card-body" style="padding: 15px;">
                 <div style="font-family: 'Fredoka', sans-serif !important; font-size: 1rem !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; letter-spacing: 0.5px; margin-bottom: 12px; text-align: left;">Time to Gems:</div>
                 
@@ -1776,7 +1776,6 @@ const HTML_GEM = `
                         <span style="font-weight: 600; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">=</span>
                         <img src="icons/Gem.png" style="width:20px; height:20px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
                         <span id="calc-time-gem-res" style="font-size: 1.05rem; font-weight: 600; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">0</span>
-                        
                     </div>
                     
                     <div style="display: flex; justify-content: space-around; width: 100%; border-top: 1px solid #ecf0f1; padding-top: 12px;">
@@ -1787,9 +1786,12 @@ const HTML_GEM = `
                             Tech <button class="btn-info" onclick="showTechGemTable()" style="margin: 0; transform: translateY(-1px);">i</button>
                         </div>
                     </div>
-                    
                 </div>
             </div>
+        </div>
+
+        <div style="text-align: center; font-family: 'Fredoka', sans-serif !important; font-size: 1rem !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; letter-spacing: 0.5px; margin-top: 5px;">
+            Note <button class="btn-info" onclick="showGemInfoModal()" style="margin: 0; transform: translateY(-1px);">i</button>
         </div>
 
     </div>
@@ -1868,7 +1870,8 @@ const HTML_HELP = `
                     <span class="help-header-text">2. Plan Your Upgrades</span>
                     <div class="help-body-text">Toggle to <b>PLAN</b> mode to queue up your next upgrades.</div>
                     <ul class="help-body-text help-ul">
-                        <li><b>Add to Schedule:</b> Click the nodes you want to upgrade. They will automatically be added to your queue.</li>
+                    <li><b>Use Gems:</b> Set a Gem amount using the Gem toggle before clicking a node. The planner will automatically calculate and reduce the time required to research the tech.</li>
+                    <li><b>Add to Schedule:</b> Click the nodes you want to upgrade. They will automatically be added to your queue.</li>                        
                     </ul>
                 </div>
 
@@ -1878,7 +1881,7 @@ const HTML_HELP = `
                     <ul class="help-body-text help-ul">
                         <li><b>War Start:</b> Set the time when Day 1 of clan war starts. Tech upgrades finishing on Day 1 or Day 4 of war will be highlighted based on the matchmaking cycle: <b style="color: #5d9cec;">Steel Blue</b> for a similar strength opponent, and <b style="color: #00a2ff;">Standard Blue</b> for a random same-tier opponent. <i>Note: This tool isn't smart enough to automatically adjust the blue highlights for Daylight Saving Time! Since game servers don't observe DST, you will need to manually update your War Start time here twice a year when your local clocks shift.</i></li>
                         <li><b>Mark Done:</b> Click an item in your schedule to reveal its controls, then hit "DONE" to clear it and update your start time and tech.</li>
-                        <li><b>Manage Upgrades:</b> Reorder tasks, insert new ones, or add custom delays (like when you are sleeping or working).</li>
+                        <li><b>Manage Upgrades:</b> Reorder tasks, insert new ones, or add custom delays (like when you are sleeping or working). To change the amount of gem on a tech, click the gem icon in the Schedule tab.</li>
                     </ul>
                 </div>
 
@@ -1914,9 +1917,11 @@ const HTML_HELP = `
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>Summon Calc:</b> Calculate how many resources you need to reach certain level of Skill / Egg / Pet summoning and theirs expected yield.</li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Forge Calc:</b> Calculate how much cost and time needed to reach target Forge Lv. See how much gold are your hammers worth or how many hammers are needed to reach your target gold.</li>
+                        <li><b>Forge Calc:</b> Calculate how much cost and time needed to reach target Forge Lv. See how much gold are your hammers worth or how many hammers are needed to reach your target gold. You can add the gem value inside the Forge Upgrade Schedule table by clicking the gem at the top or at each level one by one to see when your forge upgrade is ready after using the gem. </li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>War Calc:</b> Estimate your expected clan war points based on the resources you plan to spend.</li>
+                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
+                        <li><b>Gem Calc:</b> Calculate how much time skipped with certain amount of gem and vice versa.</li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
                         <li><b>Egg Planner:</b> Schedule your egg hatching queue </li>
                         <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
@@ -1989,7 +1994,7 @@ const HTML_HELP = `
 
                 <div class="help-card-inner" style="text-align: center;">
                     <span class="help-header-text">Special Thanks</span>
-                    <div class="help-body-text"><b>Nienna</b> and <b>Hibiscus</b></div>
+                    <div class="help-body-text"><b>Nienna</b>, <b>Hibiscus</b>, and <b>LexAeterna </b></div>
                     <div class="help-body-text" style="font-size: 0.85rem !important; margin-top: 4px;">For providing various in-game data.</div>
                 </div>
 

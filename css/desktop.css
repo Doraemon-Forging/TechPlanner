@@ -320,8 +320,6 @@ body[data-mode="plan"] .tier-max-btn { visibility: hidden !important; pointer-ev
     z-index: 500 !important; 
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)) !important; 
     margin-bottom: 3px !important; 
-    
-    /* THE FIX: Forces the capsule to shrink-wrap tightly around the buttons */
     width: max-content !important; 
     min-width: 0 !important;
 }

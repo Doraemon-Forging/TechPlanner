@@ -431,7 +431,7 @@ function updateCalculator() {
             const amountB = effH1 * (rates[i] / 100);
             const amountA = effH2 * (rates[i] / 100);
             
-            yieldHtml += `<div class="calc-line" style="background-color: ${TIER_COLORS[i]}; border-radius: 6px; padding: 4px 8px; margin-bottom: 4px; border-bottom: none; color: #000;">
+            yieldHtml += `<div class="calc-line" style="background-color: ${TIER_COLORS[i]}; border-radius: 6px; padding: 4px 8px; border-bottom: none; color: #000;">
                 <div class="calc-label" style="color: #000;">${TIER_NAMES[i]}</div>
                 ${renderForgeGroup(amountB, amountA, null, 'yield')}
             </div>`;
@@ -448,209 +448,219 @@ function updateCalculator() {
     if (res2) res2.innerHTML = genLine('Hammer Needed', gTarget / curStats.avgGold * (1 - curStats.free / 100), gTarget / projStats.avgGold * (1 - projStats.free / 100), 'fm_hammer', 'hammer');
     
     // ==========================================
-    // 1st & 2nd CARDS: FORGE UPGRADES
-    // ==========================================
-    const res5 = document.getElementById('calc-res-5');
-    const resTarget = document.getElementById('calc-res-target-forge');
+    // 1st & 2nd CARDS: FORGE UPGRADES
+    // ==========================================
+    const res5 = document.getElementById('calc-res-5');
+    const resTarget = document.getElementById('calc-res-target-forge');
 
-    let useSnapshot = false;
-    if (window.ongoingForgeSnapshot && 
-        window.ongoingForgeSnapshot.startDate === sDateVal && 
-        window.ongoingForgeSnapshot.startAsc === fAsc && 
-        window.ongoingForgeSnapshot.startLv === fLv) {
-        useSnapshot = true;
-    } else {
-        window.ongoingForgeSnapshot = null;
-    }
+    let useSnapshot = false;
+    if (window.ongoingForgeSnapshot && 
+        window.ongoingForgeSnapshot.startDate === sDateVal && 
+        window.ongoingForgeSnapshot.startAsc === fAsc && 
+        window.ongoingForgeSnapshot.startLv === fLv) {
+        useSnapshot = true;
+    } else {
+        window.ongoingForgeSnapshot = null;
+    }
 
-    if (fAsc === 3 && fLv === 35) {
-        let h5 = genLine('Cost', '-', '-', 'fm_gold', 'standard');
-        h5 += genLine('Finish', '-', '-', null, 'standard');
-        h5 += genLine('Duration', '-', '-', null, 'standard');
-        if (res5) res5.innerHTML = h5;
-    } else if (fLv === 35) {
-        let h5 = genLine('Cost', 3000000, 3000000, 'fm_gold', 'gold');
-        h5 += genLine('Finish', '-', '-', null, 'standard');
-        h5 += genLine('Duration', 0, 0, null, 'time'); 
-        if (res5) res5.innerHTML = h5;
-    } else {
-        const cRaw = forgeLevelData[fLv][0];
-        const baseMins = forgeLevelData[fLv][1] * 60;
-        
-        let costB, costA, f1, f2, dFinish, dFinishProj;
+    if (fAsc === 3 && fLv === 35) {
+        let h5 = genLine('Cost', '-', '-', 'fm_gold', 'standard');
+        h5 += genLine('Finish', '-', '-', null, 'standard');
+        h5 += genLine('Duration', '-', '-', null, 'standard');
+        if (res5) res5.innerHTML = h5;
+    } else if (fLv === 35) {
+        let h5 = genLine('Cost', 3000000, 3000000, 'fm_gold', 'gold');
+        h5 += genLine('Finish', '-', '-', null, 'standard');
+        h5 += genLine('Duration', 0, 0, null, 'time'); 
+        if (res5) res5.innerHTML = h5;
+    } else {
+        const cRaw = forgeLevelData[fLv][0];
+        const baseMins = forgeLevelData[fLv][1] * 60;
+        
+        let costB, costA, f1, f2, dFinish, dFinishProj;
 
-        if (useSnapshot) {
-            costB = window.ongoingForgeSnapshot.costCur;
-            costA = window.ongoingForgeSnapshot.costProj;
-            f1 = window.ongoingForgeSnapshot.minsCur;
-            f2 = window.ongoingForgeSnapshot.minsProj;
-            dFinish = new Date(window.ongoingForgeSnapshot.finishTimeCur);
-            dFinishProj = new Date(window.ongoingForgeSnapshot.finishTimeProj);
-        } else {
-            let speedBonusAtStart = curStats.speed; 
-            let discBonusAtStart = curStats.forgeDisc;
-            techSchedule.forEach(t => { 
-                if (t.time <= mainStartTime) {
-                    if (t.type === 'speed') speedBonusAtStart += t.val; 
-                    if (t.type === 'disc') discBonusAtStart += t.val;
-                }
-            });
+        if (useSnapshot) {
+            costB = window.ongoingForgeSnapshot.costCur;
+            costA = window.ongoingForgeSnapshot.costProj;
+            f1 = window.ongoingForgeSnapshot.minsCur;
+            f2 = window.ongoingForgeSnapshot.minsProj;
+            dFinish = new Date(window.ongoingForgeSnapshot.finishTimeCur);
+            dFinishProj = new Date(window.ongoingForgeSnapshot.finishTimeProj);
+        } else {
+            let speedBonusAtStart = curStats.speed; 
+            let discBonusAtStart = curStats.forgeDisc;
+            techSchedule.forEach(t => { 
+                if (t.time <= mainStartTime) {
+                    if (t.type === 'speed') speedBonusAtStart += t.val; 
+                    if (t.type === 'disc') discBonusAtStart += t.val;
+                }
+            });
 
-            costB = Math.round(cRaw * (1 - curStats.forgeDisc / 100));
-            costA = Math.round(cRaw * (1 - discBonusAtStart / 100));
-            f1 = baseMins / (1 + curStats.speed / 100); 
-            f2 = baseMins / (1 + speedBonusAtStart / 100);
-            dFinish = new Date(mainStartTime + f1 * 60000); 
-            dFinishProj = new Date(mainStartTime + f2 * 60000);
-        }
+            costB = Math.round(cRaw * (1 - curStats.forgeDisc / 100));
+            costA = Math.round(cRaw * (1 - discBonusAtStart / 100));
+            f1 = baseMins / (1 + curStats.speed / 100); 
+            f2 = baseMins / (1 + speedBonusAtStart / 100);
+            dFinish = new Date(mainStartTime + f1 * 60000); 
+            dFinishProj = new Date(mainStartTime + f2 * 60000);
+        }
 
-        let h5 = genLine('Cost', costB, costA, 'fm_gold', 'gold');
-        h5 += `<div class="calc-line"><div class="calc-label">Finish</div>${renderForgeGroup(formatDT(dFinish), formatDT(dFinishProj), null, 'date')}</div>`;
-        h5 += genLine('Duration', f1, f2, null, 'time');
-        if (res5) res5.innerHTML = h5;
-    }
+        let h5 = genLine('Cost', costB, costA, 'fm_gold', 'gold');
+        h5 += `<div class="calc-line"><div class="calc-label">Finish</div>${renderForgeGroup(formatDT(dFinish), formatDT(dFinishProj), null, 'date')}</div>`;
+        h5 += genLine('Duration', f1, f2, null, 'time');
+        if (res5) res5.innerHTML = h5;
+    }
 
-    if (fAsc === 3 && fLv === 35) {
-        let hTarget = genLine('Total Cost', '-', '-', 'fm_gold', 'standard');
-        hTarget += genLine('Finish', '-', '-', null, 'standard');
-        hTarget += genLine('Total Duration', '-', '-', null, 'standard');
-        hTarget += genLine('Total Gem', '-', '-', null, 'standard');
-        if (resTarget) resTarget.innerHTML = hTarget;
-    } else {
-        const tAscEl = document.getElementById('calc-target-forge-asc');
-        const tLvEl = document.getElementById('calc-target-forge-lv');
-        
-        const tAscRaw = tAscEl ? parseInt(tAscEl.value) : fAsc;
-        const tLvRaw = tLvEl ? tLvEl.value : (fLv + 1);
-        const isAscendTarget = tLvRaw === "Ascend";
-        
-        const tAsc = isNaN(tAscRaw) ? fAsc : tAscRaw;
-        const endLv = isAscendTarget ? 35 : (parseInt(tLvRaw) || (fLv + 1));
+    if (fAsc === 3 && fLv === 35) {
+        let hTarget = genLine('Total Cost', '-', '-', 'fm_gold', 'standard');
+        hTarget += genLine('Finish', '-', '-', null, 'standard');
+        hTarget += genLine('Total Duration', '-', '-', null, 'standard');
+        hTarget += genLine('Total Gem', '-', '-', null, 'standard');
+        if (resTarget) resTarget.innerHTML = hTarget;
+    } else {
+        const tAscEl = document.getElementById('calc-target-forge-asc');
+        const tLvEl = document.getElementById('calc-target-forge-lv');
+        
+        const tAscRaw = tAscEl ? parseInt(tAscEl.value) : fAsc;
+        const tLvRaw = tLvEl ? tLvEl.value : (fLv + 1);
+        const isAscendTarget = tLvRaw === "Ascend";
+        
+        const tAsc = isNaN(tAscRaw) ? fAsc : tAscRaw;
+        const endLv = isAscendTarget ? 35 : (parseInt(tLvRaw) || (fLv + 1));
 
-        let totalCostCur = 0, totalCostProj = 0;
-        let totalMinsCur = 0, totalMinsProj = 0;
-        let totalGemsCur = 0, totalGemsProj = 0;
+        let totalCostCur = 0, totalCostProj = 0;
+        let totalMinsCur = 0, totalMinsProj = 0;
+        let totalGemsCur = 0, totalGemsProj = 0;
 
-        let cAsc = fAsc, cLv = fLv;
-        let currentTimeCur = mainStartTime;
-        let currentTimeProj = mainStartTime;
+        let cAsc = fAsc, cLv = fLv;
+        let currentTimeCur = mainStartTime;
+        let currentTimeProj = mainStartTime;
 
-        window.currentForgeSchedule = [];
+        window.currentForgeSchedule = [];
 
-        while (cAsc < tAsc || (cAsc === tAsc && cLv < endLv)) {
-            if (cLv === 35) {
-                totalCostCur += 3000000;
-                totalCostProj += 3000000;
-                
-                window.currentForgeSchedule.push({
-                    label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
-                    finish: currentTimeProj,
-                    isAscension: true
-                });
-                
-                cAsc++;
-                cLv = 1;
-            } else {
-                if (forgeLevelData[cLv]) {
-                    const baseCost = forgeLevelData[cLv][0];
-                    const baseMins = forgeLevelData[cLv][1] * 60;
-                    
-                    let activeProjSpeed = curStats.speed;
-                    let activeProjDisc = curStats.forgeDisc;
-                    techSchedule.forEach(t => { 
-                        if (t.time <= currentTimeProj) {
-                            if (t.type === 'speed') activeProjSpeed += t.val;
-                            if (t.type === 'disc') activeProjDisc += t.val;
-                        }
-                    });
+        while (cAsc < tAsc || (cAsc === tAsc && cLv < endLv)) {
+            if (cLv === 35) {
+                totalCostCur += 3000000;
+                totalCostProj += 3000000;
+                
+                window.currentForgeSchedule.push({
+                    label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
+                    finish: currentTimeProj,
+                    isAscension: true,
+                    costCur: 3000000,
+                    costProj: 3000000
+                });
+                
+                cAsc++;
+                cLv = 1;
+            } else {
+                if (forgeLevelData[cLv]) {
+                    const baseCost = forgeLevelData[cLv][0];
+                    const baseMins = forgeLevelData[cLv][1] * 60;
+                    
+                    let activeProjSpeed = curStats.speed;
+                    let activeProjDisc = curStats.forgeDisc;
+                    techSchedule.forEach(t => { 
+                        if (t.time <= currentTimeProj) {
+                            if (t.type === 'speed') activeProjSpeed += t.val;
+                            if (t.type === 'disc') activeProjDisc += t.val;
+                        }
+                    });
 
-                    if (cAsc === fAsc && cLv === fLv && useSnapshot) {
-                        currentTimeProj = window.ongoingForgeSnapshot.finishTimeProj;
-                        currentTimeCur = window.ongoingForgeSnapshot.finishTimeCur;
-                        
-                        totalCostCur += window.ongoingForgeSnapshot.costCur;
-                        totalCostProj += window.ongoingForgeSnapshot.costProj;
-                        
-                        totalMinsCur += window.ongoingForgeSnapshot.minsCur;
-                        totalMinsProj += window.ongoingForgeSnapshot.minsProj;
-                        
-                        totalGemsCur += Math.round(window.ongoingForgeSnapshot.minsCur / 7.24643);
-                        totalGemsProj += Math.round(window.ongoingForgeSnapshot.minsProj / 7.24643);
+                    if (cAsc === fAsc && cLv === fLv && useSnapshot) {
+                        currentTimeProj = window.ongoingForgeSnapshot.finishTimeProj;
+                        currentTimeCur = window.ongoingForgeSnapshot.finishTimeCur;
+                        
+                        totalCostCur += window.ongoingForgeSnapshot.costCur;
+                        totalCostProj += window.ongoingForgeSnapshot.costProj;
+                        
+                        totalMinsCur += window.ongoingForgeSnapshot.minsCur;
+                        totalMinsProj += window.ongoingForgeSnapshot.minsProj;
+                        
+                        totalGemsCur += Math.round(window.ongoingForgeSnapshot.minsCur / 7.24643);
+                        totalGemsProj += Math.round(window.ongoingForgeSnapshot.minsProj / 7.24643);
 
-                        window.currentForgeSchedule.push({
-                            label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
-                            finish: currentTimeProj,
-                            isAscension: false
-                        });
-                        cLv++;
-                        continue; 
-                    }
+                        window.currentForgeSchedule.push({
+                            label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
+                            finish: currentTimeProj,
+                            isAscension: false,
+                            costCur: window.ongoingForgeSnapshot.costCur,
+                            costProj: window.ongoingForgeSnapshot.costProj
+                        });
+                        cLv++;
+                        continue; 
+                    }
 
-                    let stepCostCur = Math.round(baseCost * (1 - curStats.forgeDisc / 100));
-                    let stepCostProj = Math.round(baseCost * (1 - activeProjDisc / 100));
-                    
-                    totalCostCur += stepCostCur;
-                    totalCostProj += stepCostProj;
+                    let stepCostCur = Math.round(baseCost * (1 - curStats.forgeDisc / 100));
+                    let stepCostProj = Math.round(baseCost * (1 - activeProjDisc / 100));
+                    
+                    totalCostCur += stepCostCur;
+                    totalCostProj += stepCostProj;
 
-                    const curLvlMins = baseMins / (1 + curStats.speed / 100);
-                    currentTimeCur += curLvlMins * 60000;
-                    totalMinsCur += curLvlMins;
-                    
-                    const projLvlMins = baseMins / (1 + activeProjSpeed / 100);
-                    currentTimeProj += projLvlMins * 60000;
-                    totalMinsProj += projLvlMins;
-                    
-                    totalGemsCur += Math.round(curLvlMins / 7.24643);
-                    totalGemsProj += Math.round(projLvlMins / 7.24643);
+                    const curLvlMins = baseMins / (1 + curStats.speed / 100);
+                    currentTimeCur += curLvlMins * 60000;
+                    totalMinsCur += curLvlMins;
+                    
+                    const projLvlMins = baseMins / (1 + activeProjSpeed / 100);
+                    currentTimeProj += projLvlMins * 60000;
+                    totalMinsProj += projLvlMins;
+                    
+                    totalGemsCur += Math.round(curLvlMins / 7.24643);
+                    totalGemsProj += Math.round(projLvlMins / 7.24643);
 
-                    window.currentForgeSchedule.push({
-                        label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
-                        finish: currentTimeProj,
-                        isAscension: false
-                    });
-                    
-                    if (cAsc === fAsc && cLv === fLv && !useSnapshot) {
-                        window.ongoingForgeSnapshot = {
-                            startDate: sDateVal,
-                            startAsc: fAsc,
-                            startLv: fLv,
-                            finishTimeProj: currentTimeProj,
-                            finishTimeCur: currentTimeCur,
-                            costProj: stepCostProj,
-                            costCur: stepCostCur,
-                            minsProj: projLvlMins,
-                            minsCur: curLvlMins
-                        };
-                    }
-                }
-                cLv++;
-            }
-        }
+                    window.currentForgeSchedule.push({
+                        label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
+                        finish: currentTimeProj,
+                        isAscension: false,
+                        costCur: stepCostCur,
+                        costProj: stepCostProj
+                    });
+                    
+                    if (cAsc === fAsc && cLv === fLv && !useSnapshot) {
+                        window.ongoingForgeSnapshot = {
+                            startDate: sDateVal,
+                            startAsc: fAsc,
+                            startLv: fLv,
+                            finishTimeProj: currentTimeProj,
+                            finishTimeCur: currentTimeCur,
+                            costProj: stepCostProj,
+                            costCur: stepCostCur,
+                            minsProj: projLvlMins,
+                            minsCur: curLvlMins
+                        };
+                    }
+                }
+                cLv++;
+            }
+        }
 
-        if (isAscendTarget && cAsc === tAsc && cLv === 35) {
-            totalCostCur += 3000000;
-            totalCostProj += 3000000;
-            window.currentForgeSchedule.push({
-                label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
-                finish: currentTimeProj,
-                isAscension: true
-            });
-        }
+        if (isAscendTarget && cAsc === tAsc && cLv === 35) {
+            totalCostCur += 3000000;
+            totalCostProj += 3000000;
+            window.currentForgeSchedule.push({
+                label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
+                finish: currentTimeProj,
+                isAscension: true,
+                costCur: 3000000,
+                costProj: 3000000
+            });
+        }
 
-        let finishLabel = 'Finish';
-        if (window.currentForgeSchedule && window.currentForgeSchedule.length > 1) {
-            finishLabel += ' <button class="btn-info" onclick="openForgeScheduleModal()" style="vertical-align: middle; margin-left: 6px;">i</button>';
-        }
-        
-        let hTarget = genLine('Total Cost', totalCostCur, totalCostProj, 'fm_gold', 'gold');
-        hTarget += genLine(finishLabel, formatDT(new Date(currentTimeCur)), formatDT(new Date(currentTimeProj)), null, 'date');
-        hTarget += genLine('Total Duration', totalMinsCur, totalMinsProj, null, 'time');
-        hTarget += genLine('Total Gem', totalGemsCur, totalGemsProj, null, 'number');
-        
-        if (resTarget) resTarget.innerHTML = hTarget;
-    }
+        let finishLabel = 'Finish';
+        let costLabel = 'Total Cost';
+        if (window.currentForgeSchedule && window.currentForgeSchedule.length > 1) {
+            finishLabel += ' <button class="btn-info" onclick="openForgeScheduleModal()" style="vertical-align: middle; margin-left: 6px;">i</button>';
+            costLabel += ' <button class="btn-info" onclick="openForgeCostBreakdownModal()" style="vertical-align: middle; margin-left: 6px;">i</button>';
+        }
+        
+        let hTarget = genLine(costLabel, totalCostCur, totalCostProj, 'fm_gold', 'gold');
+        hTarget += genLine(finishLabel, formatDT(new Date(currentTimeCur)), formatDT(new Date(currentTimeProj)), null, 'date');
+        hTarget += genLine('Total Duration', totalMinsCur, totalMinsProj, null, 'time');
+        hTarget += genLine('Total Gem', totalGemsCur, totalGemsProj, null, 'number');
+        
+        if (resTarget) resTarget.innerHTML = hTarget;
+    }
 
-    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
 }
 
 function initCalcDateSelectors() {
@@ -892,414 +902,4 @@ function clearEggPlan() {
         renderEggLog(); 
         if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); 
     });
-}
-
-// Gem
-function updateGemToTime() {
-    let g = parseInt(document.getElementById('calc-gem-input').value);
-    let res = document.getElementById('calc-gem-time-res');
-    
-    if (isNaN(g) || g <= 0) { 
-        res.innerText = '0s'; 
-        return; 
-    }
-
-    let ts = Math.floor((g + 0.5) * 7.24643 * 60);
-    
-    let d = Math.floor(ts / 86400);
-    let h = Math.floor((ts % 86400) / 3600);
-    let m = Math.floor((ts % 3600) / 60);
-    let s = ts % 60;
-    
-    let arr = [];
-    if(d > 0) arr.push(d + 'd');
-    if(h > 0) arr.push(h + 'h');
-    if(m > 0) arr.push(m + 'm');
-    if(s > 0 || arr.length === 0) arr.push(s + 's');
-    
-    res.innerText = arr.join(' ');
-}
-
-function updateTimeToGem() {
-    let d = parseInt(document.getElementById('calc-time-d').value) || 0;
-    let h = parseInt(document.getElementById('calc-time-h').value) || 0;
-    let m = parseInt(document.getElementById('calc-time-m').value) || 0;
-    let s = parseInt(document.getElementById('calc-time-s').value) || 0;
-    
-    let totalSeconds = (d * 86400) + (h * 3600) + (m * 60) + s;
-    let res = document.getElementById('calc-time-gem-res');
-    
-    if (totalSeconds <= 0) {
-        res.innerText = '0';
-        return;
-    }
-
-    let gems = Math.max(1, Math.ceil((totalSeconds / 434.76) - 0.5));
-    
-    res.innerText = gems.toLocaleString();
-}
-
-// --- GEM COST HELPERS ---
-window.formatFrugalWait = function(s) {
-    if (s <= 0) return '0s';
-    let h = Math.floor(s / 3600);
-    let m = Math.floor((s % 3600) / 60);
-    let sec = s % 60;
-    let arr = [];
-    if (h > 0) arr.push(h + 'h');
-    if (m > 0) arr.push(m + 'm');
-    if (sec > 0 || arr.length === 0) arr.push(sec + 's');
-    return arr.join(' ');
-};
-
-window.getGemData = function(mins) {
-    if (mins <= 0) return { std: 0, frg: 0, rawWait: 0, wait: '0s' };
-    let totalSeconds = mins * 60;
-    let stdGems = Math.max(1, Math.ceil((totalSeconds / 434.76) - 0.5));
-    let frgGems = stdGems - 1;
-    let targetSeconds = frgGems > 0 ? (frgGems + 0.5) * 434.76 : 0;
-    let waitSeconds = Math.max(0, Math.ceil(totalSeconds - targetSeconds));
-    return { std: stdGems, frg: frgGems, rawWait: waitSeconds, wait: window.formatFrugalWait(waitSeconds) };
-};
-
-window.renderGemCell = function(data, customColor) {
-    const color = customColor || '#000';
-    const iconHtml = `<img src="icons/Gem.png" style="width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; margin-right: 4px;">`;
-    const stdHtml = `<span class="gem-val-standard" style="display: inline-flex; align-items: center; color: ${color} !important;">${iconHtml}${data.std.toLocaleString()}</span>`;
-    const frgHtml = `<span class="gem-val-frugal" style="display: none; align-items: center; color: ${color} !important;">${iconHtml}${data.frg.toLocaleString()} + ${data.wait}</span>`;
-    
-    return `${stdHtml}${frgHtml}`;
-};
-
-window.toggleGemFrugalMode = function(isFrugal) {
-    const stdElems = document.querySelectorAll('.gem-val-standard');
-    const frgElems = document.querySelectorAll('.gem-val-frugal');
-    const btnStd = document.getElementById('btn-gem-standard');
-    const btnFrg = document.getElementById('btn-gem-frugal');
-
-    if (isFrugal) {
-        stdElems.forEach(el => el.style.setProperty('display', 'none', 'important'));
-        frgElems.forEach(el => el.style.setProperty('display', 'inline-flex', 'important'));
-        if (btnStd) btnStd.classList.remove('active');
-        if (btnFrg) btnFrg.classList.add('active');
-    } else {
-        stdElems.forEach(el => el.style.setProperty('display', 'inline-flex', 'important'));
-        frgElems.forEach(el => el.style.setProperty('display', 'none', 'important'));
-        if (btnStd) btnStd.classList.add('active');
-        if (btnFrg) btnFrg.classList.remove('active');
-    }
-};
-
-// --- MODAL FUNCTIONS ---
-function showForgeGemTable() {
-    let cur = 0, proj = 0;
-    if (typeof getTechBonuses === 'function' && typeof setupLevels !== 'undefined' && typeof calcState === 'function') {
-        cur = getTechBonuses(setupLevels).speed;
-        proj = getTechBonuses(calcState().levels).speed;
-    }
-    const isUpgrade = proj > cur;
-    let totalStdBefore = 0, totalFrgBefore = 0, totalWaitBefore = 0;
-    let totalStdAfter = 0, totalFrgAfter = 0, totalWaitAfter = 0;
-
-    let rowsHtml = '';
-    for (let i = 1; i <= 34; i++) {
-        if (!forgeLevelData[i]) continue;
-        const mins = forgeLevelData[i][1] * 60;
-        
-        const curData = window.getGemData(mins / (1 + cur / 100));
-        const projData = window.getGemData(mins / (1 + proj / 100));
-
-        totalStdBefore += curData.std; totalFrgBefore += curData.frg; totalWaitBefore += curData.rawWait;
-        totalStdAfter += projData.std; totalFrgAfter += projData.frg; totalWaitAfter += projData.rawWait;
-        
-        let rightCol = `
-        <div class="gem-comp-container">
-            <div class="gem-stack-inner">
-                <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
-            </div>
-        </div>`;
-        if (isUpgrade) {
-            rightCol = `
-            <div class="gem-comp-container"> 
-                <div class="gem-stack-inner">
-                    <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
-                    <div class="gem-after-wrapper">
-                        <span class="gem-comp-arrow">➜</span>
-                        <div class="gem-after-val">${window.renderGemCell(projData, '#198754')}</div>
-                    </div>
-                </div>
-            </div>`;
-        }
-
-        rowsHtml += `<tr>
-            <td><div style="text-align: left; padding-left: 20px; display: block; width: 100%; box-sizing: border-box; color: #000; font-family: 'Fredoka', sans-serif; font-weight: 700;">${i} ➜ ${i + 1}</div></td>
-            <td>${rightCol}</td>
-        </tr>`;
-    }
-    
-    const totalCurData = { std: totalStdBefore, frg: totalFrgBefore, wait: window.formatFrugalWait(totalWaitBefore) };
-    const totalProjData = { std: totalStdAfter, frg: totalFrgAfter, wait: window.formatFrugalWait(totalWaitAfter) };
-
-    let totalRightCol = `
-    <div class="gem-comp-container">
-        <div class="gem-stack-inner">
-            <div class="gem-before-wrapper">${window.renderGemCell(totalCurData)}</div>
-        </div>
-    </div>`;
-    if (isUpgrade) {
-        totalRightCol = `
-        <div class="gem-comp-container"> 
-            <div class="gem-stack-inner">
-                <div class="gem-before-wrapper">${window.renderGemCell(totalCurData)}</div>
-                <div class="gem-after-wrapper">
-                    <span class="gem-comp-arrow">➜</span>
-                    <div class="gem-after-val">${window.renderGemCell(totalProjData, '#198754')}</div>
-                </div>
-            </div>
-        </div>`;
-    }
-
-    rowsHtml += `<tr>
-        <td><div style="text-align: left; padding-left: 20px; display: block; width: 100%; box-sizing: border-box; color: #000; font-family: 'Fredoka', sans-serif; font-weight: 700;">Total</div></td>
-        <td>${totalRightCol}</td>
-    </tr>`;
-
-    const dynamicStyles = `
-    <style>
-        .gem-comp-container {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            box-sizing: border-box;
-            font-family: 'Fredoka', sans-serif;
-            font-weight: 700;
-        }
-        .gem-stack-inner {
-            display: flex;
-            align-items: center;
-        }
-        .gem-before-wrapper, .gem-after-val {
-            display: flex;
-            align-items: center;
-        }
-        .gem-after-wrapper {
-            display: flex;
-            align-items: center;
-        }
-        .gem-comp-arrow {
-            color: #198754 !important;
-            font-weight: 900;
-            margin: 0 6px;
-            -webkit-text-stroke: 0px !important;
-        }
-        @media (max-width: 768px) {
-            .gem-stack-inner {
-                flex-direction: column;
-                align-items: flex-start; /* Aligns the left edges of Before/After perfectly */
-                gap: 4px;
-                padding: 4px 0;
-            }
-            .gem-after-wrapper {
-                position: relative; /* Anchor for the absolute arrow */
-            }
-            .gem-comp-arrow {
-                position: absolute;
-                right: 100%; /* Pushes the arrow outside to the left */
-                margin: 0 4px 0 0;
-            }
-        }
-    </style>
-    `;
-
-    const subHtml = `
-    ${dynamicStyles}
-    <div style="text-align: center; margin-bottom: 12px; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">
-        Speed +${cur}% ${isUpgrade ? `<span style="color: #198754; margin: 0 4px; font-weight: 800;">➜</span> <span style="color: #198754;">+${proj}%</span>` : ''}
-    </div>
-    <div style="display: flex; justify-content: center; margin-bottom: 15px; gap: 12px;">
-        <button id="btn-gem-standard" class="gem-toggle-btn active" onclick="toggleGemFrugalMode(false)">Standard</button>
-        <button id="btn-gem-frugal" class="gem-toggle-btn" onclick="toggleGemFrugalMode(true)">Frugal</button>
-    </div>`;
-
-    let html = `
-        ${subHtml}
-        <table class="clean-table" style="width: 100%;">
-            <thead>
-                <tr>
-                    <th style="text-align: left; padding-left: 20px; width: 25%;">Level</th>
-                    <th style="text-align: center; width: 75%; box-sizing: border-box;">Gem Cost</th>
-                </tr>
-            </thead>
-            <tbody id="modal-table-body">${rowsHtml}</tbody>
-        </table>
-    `;
-
-    if (typeof MODAL_SETTINGS !== 'undefined') MODAL_SETTINGS['forgeGemCost'] = { title: "FORGE GEM COST", headerColor: "#ebf8fa", titleColor: "#000000", disclaimer: "" };
-    renderMasterModal('forgeGemCost', html);
-}
-
-function showTechGemTable() {
-    let cur = 0, proj = 0;
-    if (typeof setupLevels !== 'undefined' && typeof calcState === 'function') {
-        const state = calcState();
-        for (let t = 1; t <= 5; t++) {
-            cur += (setupLevels[`spt_T${t}_timer`] || 0) * 4;
-            proj += (state.levels[`spt_T${t}_timer`] || 0) * 4;
-        }
-    }
-    const isUpgrade = proj > cur;
-
-    let tabsHtml = `<div id="modal-tabs-container" style="display: flex; justify-content: center; margin-bottom: 15px;">`;
-    ['I', 'II', 'III', 'IV', 'V'].forEach((name, idx) => {
-        const activeCls = idx === 0 ? 'active' : '';
-        tabsHtml += `<button class="seg-btn ${activeCls}" onclick="document.querySelectorAll('.tech-gem-tab').forEach(el=>el.style.display='none'); document.getElementById('tech-gem-tab-${idx}').style.display='block'; this.parentNode.querySelectorAll('.seg-btn').forEach(btn=>btn.classList.remove('active')); this.classList.add('active');">${name}</button>`;
-    });
-    tabsHtml += `</div>`;
-
-    let contentHtml = '';
-
-    for (let t = 1; t <= 5; t++) {
-        let totalStdBefore = 0, totalFrgBefore = 0, totalWaitBefore = 0;
-        let totalStdAfter = 0, totalFrgAfter = 0, totalWaitAfter = 0;
-        let rowsHtml = '';
-        
-        for (let i = 0; i < 5; i++) {
-            const baseMins = tierTimes[t][i]; 
-            const curData = window.getGemData(baseMins / (1 + cur / 100));
-            const projData = window.getGemData(baseMins / (1 + proj / 100));
-
-            totalStdBefore += curData.std; totalFrgBefore += curData.frg; totalWaitBefore += curData.rawWait;
-            totalStdAfter += projData.std; totalFrgAfter += projData.frg; totalWaitAfter += projData.rawWait;
-
-            let rightCol = `
-            <div class="gem-comp-container">
-                <div class="gem-stack-inner">
-                    <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
-                </div>
-            </div>`;
-            if (isUpgrade) {
-                rightCol = `
-                <div class="gem-comp-container"> 
-                    <div class="gem-stack-inner">
-                        <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
-                        <div class="gem-after-wrapper">
-                            <span class="gem-comp-arrow">➜</span>
-                            <div class="gem-after-val">${window.renderGemCell(projData, '#198754')}</div>
-                        </div>
-                    </div>
-                </div>`;
-            }
-
-            rowsHtml += `<tr>
-                <td><div style="text-align: left; padding-left: 20px; display: block; width: 100%; box-sizing: border-box; color: #000; font-family: 'Fredoka', sans-serif; font-weight: 700;">${i + 1}</div></td>
-                <td>${rightCol}</td>
-            </tr>`;
-        }
-
-        const totalCurData = { std: totalStdBefore, frg: totalFrgBefore, wait: window.formatFrugalWait(totalWaitBefore) };
-        const totalProjData = { std: totalStdAfter, frg: totalFrgAfter, wait: window.formatFrugalWait(totalWaitAfter) };
-
-        let totalRightCol = `
-        <div class="gem-comp-container">
-            <div class="gem-stack-inner">
-                <div class="gem-before-wrapper">${window.renderGemCell(totalCurData)}</div>
-            </div>
-        </div>`;
-        if (isUpgrade) {
-            totalRightCol = `
-            <div class="gem-comp-container"> 
-                <div class="gem-stack-inner">
-                    <div class="gem-before-wrapper">${window.renderGemCell(totalCurData)}</div>
-                    <div class="gem-after-wrapper">
-                        <span class="gem-comp-arrow">➜</span>
-                        <div class="gem-after-val">${window.renderGemCell(totalProjData, '#198754')}</div>
-                    </div>
-                </div>
-            </div>`;
-        }
-
-        rowsHtml += `<tr>
-            <td><div style="text-align: left; padding-left: 20px; display: block; width: 100%; box-sizing: border-box; color: #000; font-family: 'Fredoka', sans-serif; font-weight: 700;">Total</div></td>
-            <td>${totalRightCol}</td>
-        </tr>`;
-
-        contentHtml += `
-        <div id="tech-gem-tab-${t-1}" class="tech-gem-tab" style="display: ${t === 1 ? 'block' : 'none'};">
-            <table class="clean-table" style="width: 100%;">
-                <thead>
-                    <tr>
-                        <th style="text-align: left; padding-left: 20px; width: 25%;">Level</th>
-                        <th style="text-align: center; width: 75%; box-sizing: border-box;">Gem Cost</th>
-                    </tr>
-                </thead>
-                <tbody>${rowsHtml}</tbody>
-            </table>
-        </div>`;
-    }
-    
-    const dynamicStyles = `
-    <style>
-        .gem-comp-container {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            box-sizing: border-box;
-            font-family: 'Fredoka', sans-serif;
-            font-weight: 700;
-        }
-        .gem-stack-inner {
-            display: flex;
-            align-items: center;
-        }
-        .gem-before-wrapper, .gem-after-val {
-            display: flex;
-            align-items: center;
-        }
-        .gem-after-wrapper {
-            display: flex;
-            align-items: center;
-        }
-        .gem-comp-arrow {
-            color: #198754 !important;
-            font-weight: 900;
-            margin: 0 6px;
-            -webkit-text-stroke: 0px !important;
-        }
-        @media (max-width: 768px) {
-            .gem-stack-inner {
-                flex-direction: column;
-                align-items: flex-start; /* Aligns the left edges of Before/After perfectly */
-                gap: 4px;
-                padding: 4px 0;
-            }
-            .gem-after-wrapper {
-                position: relative; /* Anchor for the absolute arrow */
-            }
-            .gem-comp-arrow {
-                position: absolute;
-                right: 100%; /* Pushes the arrow outside to the left */
-                margin: 0 4px 0 0;
-            }
-        }
-    </style>
-    `;
-
-    const subHtml = `
-    ${dynamicStyles}
-    <div style="text-align: center; margin-bottom: 12px; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">
-        Speed Bonus +${cur}% ${isUpgrade ? `<span style="color: #198754; margin: 0 4px; font-weight: 800;">➜</span> <span style="color: #198754;">+${proj}%</span>` : ''}
-    </div>
-    <div style="display: flex; justify-content: center; margin-bottom: 15px; gap: 12px;">
-        <button id="btn-gem-standard" class="gem-toggle-btn active" onclick="toggleGemFrugalMode(false)">Standard</button>
-        <button id="btn-gem-frugal" class="gem-toggle-btn" onclick="toggleGemFrugalMode(true)">Frugal</button>
-    </div>`;
-
-    let html = `
-        ${subHtml}
-        ${tabsHtml}
-        ${contentHtml}
-    `;
-    
-    if (typeof MODAL_SETTINGS !== 'undefined') MODAL_SETTINGS['techGemCost'] = { title: "TECH GEM COST", headerColor: "#ebf8fa", titleColor: "#000000", disclaimer: "" };
-    renderMasterModal('techGemCost', html);
 }

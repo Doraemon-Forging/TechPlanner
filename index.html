@@ -91,7 +91,7 @@
                         <img src="icons/warcalc.png" class="dash-icon">War Calc
                     </button>
                     <button class="dash-btn" id="btn-gem" onclick="setSidebarPanel('gem')">
-                    <img src="icons/Gem.png" class="dash-icon">Gem Calc
+                        <img src="icons/Gem.png" class="dash-icon">Gem Calc
                     </button>
                     <button class="dash-btn" id="btn-egg" onclick="setSidebarPanel('egg')">
                         <img src="icons/icon_eggplan.png" class="dash-icon">Egg Planner
@@ -171,6 +171,12 @@
                     </div>
                 </div>
 
+                <div class="gem-toggle-container desktop-only">
+                    <button id="btn-gem-toggle" class="btn-gem-style" onclick="toggleGemMode()" title="Toggle Gem Usage">
+                        <img src="icons/Gem.png"><span>0</span>
+                    </button>
+                </div>
+
                 <div class="control-capsule bottom-capsule desktop-only">
                     <button class="btn-reset-text" onclick="resetCurrentTree()" title="Reset Tree"></button>
                     <button id="btn-undo-desktop" onclick="undo()" disabled title="Undo"></button>
@@ -232,7 +238,12 @@
                                     </div>
                                 </div>
 
-                                <div class="stats-box-row">
+                                <div class="stats-box-row" style="display: flex; gap: 8px;">
+                                    <div class="sb-item type-gem" style="display: flex; align-items: center; justify-content: center; gap: 4px;" title="Total Gems">
+                                        <img src="icons/Gem.png" style="width: 24px; height: 24px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.2)); transform: translateY(-1px);">
+                                        <span class="sb-value" style="color:#00b0ff" id="gem-val-desktop">0</span>
+                                    </div>
+                                    
                                     <div class="sb-item type-res"><span class="sb-value" style="color:#e74c3c" id="res-val-desktop">0</span></div>
                                     <div class="sb-item type-time"><span class="sb-value" style="color:#f39c12" id="time-val-desktop">0m</span></div>
                                 </div>
@@ -280,6 +291,12 @@
     </div> 
 
     <div id="float-tree" class="mobile-floating-container mobile-only">
+        <div class="gem-toggle-container mobile-only">
+            <button id="btn-gem-toggle-mobile" class="btn-gem-style" onclick="toggleGemMode()" title="Toggle Gem Usage">
+                <img src="icons/Gem.png"><span>OFF</span>
+            </button>
+        </div>
+
         <div class="control-capsule">
             <button class="tn-action-btn reset-neutral" onclick="resetCurrentTree()"></button>
             <button class="tn-action-btn" id="btn-undo-mobile-tree" onclick="undo()" disabled></button>
@@ -376,8 +393,8 @@
                         <span>War Calc</span>
                     </button>
                     <button class="bento-btn btn-calc" id="btn-gem-mobile" onclick="switchMobileView('gem')">
-                    <div class="calc-icon-circle"><img src="icons/Gem.png"></div>
-                    <span>Gem Calc</span>
+                        <div class="calc-icon-circle"><img src="icons/Gem.png"></div>
+                        <span>Gem Calc</span>
                     </button>
                     <button class="bento-btn btn-calc" id="btn-egg" onclick="switchMobileView('egg')">
                         <div class="calc-icon-circle"><img src="icons/icon_eggplan.png"></div>
@@ -428,6 +445,7 @@
     <script src="js/daily.js"></script>
     <script src="js/weekly.js"></script>
     <script src="js/warcalc.js"></script>
+    <script src="js/gem.js"></script>
     <script src="js/petmount.js"></script> 
     <script src="js/equipment.js"></script> 
 
