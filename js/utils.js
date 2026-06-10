@@ -444,6 +444,7 @@ function updateRightPaneVisuals(panelId) {
     else if (panelId === 'weekly') { iconHtml = img("icon_weekly.png"); titleText = "WEEKLY GAIN"; }
     else if (panelId === 'egg') { iconHtml = img("icon_eggplan.png"); titleText = "EGG PLANNER"; }
     else if (panelId === 'war') { iconHtml = img("warcalc.png"); titleText = "WAR CALC"; }
+    else if (panelId === 'gem') { iconHtml = img("Gem.png"); titleText = "GEM CALC"; }
     else if (panelId === 'pet') { iconHtml = img("petmount.png"); titleText = "PET & MOUNT"; }
     else if (panelId === 'equipment') { iconHtml = img("equipment.png"); titleText = "EQUIPMENT"; }
     else if (panelId === 'summon') { iconHtml = img("summon.png"); titleText = "SUMMON CALC"; }

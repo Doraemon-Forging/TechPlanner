@@ -19,8 +19,7 @@ window.refTablePrefs = {
     statsMastery: 0
 };
 
-const ALL_VIEW_CLASSES = ['view-planner', 'view-log', 'view-calc', 'view-egg', 'view-stats', 'view-war', 'view-daily', 'view-weekly', 'view-more', 'view-pet', 'view-equipment', 'view-summon', 'view-help'];
-
+const ALL_VIEW_CLASSES = ['view-planner', 'view-log', 'view-calc', 'view-egg', 'view-stats', 'view-war', 'view-daily', 'view-weekly', 'view-more', 'view-pet', 'view-equipment', 'view-summon', 'view-help', 'view-gem'];
 // =========================================
 // 2. GLOBAL UI NAVIGATION
 // =========================================
@@ -70,7 +69,7 @@ function setMainView(viewName) {
         
         setTimeout(() => { if (typeof drawLines === 'function') drawLines(); }, 50);
 
-    } else if (['logs', 'calc', 'egg', 'stats', 'war', 'pet', 'equipment'].includes(viewName)) {
+    } else if (['logs', 'calc', 'egg', 'stats', 'war', 'pet', 'equipment', 'gem'].includes(viewName)) {
         setSidebarPanel(viewName);
         if (sidebar) sidebar.style.display = isMobile ? 'block' : 'flex';
         if (!isMobile && treeCont) treeCont.style.display = 'flex';
@@ -93,7 +92,7 @@ function setSidebarPanel(panelName) {
     if (rightPaneWrapper) rightPaneWrapper.scrollTop = 0;
     window.scrollTo(0, 0);
 
-    const panels =['logs', 'calc', 'egg', 'stats', 'daily', 'weekly', 'war', 'pet', 'equipment', 'summon', 'help'];
+    const panels =['logs', 'calc', 'egg', 'stats', 'daily', 'weekly', 'war', 'pet', 'equipment', 'summon', 'help', 'gem'];
     
     panels.forEach(p => {
         const el = document.getElementById('panel-' + p); if (el) el.style.display = 'none';
@@ -120,7 +119,8 @@ function setSidebarPanel(panelName) {
             pet: { t: 'PET & MOUNT', i: '🐾' },
             equipment: { t: 'EQUIPMENT', i: '🛡️' },
             summon: { t: 'SUMMON CALC', i: '✨' },
-            help: { t: 'HELP', i: '❓' }
+            help: { t: 'HELP', i: '❓' },
+            gem: { t: 'GEM CALC', i: '💎' } 
         };
         if (titles[panelName]) {
             fhTitle.innerText = titles[panelName].t;
