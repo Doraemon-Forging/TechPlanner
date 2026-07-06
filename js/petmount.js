@@ -376,7 +376,7 @@ function updatePetMountExpCap() {
     if (lvEl && maxEl && expEl) {
         let lv = parseInt(lvEl.value) || 1;
         if (lv < 1) lv = 1;
-        if (lv > 100) lv = 50;
+        if (lv > 100) lv = 100; 
         
         let maxExp = 2;
         if (typeof MOUNT_LEVEL_DATA !== 'undefined' && MOUNT_LEVEL_DATA[lv]) {
@@ -806,8 +806,8 @@ function updateMountMergeResult() {
         }
     }
 
-    const mCostBefore = Math.max(1, Math.ceil(50 * (1 - (costBefore / 100))));
-    const mCostAfter = Math.max(1, Math.ceil(50 * (1 - (costAfter / 100))));
+    const mCostBefore = Math.max(1, 50 * (1 - (costBefore / 100)));
+    const mCostAfter = Math.max(1, 50 * (1 - (costAfter / 100)));
     const extraChanceB = (chanceBefore * 2) / 100;
     const extraChanceA = (chanceAfter * 2) / 100;
 

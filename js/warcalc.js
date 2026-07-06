@@ -344,14 +344,8 @@ function updateWarCalc() {
     // --- 2.5 SKILL UPGRADE CALCULATION ---
     let skillUpgradePtsB = 0; let skillUpgradePtsA = 0;
 
-    let expPerAsc = 0;
-    for (let i = 1; i <= 100; i++) {
-        if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[i] && SKILL_LEVEL_DATA[i][0] !== "MAX") {
-            expPerAsc += SKILL_LEVEL_DATA[i][0];
-        }
-    }
-
-    let historicalPulls = (skillAsc * expPerAsc);
+    // FIXED: Calculate historical pulls ONLY for the current ascension level (since it resets!)
+    let historicalPulls = 0;
     for (let i = 1; i < skillLv; i++) {
         if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[i] && SKILL_LEVEL_DATA[i][0] !== "MAX") {
             historicalPulls += SKILL_LEVEL_DATA[i][0];
@@ -374,7 +368,8 @@ function updateWarCalc() {
         let cur = 1; 
         let rem = amt;
         
-        while (cur < 100) { 
+        // Increased cap to 1000 just as a safety net
+        while (cur < 1000) { 
             let cost = 8;
             if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[cur]) {
                 cost = SKILL_UPGRADE_COSTS[cur];
@@ -395,9 +390,10 @@ function updateWarCalc() {
                 return cur + (rem / cost); 
             }
         }
-        return 100.0; 
+        return 1000.0; 
     };
 
+    // FIXED: Evaluate each Ascension Phase individually because upgrade costs reset!
     const ascMap = new Set();
     phasesB.forEach(p => ascMap.add(p.asc));
     phasesA.forEach(p => ascMap.add(p.asc));
@@ -410,6 +406,8 @@ function updateWarCalc() {
         const isBasePhase = (asc === skillAsc);
 
         for (let i = 0; i < 6; i++) {
+            // If evaluating the current ascension, start from historical base yields.
+            // If evaluating a new ascension we just crossed into, start from 0 copies.
             let copiesBase = isBasePhase ? (baseYields[i] / 3) : 0;
             let copiesB = copiesBase + (pB.yields[i] / 3);
             let copiesA = copiesBase + (pA.yields[i] / 3);
@@ -441,12 +439,12 @@ function updateWarCalc() {
     }
 
     // --- 4. MOUNT SUMMON CALCULATION ---
-    const mountAsc = parseInt(document.getElementById('wc-mount-asc')?.value || 0); // NEW
+    const mountAsc = parseInt(document.getElementById('wc-mount-asc')?.value || 0);
     const techMountCost = getTechVal('power', 'mount_cost');
     const techMountChance = getTechVal('power', 'mount_chance');
     
-    const mCostB = Math.max(1, Math.ceil(50 * (1 - (techMountCost.before * 1) / 100)));
-    const mCostA = Math.max(1, Math.ceil(50 * (1 - (techMountCost.after * 1) / 100)));
+    const mCostB = Math.max(1, 50 * (1 - (techMountCost.before * 1) / 100));
+    const mCostA = Math.max(1, 50 * (1 - (techMountCost.after * 1) / 100));
 
     const mPullsB = Math.floor(mountKey / mCostB);
     const mPullsA = Math.floor(mountKey / mCostA);
@@ -470,20 +468,20 @@ function updateWarCalc() {
     const warMountMergeSummonB = warMountB;
     const warMountMergeSummonA = warMountA;
 
-    const d1B = warForgeB + warSkillB + rndUpgradePtsB + warTech;
-    const d1A = warForgeA + warSkillA + rndUpgradePtsA + warTech;
+    const d1B = warForgeB + warSkillB + rndUpgradePtsB + warDungeon;
+    const d1A = warForgeA + warSkillA + rndUpgradePtsA + warDungeon;
 
-    const d2B = warForgeUpgradeB + warDungeon + warEggHatch + warEggMergeInput + warForgeGems;
-    const d2A = warForgeUpgradeA + warDungeon + warEggHatch + warEggMergeInput + warForgeGems;
+    const d2B = warForgeUpgradeB + warForgeGems + warTech + warMountB + warMountMergeSummonB + warMountMergeInput;
+    const d2A = warForgeUpgradeA + warForgeGems + warTech + warMountA + warMountMergeSummonA + warMountMergeInput;
 
-    const d3B = warForgeB + warSkillB + rndUpgradePtsB + warMountB + warMountMergeSummonB + warMountMergeInput;
-    const d3A = warForgeA + warSkillA + rndUpgradePtsA + warMountA + warMountMergeSummonA + warMountMergeInput;
+    const d3B = warForgeB + warSkillB + rndUpgradePtsB + warEggHatch + warEggMergeInput;
+    const d3A = warForgeA + warSkillA + rndUpgradePtsA + warEggHatch + warEggMergeInput;
+    
+    const d4B = warForgeUpgradeB + warForgeGems + warDungeon + warMountB + warMountMergeSummonB + warMountMergeInput;
+    const d4A = warForgeUpgradeA + warForgeGems + warDungeon + warMountA + warMountMergeSummonA + warMountMergeInput;
 
-    const d4B = warForgeUpgradeB + warEggHatch + warEggMergeInput + warTech + warForgeGems;
-    const d4A = warForgeUpgradeA + warEggHatch + warEggMergeInput + warTech + warForgeGems;
-
-    const d5B = warForgeB + warMountB + warMountMergeSummonB + warMountMergeInput + warDungeon;
-    const d5A = warForgeA + warMountA + warMountMergeSummonA + warMountMergeInput + warDungeon;
+    const d5B = warForgeB + warTech + warEggHatch + warEggMergeInput;
+    const d5A = warForgeA + warTech + warEggHatch + warEggMergeInput;
 
     const totB = warForgeB + warForgeUpgradeB + warDungeon + warSkillB + rndUpgradePtsB + warTech + warEggHatch + warEggMergeInput + warMountB + warMountMergeSummonB + warMountMergeInput + warForgeGems;
     const totA = warForgeA + warForgeUpgradeA + warDungeon + warSkillA + rndUpgradePtsA + warTech + warEggHatch + warEggMergeInput + warMountA + warMountMergeSummonA + warMountMergeInput + warForgeGems;

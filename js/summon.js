@@ -39,7 +39,7 @@ const SUMMON_CONFIG = {
     mount: {
         db: typeof MOUNT_LEVEL_DATA !== 'undefined' ? MOUNT_LEVEL_DATA : null,
         baseCost: 50,
-        costRoundMode: 'ceil',
+        costRoundMode: 'none',
         yieldPerPull: 1,
         techPrefix: 'power',
         techCostKey: 'mount_cost',
@@ -343,7 +343,10 @@ function updateSummonCalc(type) {
     const calcCost = (lv) => {
         if (!config.techCostKey) return config.baseCost;
         let mult = config.baseCost * (1 - (lv * 1) / 100);
-        return config.costRoundMode === 'ceil' ? Math.max(1, Math.ceil(mult)) : Math.max(1, Math.round(mult));
+        
+        if (config.costRoundMode === 'ceil') return Math.max(1, Math.ceil(mult));
+        if (config.costRoundMode === 'none') return Math.max(1, mult);
+        return Math.max(1, Math.round(mult));
     };
 
     const costB = calcCost(curCostLv);

@@ -174,8 +174,8 @@ function updateWeekly() {
 
     const techMountCost = getWeeklyTechVal('power', 'mount_cost');
     const techMountChance = getWeeklyTechVal('power', 'mount_chance');
-    const safeCostB = Math.max(1, Math.ceil(50 * (1 - (techMountCost.before * 1) / 100)));
-    const safeCostA = Math.max(1, Math.ceil(50 * (1 - (techMountCost.after * 1) / 100)));
+    const safeCostB = Math.max(1, 50 * (1 - (techMountCost.before * 1) / 100));
+    const safeCostA = Math.max(1, 50 * (1 - (techMountCost.after * 1) / 100));
 
     const dailyData = typeof calculateDailyMath === 'function' ? calculateDailyMath() : null;
     if (!dailyData) return; 

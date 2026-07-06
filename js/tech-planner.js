@@ -230,22 +230,35 @@ function updateWarConfig() {
 }
 
 function isWarTime(date) {
-    const d = date.getDay(); const h = date.getHours(); const m = date.getMinutes();
-    
-    let startH = warConfig.hour; 
-    if (startH === 12) startH = (warConfig.ampm === 'PM') ? 12 : 0; 
-    else if (warConfig.ampm === 'PM') startH += 12;
-    
-    const startM = warConfig.min || 0;
-    const curH = (d * 24) + h + (m / 60); 
-    const warH = (warConfig.day * 24) + startH + (startM / 60); 
-    
-    const check = (off) => { 
-        const s = off % 168; 
-        const e = (off + 24) % 168; 
-        return (e > s) ? (curH >= s && curH < e) : (curH >= s || curH < e); 
-    };
-    return check(warH) || check(warH + 72);
+    try {
+        if (!date || isNaN(date.getTime())) return false;
+
+        const d = date.getDay(); 
+        const h = date.getHours(); 
+        const m = date.getMinutes();
+        
+        let startH = Number(warConfig.hour); 
+        if (startH === 12) startH = (warConfig.ampm === 'PM') ? 12 : 0; 
+        else if (warConfig.ampm === 'PM') startH += 12;
+        
+        const startM = Number(warConfig.min) || 0;
+        
+        const curH = (d * 24) + h + (m / 60); 
+        const warH = Number((Number(warConfig.day) * 24) + startH + (startM / 60)); 
+        
+        const check = (off) => { 
+            let s = Number(off) % 168; 
+            if (s < 0) s += 168; 
+            const e = (s + 24) % 168; 
+            
+            return (e > s) ? (curH >= s && curH < e) : (curH >= s || curH < e); 
+        };
+        return check(warH + 24) || check(warH + 96);
+
+    } catch (err) {
+        console.error("Error calculating war time:", err);
+        return false; 
+    }
 }
 
 function updateCalculations() {

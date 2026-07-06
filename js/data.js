@@ -72,7 +72,7 @@ const forgeLevelData = {
 
 const bracketFloors = [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61, 66, 71, 76, 81, 86, 91, 96, 101, 106, 111, 116, 121, 126, 131, 136, 141, 146];
 
-const EGG_POINTS = { 'common': 200, 'rare': 800, 'epic': 1600, 'legendary': 3200, 'ultimate': 6400, 'mythic': 12800 };
+const EGG_POINTS = { 'common': 400, 'rare': 1600, 'epic': 3200, 'legendary': 6400, 'ultimate': 12800, 'mythic': 25600 };
 
 const EGG_DATA = {
     common: { n: "Common", t: 30, id: "egg1", img: "icons/EggCommon.png", c: "common" },
@@ -296,7 +296,7 @@ const TREES = {
             mount_cost: {
                 n: "Mount Summon Cost", p: ["ring_2", "belt_2"], m: 5,
                 stat: (l) => {
-                    const p = l * 1; const v = Math.ceil(50 * (1 - p / 100));
+                    const p = l * 1; const v = 50 * (1 - p / 100);
                     return `Cost -${p}% (${v} <img src="icons/mount_key.png" class="stat-key-icon">)`;
                 }
             },
