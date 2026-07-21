@@ -38,7 +38,7 @@ function updateTimeToGem() {
         return;
     }
 
-    let gems = Math.max(1, Math.ceil((totalSeconds / 434.76) - 0.5));
+    let gems = Math.max(1, Math.ceil((totalSeconds / 434.7858) - 0.5));
     
     res.innerText = gems.toLocaleString();
 }
@@ -59,9 +59,9 @@ window.formatFrugalWait = function(s) {
 window.getGemData = function(mins) {
     if (mins <= 0) return { std: 0, frg: 0, rawWait: 0, wait: '0s' };
     let totalSeconds = mins * 60;
-    let stdGems = Math.max(1, Math.ceil((totalSeconds / 434.76) - 0.5));
+    let stdGems = Math.max(1, Math.ceil((totalSeconds / 434.7858) - 0.5));
     let frgGems = stdGems - 1;
-    let targetSeconds = frgGems > 0 ? (frgGems + 0.5) * 434.76 : 0;
+    let targetSeconds = frgGems > 0 ? (frgGems + 0.5) * 434.7858 : 0;
     let waitSeconds = Math.max(0, Math.ceil(totalSeconds - targetSeconds));
     return { std: stdGems, frg: frgGems, rawWait: waitSeconds, wait: window.formatFrugalWait(waitSeconds) };
 };

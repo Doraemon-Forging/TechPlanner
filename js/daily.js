@@ -1,6 +1,6 @@
 /**
  * DAILY.JS
- * Logic for Daily Totals
+ * Logic for Daily Totals and Mission
  */
 
 // ==========================================
@@ -116,6 +116,102 @@ function calculateDailyMath() {
         totEggA: ((rewards.eggshell.after * 2) / 100) * (1 + (lucky.after / 100)),
         totCardsB: ((rewards.ticket.before * 2) / (200 * (1 - summonCost.before / 100))) * 5,
         totCardsA: ((rewards.ticket.after * 2) / (200 * (1 - summonCost.after / 100))) * 5
+    };
+}
+
+// ==========================================
+// DAILY MISSION YIELD CALCULATOR
+// ==========================================
+function getMissionSlots() {
+    const getVal = (id) => {
+        const el = document.getElementById(`ms-slot-${id}`);
+        if (el) return parseFloat(el.value) || 0;
+        return parseFloat(window.missionSlotsMemory?.[id]) || 0;
+    };
+    
+    return {
+        gold: getVal('gold'),
+        ticket: getVal('ticket'),
+        egg: getVal('egg'),
+        pot: getVal('pot'),
+        key: getVal('key'),
+        gp: getVal('gp'),
+        rally: getVal('rally')
+    };
+}
+
+function calculateMissionYields(lvl, sub, slots) {
+    let th = (lvl - 1) * 10 + sub;
+
+    let minLv = 1, maxLv = 4;
+    if (typeof MISSION_CHECKPOINTS !== 'undefined') {
+        for (let i = 0; i < MISSION_CHECKPOINTS.length; i++) {
+            if (th >= MISSION_CHECKPOINTS[i].th) {
+                minLv = MISSION_CHECKPOINTS[i].min;
+                maxLv = MISSION_CHECKPOINTS[i].max;
+            } else break;
+        }
+    }
+
+    const missionLvl = parseInt(window.clanTechMemory?.mission) || 0;
+    const potMissionLvl = parseInt(window.clanTechMemory?.potMission) || 0;
+    const potAsc = parseInt(document.getElementById('weekly-potion-asc')?.value) || 0; 
+
+    const generalTechMult = 1 + (missionLvl / 100);
+    const gpTechMult = 1 + (missionLvl / 100) + ((potMissionLvl * 5) / 100);
+    const gpAscMult = 1 + (potAsc / 100);
+
+    const getYield = (base, techMult) => {
+        let sum = 0;
+        for (let L = minLv; L <= maxLv; L++) {
+            let levelBase = Math.round(base * Math.pow(1.01, L - 1));
+            sum += Math.round(levelBase * techMult);
+        }
+        return sum / (maxLv - minLv + 1);
+    };
+
+    const getGPYield = () => {
+        let sum = 0;
+        for (let L = minLv; L <= maxLv; L++) {
+            let base = 0;
+            if (L <= 2) base = 3;
+            else if (L <= 4) base = 4;
+            else if (L <= 6) base = 5;
+            else if (L <= 16) base = 6;
+            else if (L <= 19) base = 7;
+            else if (L <= 41) base = 8;
+            else if (L <= 43) base = 9;
+            else base = 10;
+            
+            sum += Math.round(base * gpAscMult * gpTechMult);
+        }
+        return sum / (maxLv - minLv + 1);
+    };
+
+    const yields = {
+        gold: getYield(MISSION_BASE_YIELDS.gold, generalTechMult),
+        ticket: getYield(MISSION_BASE_YIELDS.ticket, generalTechMult),
+        egg: getYield(MISSION_BASE_YIELDS.egg, generalTechMult),
+        pot: getYield(MISSION_BASE_YIELDS.pot, generalTechMult),
+        key: getYield(MISSION_BASE_YIELDS.key, generalTechMult),
+        gp: getGPYield()
+    };
+
+    const totalSlots = Object.values(slots).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+
+    return {
+        minLv, 
+        maxLv,
+        dailyBase: yields, 
+        dailyTotal: {      
+            gold: yields.gold * (slots.gold || 0),
+            ticket: yields.ticket * (slots.ticket || 0),
+            egg: yields.egg * (slots.egg || 0),
+            pot: yields.pot * (slots.pot || 0),
+            key: yields.key * (slots.key || 0),
+            gp: yields.gp * (slots.gp || 0)
+        },
+        totalSlots
     };
 }
 

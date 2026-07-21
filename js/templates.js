@@ -72,152 +72,307 @@ const HTML_CALC = `
 const HTML_WAR = `
 <div id="panel-war" class="sidebar-panel" style="display: none;">
     <div class="log-container">
-        <div class="daily-card">
-            <div class="daily-card-header strip-red">
-                <div class="daily-header-title">WAR CONFIG</div>
-            </div>
-            <div class="daily-card-body" id="war-calc-inputs">
-                <div class="wc-scope">
-                    
-                    <div class="wc-row">
-                        <div class="wc-label">Current Forge Lv:</div>
-                        <select id="wc-forge-lv" style="width:80px;" onchange="updateWarForgeNodesCap(); updateWarCalc()"></select>
-                    </div>
-                    <div class="wc-row">
-                        <div class="wc-label">Forge Upgrade Nodes:</div>
-                        <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
-                            <input type="number" id="wc-forge-nodes" placeholder="0" min="0" oninput="updateWarForgeNodesCap(); updateWarCalc()" style="width: 70px;">
-                            <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-forge-nodes-max">10</span></span>
-                        </div>
-                    </div>
-                    <div class="wc-row">
-                        <div class="wc-label">Gem Spent on Forge:</div>
-                        <input type="text" id="wc-forge-gem" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
-                    </div>
-                    <div class="wc-row">
-                        <div class="wc-label">Hammer:</div>
-                        <input type="text" id="wc-hammer" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
-                    </div>                    
-                    <div class="wc-line"></div>
-                    <div class="wc-row">
-                        <div class="wc-label">Dungeon Key:</div>
-                        <input type="text" id="wc-dungeon-key" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
-                    </div>
-                    <div class="wc-line"></div>
+        <div style="padding: 10px 0 15px 0; display: flex; justify-content: center;">
+            <button class="btn-clan-tech" onclick="openClanWarTechModal()" style="padding: 0 24px 5px 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; height: 45px; background-color: #02a2ff; border: 2px solid #000; border-radius: 12px; cursor: pointer; box-shadow: inset 0 -5px 0 0 #005d96; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;">
+                <img src="icons/warcalc.png" style="width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0px 1.5px 0px rgba(0,0,0,0.8));">
+                <span style="font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 1rem; font-weight: 500; color: #fff; text-transform: uppercase; letter-spacing: 0px; -webkit-text-stroke: 2px #000;">
+                    Clan Tech
+                </span>
+            </button>
+        </div>
 
-                    <div class="wc-row"><div class="wc-label">Tech Tier I:</div><input type="text" id="wc-tech-I" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
-                    <div class="wc-row"><div class="wc-label">Tech Tier II:</div><input type="text" id="wc-tech-II" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
-                    <div class="wc-row"><div class="wc-label">Tech Tier III:</div><input type="text" id="wc-tech-III" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
-                    <div class="wc-row"><div class="wc-label">Tech Tier IV:</div><input type="text" id="wc-tech-IV" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
-                    <div class="wc-row"><div class="wc-label">Tech Tier V:</div><input type="text" id="wc-tech-V" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
-                    <div class="wc-line"></div>
+        <style>
+            .btn-clan-tech:hover { background-color: #33b5ff !important; transform: translateY(-2px); box-shadow: inset 0 -5px 0 0 #005d96 !important; }
+            .btn-clan-tech:active { transform: translateY(3px) !important; box-shadow: inset 0 -2px 0 0 #005d96 !important; padding-bottom: 2px !important; }
+            
+            #panel-war .segmented-control .seg-btn {
+                font-size: 0.85rem;
+                transition: font-size 0.15s ease, transform 0.1s ease;
+            }
+            #panel-war .segmented-control .seg-btn.active {
+                font-size: 1rem; 
+            }
+        </style>
 
-                    <div class="wc-row">
-                        <div class="wc-label">Skill Summon Lv:&nbsp;<button class="btn-info" onclick="openSkillLevelsModal()" style="vertical-align: middle; margin-bottom: 2px;">i</button></div>
-                        <div style="display: flex; gap: 6px; align-items: stretch;">
-                            <select id="wc-skill-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="updateWarSkillExpCap(); updateWarCalc()">
-                                <option value="0">Asc 0</option>
-                                <option value="1">Asc 1</option>
-                                <option value="2">Asc 2</option>
-                                <option value="3">Asc 3</option>
-                            </select>
-                            <input type="number" id="wc-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarSkillExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
-                        </div>
-                    </div>
-                    <div class="wc-row">
-                        <div class="wc-label">Skill Summon Exp:</div>
-                        <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
-                            <input type="number" id="wc-skill-exp" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateWarSkillExpCap(); updateWarCalc()" style="width: 70px;">
-                            <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-skill-max">10</span></span>
-                        </div>
-                    </div>
-                    <div class="wc-row">
-                        <div class="wc-label">Green Ticket:</div>
-                        <input type="text" id="wc-ticket" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
-                    </div>
-                    <div class="wc-line"></div>
-
-                    <div class="wc-row">
-                        <div class="wc-label">Mount Summon Lv:</div>
-                        <div style="display: flex; gap: 6px; align-items: stretch;">
-                            <select id="wc-mount-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="updateWarMountExpCap(); updateWarCalc()">
-                                <option value="0">Asc 0</option>
-                                <option value="1">Asc 1</option>
-                                <option value="2">Asc 2</option>
-                                <option value="3">Asc 3</option>
-                            </select>
-                            <input type="number" id="wc-mount-lv" placeholder="1" min="1" max="100" oninput="updateWarMountExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarMountExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
-                        </div>
-                    </div>
-                    <div class="wc-row">
-                        <div class="wc-label">Mount Summon Exp:</div>
-                        <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
-                            <input type="number" id="wc-mount-exp" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateWarMountExpCap(); updateWarCalc()" style="width: 70px;">
-                            <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-mount-max">2</span></span>
-                        </div>
-                    </div>
-                    <div class="wc-row">
-                        <div class="wc-label">Mount Key:</div>
-                        <input type="text" id="wc-mount-key" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
-                    </div>
-                    <div class="wc-line"></div>
-
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 2px;">
-                        <div class="wc-header-label wc-color-cell">Hatch Egg</div>
-                        <div class="wc-header-label wc-color-cell">Merge Egg/Pet</div>
-                        <div class="wc-header-label wc-color-cell">Merge Mount</div>
-                    </div>
-
-                    <div class="wc-color-row" style="background-color: #ecf0f1;">
-                        <div class="wc-color-cell"><input type="text" id="wc-hatch-common" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-common" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-common" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                    </div>
-                    <div class="wc-color-row" style="background-color: #5cd8fe;">
-                        <div class="wc-color-cell"><input type="text" id="wc-hatch-rare" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-rare" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-rare" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                    </div>
-                    <div class="wc-color-row" style="background-color: #5dfe8a;">
-                        <div class="wc-color-cell"><input type="text" id="wc-hatch-epic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-epic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-epic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                    </div>
-                    <div class="wc-color-row" style="background-color: #fcfe5d;">
-                        <div class="wc-color-cell"><input type="text" id="wc-hatch-legendary" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-legendary" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-legendary" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                    </div>
-                    <div class="wc-color-row" style="background-color: #ff5c5d;">
-                        <div class="wc-color-cell"><input type="text" id="wc-hatch-ultimate" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-ultimate" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-ultimate" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                    </div>
-                    <div class="wc-color-row" style="background-color: #d55cff;">
-                        <div class="wc-color-cell"><input type="text" id="wc-hatch-mythic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-pet-mythic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                        <div class="wc-color-cell"><input type="text" id="wc-merge-mount-mythic" class="wc-color-input" oninput="cleanInput(this); updateWarCalc()"></div>
-                    </div>
-                </div>
+        <div style="display: flex; justify-content: center; width: 100%; margin: 0 0 15px 0;">
+            <div class="segmented-control" style="width: calc(100% - 20px); max-width: 360px; height: 46px; margin: 0 auto; z-index: 10; display: flex;">
+                <button class="seg-btn active" id="btn-warday-1" onclick="switchWarDayTab(1)" style="flex: 1; line-height: 1.15; padding: 0 2px;">DAY<br>1</button>
+                <button class="seg-btn" id="btn-warday-2" onclick="switchWarDayTab(2)" style="flex: 1; line-height: 1.15; padding: 0 2px;">DAY<br>2</button>
+                <button class="seg-btn" id="btn-warday-3" onclick="switchWarDayTab(3)" style="flex: 1; line-height: 1.15; padding: 0 2px;">DAY<br>3</button>
+                <button class="seg-btn" id="btn-warday-4" onclick="switchWarDayTab(4)" style="flex: 1; line-height: 1.15; padding: 0 2px;">DAY<br>4</button>
+                <button class="seg-btn" id="btn-warday-5" onclick="switchWarDayTab(5)" style="flex: 1; line-height: 1.15; padding: 0 2px;">DAY<br>5</button>
             </div>
         </div>
 
         <div class="daily-card">
+            <div class="daily-card-body" id="war-calc-inputs">
+                
+                <div class="wc-scope">
+                    
+                    <!-- ================= DAY 1 ================= -->
+                    <div id="warday-tab-1" class="warday-content" style="display: block;">
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Current Forge Lv:</div>
+                            <select id="wc-d1-forge-lv" style="width:80px;" onchange="updateWarCalc()"></select>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Hammer:</div>
+                            <input type="text" id="wc-hammer" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+                        
+                        <div class="wc-line"></div>
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Dungeon Key:</div>
+                            <input type="text" id="wc-dungeon-key" value="8" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+                        
+                        <div class="wc-line"></div>
+
+                        <div class="wc-row">
+                            <div class="wc-label">Skill Summon Lv:</div>
+                            <div style="display: flex; gap: 6px; align-items: stretch;">
+                                <select id="wc-skill-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="updateWarSkillExpCap(); updateWarCalc()">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="wc-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarSkillExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
+                            </div>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Skill Summon Exp:</div>
+                            <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
+                                <input type="number" id="wc-skill-exp" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateWarSkillExpCap(); updateWarCalc()" style="width: 70px;">
+                                <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-skill-max">10</span></span>
+                            </div>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Green Ticket:</div>
+                            <input type="text" id="wc-ticket" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+                    </div>
+
+                    <!-- ================= DAY 2 ================= -->
+                    <div id="warday-tab-2" class="warday-content" style="display: none;">
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Current Forge Lv:</div>
+                            <select id="wc-d2-forge-lv" style="width:80px;" onchange="updateWarForgeNodesCap(); updateWarCalc()"></select>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Forge Upgrade Nodes:</div>
+                            <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
+                                <input type="number" id="wc-forge-nodes" value="0" placeholder="0" min="0" oninput="updateWarForgeNodesCap(); updateWarCalc()" style="width: 70px;">
+                                <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-forge-nodes-max">10</span></span>
+                            </div>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Gem Spent on Forge:</div>
+                            <input type="text" id="wc-forge-gem" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+
+                        <div class="wc-line"></div>
+
+                        <div class="wc-row"><div class="wc-label">Tech Tier I:</div><input type="text" id="wc-tech-I" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier II:</div><input type="text" id="wc-tech-II" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier III:</div><input type="text" id="wc-tech-III" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier IV:</div><input type="text" id="wc-tech-IV" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier V:</div><input type="text" id="wc-tech-V" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        
+                        <div class="wc-line"></div>
+
+                        <div class="wc-row" style="margin-bottom: 2px;">
+                            <div class="wc-label">Mount Key:</div>
+                            <input type="text" id="wc-mount-key" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+                        <div style="text-align: right; font-family: 'Fredoka', sans-serif; font-size: 0.8rem; font-weight: 500; color: #666; margin-bottom: 10px; padding-right: 2px;">
+                            Expected Mounts: <span id="wc-d2-mount-yield-text" style="color: #198754; font-weight: 600;">0</span>
+                        </div>
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Mount Merge:</div>
+                            <input type="text" id="wc-merge-mount-total" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+
+                    </div>
+
+                    <!-- ================= DAY 3 ================= -->
+                    <div id="warday-tab-3" class="warday-content" style="display: none;">
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Current Forge Lv:</div>
+                            <select id="wc-d3-forge-lv" style="width:80px;" onchange="updateWarCalc()"></select>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Hammer:</div>
+                            <input type="text" id="wc-d3-hammer" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+                        
+                        <div class="wc-line"></div>
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Skill Summon Lv:</div>
+                            <div style="display: flex; gap: 6px; align-items: stretch;">
+                                <select id="wc-d3-skill-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="updateWarSkillExpCap(); updateWarCalc()">
+                                    <option value="0">Asc 0</option>
+                                    <option value="1">Asc 1</option>
+                                    <option value="2">Asc 2</option>
+                                    <option value="3">Asc 3</option>
+                                </select>
+                                <input type="number" id="wc-d3-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarSkillExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
+                            </div>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Skill Summon Exp:</div>
+                            <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
+                                <input type="number" id="wc-d3-skill-exp" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateWarSkillExpCap(); updateWarCalc()" style="width: 70px;">
+                                <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-d3-skill-max">10</span></span>
+                            </div>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Green Ticket:</div>
+                            <input type="text" id="wc-d3-ticket" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+
+                        <div class="wc-line"></div>
+
+                        <div class="wc-row"><div class="wc-label">Hatch Common Egg:</div><input type="text" id="wc-hatch-common" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Rare Egg:</div><input type="text" id="wc-hatch-rare" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Epic Egg:</div><input type="text" id="wc-hatch-epic" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Legendary Egg:</div><input type="text" id="wc-hatch-legendary" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Ultimate Egg:</div><input type="text" id="wc-hatch-ultimate" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Mythic Egg:</div><input type="text" id="wc-hatch-mythic" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Merge Egg / Pet:</div>
+                            <input type="text" id="wc-merge-pet-total" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+
+                    </div>
+
+                    <!-- ================= DAY 4 ================= -->
+                    <div id="warday-tab-4" class="warday-content" style="display: none;">
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Current Forge Lv:</div>
+                            <select id="wc-d4-forge-lv" style="width:80px;" onchange="updateWarForgeNodesCap(); updateWarCalc()"></select>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Forge Upgrade Nodes:</div>
+                            <div style="display:flex; align-items:center; gap:8px; flex-shrink: 0; white-space: nowrap;">
+                                <input type="number" id="wc-d4-forge-nodes" value="0" placeholder="0" min="0" oninput="updateWarForgeNodesCap(); updateWarCalc()" style="width: 70px;">
+                                <span style="font-size:1.1rem; font-weight:700; white-space: nowrap;">/ <span id="wc-d4-forge-nodes-max">10</span></span>
+                            </div>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Gem Spent on Forge:</div>
+                            <input type="text" id="wc-d4-forge-gem" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+
+                        <div class="wc-line"></div>
+
+                        <div class="wc-row">
+                            <div class="wc-label">Dungeon Key:</div>
+                            <input type="text" id="wc-d4-dungeon-key" value="8" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+                        
+                        <div class="wc-line"></div>
+
+                        <div class="wc-row" style="margin-bottom: 2px;">
+                            <div class="wc-label">Mount Key:</div>
+                            <input type="text" id="wc-d4-mount-key" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+                        <div style="text-align: right; font-family: 'Fredoka', sans-serif; font-size: 0.8rem; font-weight: 500; color: #666; margin-bottom: 10px; padding-right: 2px;">
+                            Expected Mounts: <span id="wc-d4-mount-yield-text" style="color: #198754; font-weight: 600;">0</span>
+                        </div>
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Mount Merge:</div>
+                            <input type="text" id="wc-d4-merge-mount-total" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+
+                    </div>
+
+                    <!-- ================= DAY 5 ================= -->
+                    <div id="warday-tab-5" class="warday-content" style="display: none;">
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Current Forge Lv:</div>
+                            <select id="wc-d5-forge-lv" style="width:80px;" onchange="updateWarCalc()"></select>
+                        </div>
+                        <div class="wc-row">
+                            <div class="wc-label">Hammer:</div>
+                            <input type="text" id="wc-d5-hammer" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+
+                        <div class="wc-line"></div>
+
+                        <div class="wc-row"><div class="wc-label">Tech Tier I:</div><input type="text" id="wc-d5-tech-I" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier II:</div><input type="text" id="wc-d5-tech-II" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier III:</div><input type="text" id="wc-d5-tech-III" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier IV:</div><input type="text" id="wc-d5-tech-IV" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier V:</div><input type="text" id="wc-d5-tech-V" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        
+                        <div class="wc-line"></div>
+
+                        <div class="wc-row"><div class="wc-label">Hatch Common Egg:</div><input type="text" id="wc-d5-hatch-common" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Rare Egg:</div><input type="text" id="wc-d5-hatch-rare" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Epic Egg:</div><input type="text" id="wc-d5-hatch-epic" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Legendary Egg:</div><input type="text" id="wc-d5-hatch-legendary" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Ultimate Egg:</div><input type="text" id="wc-d5-hatch-ultimate" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Mythic Egg:</div><input type="text" id="wc-d5-hatch-mythic" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        
+                        <div class="wc-row">
+                            <div class="wc-label">Merge Egg / Pet:</div>
+                            <input type="text" id="wc-d5-merge-pet-total" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()">
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Summary -->
+        <div class="daily-card">
             <div class="daily-card-header strip-red">
-                <div class="daily-header-title">WAR POINTS SUMMARY</div>
+                <div class="daily-header-title" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    WAR POINTS SUMMARY
+                    <button class="btn-info" onclick="openWarOverviewModal()" style="margin-bottom: 2px;">i</button>
+                </div>
             </div>
             <div class="daily-card-body">
                 <div id="war-calc-summary" style="width: 100%; margin-top: 15px;"></div>
             </div>
         </div>
 
+        <!-- Card 3: Breakdown -->
         <div class="daily-card">
             <div class="daily-card-header strip-red">
-                <div class="daily-header-title">WAR POINTS BREAKDOWN</div>
+                <div class="daily-header-title" id="war-breakdown-title">DAY 1 BREAKDOWN</div>
             </div>
             <div class="daily-card-body">
-                <div id="war-calc-results" class="calc-val-group single-val" style="width: 100%;">
-                    <span class="calc-val-before" style="text-align: center; width: 100%; color: #000;">0</span>
+                <div id="war-calc-results" style="width: 100%;">
+                    <div style="text-align: center; color: #666; font-family: 'Fredoka', sans-serif; font-size: 0.9rem;">
+                        Loading...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Action Points Details -->
+        <div class="daily-card">
+            <div class="daily-card-header strip-red">
+                <div class="daily-header-title" id="war-action-points-title">DAY 1 ACTION POINTS</div>
+            </div>
+            <div class="daily-card-body">
+                <div id="war-action-points-container" style="width: 100%;">
+                    <div style="text-align: center; color: #666; font-family: 'Fredoka', sans-serif; font-size: 0.9rem;">
+                        Loading...
+                    </div>
                 </div>
             </div>
         </div>
@@ -757,6 +912,7 @@ const HTML_WEEKLY = `
                         <select id="thief-sub" class="war-select select-mini" onchange="updateDaily()"></select>
                     </div>
                 </div>
+                
                 <div class="daily-input-row">
                     <label class="daily-label">Ghost Town:</label>
                     <div class="war-select-group flex-center">
@@ -765,6 +921,7 @@ const HTML_WEEKLY = `
                         <select id="ghost-sub" class="war-select select-mini" onchange="updateDaily()"></select>
                     </div>
                 </div>
+                
                 <div class="daily-input-row">
                     <label class="daily-label">Invasion:</label>
                     <div class="war-select-group flex-center">
@@ -773,6 +930,7 @@ const HTML_WEEKLY = `
                         <select id="inv-sub" class="war-select select-mini" onchange="updateDaily()"></select>
                     </div>
                 </div>
+                
                 <div class="daily-input-row" style="padding-bottom: 8px;">
                     <label class="daily-label">Zombie Rush:</label>
                     <div class="war-select-group flex-center">
@@ -805,18 +963,19 @@ const HTML_WEEKLY = `
                         </select>
                     </div>
                 </div>
+                
                 <div class="daily-input-row">
                     <label class="daily-label">Clan War:</label>
                     <div class="war-select-group flex-center">
                         <select id="weekly-war-tier" class="war-select" style="width: 95px;" onchange="updateWeekly()">
-                            <option value="SSS-Tier" selected>SSS-Tier</option>
-                            <option value="SS-Tier">SS-Tier</option>
-                            <option value="S-Tier">S-Tier</option>
-                            <option value="A-Tier">A-Tier</option>
-                            <option value="B-Tier">B-Tier</option>
-                            <option value="C-Tier">C-Tier</option>
-                            <option value="D-Tier">D-Tier</option>
-                            <option value="E-Tier">E-Tier</option>
+                            <option value="SSS-Tier" selected>S+++ Tier</option>
+                            <option value="SS-Tier">S++ Tier</option>
+                            <option value="S-Tier">S+ Tier</option>
+                            <option value="A-Tier">A Tier</option>
+                            <option value="B-Tier">B Tier</option>
+                            <option value="C-Tier">C Tier</option>
+                            <option value="D-Tier">D Tier</option>
+                            <option value="E-Tier">E Tier</option>
                             <option value="None">None</option>
                         </select>
                         <select id="weekly-war-win" class="war-select select-small" style="width: 75px;" onchange="updateWeekly()">
@@ -825,10 +984,15 @@ const HTML_WEEKLY = `
                         </select>
                     </div>
                 </div>
+                
                 <div class="daily-input-row">
                     <label class="daily-label">Indiv. Rewards:</label>
                     <div class="war-select-group flex-center">
                         <select id="weekly-indiv" class="war-select select-small" style="width: 75px;" onchange="updateWeekly()">
+                            <option value="3m">3m</option>
+                            <option value="2.5m">2.5m</option>
+                            <option value="2m">2m</option>
+                            <option value="1.5m">1.5m</option>
                             <option value="1m" selected>1m</option>
                             <option value="900k">900k</option>
                             <option value="800k">800k</option>
@@ -851,304 +1015,200 @@ const HTML_WEEKLY = `
                         </select>
                     </div>
                 </div>
+
+                <div class="daily-input-row">
+                    <label class="daily-label">Potion Asc Bonus:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="weekly-potion-asc" class="war-select" style="width: 75px;" onchange="updateWeekly()">
+                            <option value="0" selected>0%</option>
+                            <option value="10">10%</option>
+                            <option value="20">20%</option>
+                            <option value="30">30%</option>
+                            <option value="40">40%</option>
+                            <option value="50">50%</option>
+                            <option value="60">60%</option>
+                            <option value="70">70%</option>
+                            <option value="80">80%</option>
+                            <option value="90">90%</option>
+                            <option value="100">100%</option>
+                            <option value="110">110%</option>
+                            <option value="120">120%</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- CENTERED CLAN TECH BUTTON -->
+                <div style="padding: 10px 0 5px 0; display: flex; justify-content: center;">
+                    <button class="btn-clan-tech" onclick="openClanTechModal()" style="padding: 0 24px 5px 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; height: 45px; background-color: #02a2ff; border: 2px solid #000; border-radius: 12px; cursor: pointer; box-shadow: inset 0 -5px 0 0 #005d96; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;">
+                        <img src="icons/warcalc.png" style="width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0px 1.5px 0px rgba(0,0,0,0.8));">
+                        <span style="font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 1rem; font-weight: 500; color: #fff; text-transform: uppercase; letter-spacing: 0px; -webkit-text-stroke: 2px #000;">
+                            Clan Tech
+                        </span>
+                    </button>
+                </div>
+                <style>
+                    .btn-clan-tech:hover { background-color: #33b5ff !important; transform: translateY(-2px); box-shadow: inset 0 -5px 0 0 #005d96 !important; }
+                    .btn-clan-tech:active { transform: translateY(3px) !important; box-shadow: inset 0 -2px 0 0 #005d96 !important; padding-bottom: 2px !important; }
+                </style>
             </div>
         </div>
 
-        <div style="display: flex; justify-content: center; width: 100%; margin: 25px 0 25px 0;">
-            <div class="segmented-control" style="width: calc(100% - 40px); max-width: 360px; height: 46px; margin: 0 auto; z-index: 10; display: flex;">
-                <button class="seg-btn active" id="btn-weekly-total" onclick="toggleWeeklyTab('total')" style="flex: 1; line-height: 1.15; font-size: 0.85rem; padding: 0 2px;">WEEKLY<br>TOTAL</button>
-                <button class="seg-btn" id="btn-weekly-daily" onclick="toggleWeeklyTab('daily')" style="flex: 1; line-height: 1.15; font-size: 0.85rem; padding: 0 2px;">DAILY<br>GAIN</button>
-                <button class="seg-btn" id="btn-weekly-league" onclick="toggleWeeklyTab('league')" style="flex: 1; line-height: 1.15; font-size: 0.85rem; padding: 0 2px;">LEAGUE<br>& WAR</button>
+        <div class="daily-card card-compact" style="margin-top: 15px;">
+            <div class="daily-card-header strip-blue">
+                <span class="daily-header-title">WEEKLY TOTAL REWARDS
+                    <button class="btn-info" onclick="if(typeof openWeeklyBreakdownModal==='function') openWeeklyBreakdownModal()" style="vertical-align: middle; margin-left: 6px;">i</button>
+                </span>
+            </div>
+            <div class="daily-card-body">
+                <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="weekly-base-hammer"></div></div>
+                <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="weekly-base-gold"></div></div>
+                <div class="calc-line"><span class="calc-label">Green Ticket</span><div class="calc-val-group" id="weekly-base-ticket"></div></div>
+                <div class="calc-line"><span class="calc-label">Eggshell</span><div class="calc-val-group" id="weekly-base-eggshell"></div></div>
+                <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="weekly-base-potion"></div></div>
+                <div class="calc-line"><span class="calc-label">Mount Key</span><div class="calc-val-group" id="weekly-base-mountkey"></div></div>
+                <div class="calc-line"><span class="calc-label">Green Potion</span><div class="calc-val-group" id="weekly-base-greenpotion"></div></div>
             </div>
         </div>
 
-        <div id="weekly-tab-total">
-            <div class="daily-card card-compact">
-                <div class="daily-card-header strip-blue">
-                    <span class="daily-header-title">WEEKLY TOTAL REWARDS</span>
-                </div>
-                <div class="daily-card-body">
-                    <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="weekly-base-hammer"></div></div>
-                    <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="weekly-base-gold"></div></div>
-                    <div class="calc-line"><span class="calc-label">Green Ticket</span><div class="calc-val-group" id="weekly-base-ticket"></div></div>
-                    <div class="calc-line"><span class="calc-label">Eggshell</span><div class="calc-val-group" id="weekly-base-eggshell"></div></div>
-                    <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="weekly-base-potion"></div></div>
-                    <div class="calc-line"><span class="calc-label">Mount Key</span><div class="calc-val-group" id="weekly-base-mountkey"></div></div>
-                    <div class="calc-line"><span class="calc-label">Green Potion</span><div class="calc-val-group" id="weekly-base-greenpotion"></div></div>
-                </div>
+        <div class="daily-card card-compact" style="margin-top: 15px;">
+            <div class="daily-card-header strip-blue">
+                <span class="daily-header-title">ASCENSION PROGRESSION</span>
             </div>
-            <div class="daily-card card-compact">
-                <div class="daily-card-header strip-green">
-                    <span class="daily-header-title">REWARDS BREAKDOWN</span>
-                </div>
-                <div class="daily-card-body" id="weekly-breakdown-container">
-                    <div class="calc-line"><span class="calc-label">Effective Hammer</span><div class="calc-val-group" id="res-weekly-eff-hammer"></div></div>
-                    <div class="calc-line"><span class="calc-label">Gold After Hammering</span><div class="calc-val-group" id="res-weekly-grand"></div></div>
-                    <div class="calc-line"><span class="calc-label">Skill Summoned</span><div class="calc-val-group" id="res-weekly-cards"></div></div>
-                    <div class="calc-line"><span class="calc-label">Egg</span><div class="calc-val-group" id="res-weekly-eggs"></div></div>
-                    <div class="calc-line"><span class="calc-label">Mount Summoned</span><div class="calc-val-group" id="res-weekly-mounts"></div></div>
-                </div>
-            </div>
-
-            <div class="daily-card card-compact" style="margin-top: 15px;">
-                <div class="daily-card-header strip-blue">
-                    <span class="daily-header-title">ASCENSION PROGRESSION</span>
-                </div>
-                <div class="daily-card-body">                    
-                    
-                    <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
-                        <div class="calc-row-input">
-                            <label>Skill Summon Lv:</label>
-                            <div style="display: flex; gap: 6px;">
-                                <select id="asc-skill-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateAscensionCaps('skill'); updateWeekly()">
-                                    <option value="0">Asc 0</option>
-                                    <option value="1">Asc 1</option>
-                                    <option value="2">Asc 2</option>
-                                    <option value="3">Asc 3</option>
-                                </select>
-                                <input type="number" id="asc-skill-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('skill'); updateWeekly()">
-                            </div>
-                        </div>
-                        <div class="calc-row-input">
-                            <label for="asc-skill-exp">Skill Summon Exp:</label>
-                            <div class="pet-flex-center" style="display: flex; align-items: center;">
-                                <input type="number" id="asc-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('skill'); updateWeekly()">
-                                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-skill-max">10</span></span>
-                            </div>
-                        </div>
-                        <div class="calc-row-input">
-                            <label for="asc-skill-inv">Green Tickets:</label>
-                            <input type="text" id="asc-skill-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
-                        </div>
-                        <div class="calc-row-input">
-                            <label>Target Lv:</label>
-                            <div style="display: flex; gap: 6px;">
-                                <select id="asc-skill-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
-                                    <option value="0">Asc 0</option>
-                                    <option value="1">Asc 1</option>
-                                    <option value="2">Asc 2</option>
-                                    <option value="3">Asc 3</option>
-                                </select>
-                                <input type="number" id="asc-skill-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
-                            </div>
+            <div class="daily-card-body">                    
+                <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
+                    <div class="calc-row-input">
+                        <label>Skill Summon Lv:</label>
+                        <div style="display: flex; gap: 6px;">
+                            <select id="asc-skill-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateAscensionCaps('skill'); updateWeekly()">
+                                <option value="0">Asc 0</option>
+                                <option value="1">Asc 1</option>
+                                <option value="2">Asc 2</option>
+                                <option value="3">Asc 3</option>
+                            </select>
+                            <input type="number" id="asc-skill-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('skill'); updateWeekly()">
                         </div>
                     </div>
-
-                    <hr class="pet-hr" style="margin: 10px 0;">
-
-                    <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
-                        <div class="calc-row-input">
-                            <label>Pet Summon Lv:</label>
-                            <div style="display: flex; gap: 6px;">
-                                <select id="asc-pet-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateAscensionCaps('pet'); updateWeekly()">
-                                    <option value="0">Asc 0</option>
-                                    <option value="1">Asc 1</option>
-                                    <option value="2">Asc 2</option>
-                                    <option value="3">Asc 3</option>
-                                </select>
-                                <input type="number" id="asc-pet-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('pet'); updateWeekly()">
-                            </div>
-                        </div>
-                        <div class="calc-row-input">
-                            <label for="asc-pet-exp">Pet Summon Exp:</label>
-                            <div class="pet-flex-center" style="display: flex; align-items: center;">
-                                <input type="number" id="asc-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('pet'); updateWeekly()">
-                                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-pet-max">3</span></span>
-                            </div>
-                        </div>
-                        <div class="calc-row-input">
-                            <label for="asc-pet-inv">Eggshells:</label>
-                            <input type="text" id="asc-pet-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
-                        </div>
-                        <div class="calc-row-input">
-                            <label>Target Lv:</label>
-                            <div style="display: flex; gap: 6px;">
-                                <select id="asc-pet-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
-                                    <option value="0">Asc 0</option>
-                                    <option value="1">Asc 1</option>
-                                    <option value="2">Asc 2</option>
-                                    <option value="3">Asc 3</option>
-                                </select>
-                                <input type="number" id="asc-pet-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
-                            </div>
+                    <div class="calc-row-input">
+                        <label for="asc-skill-exp">Skill Summon Exp:</label>
+                        <div class="pet-flex-center" style="display: flex; align-items: center;">
+                            <input type="number" id="asc-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('skill'); updateWeekly()">
+                            <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-skill-max">10</span></span>
                         </div>
                     </div>
-
-                    <hr class="pet-hr" style="margin: 10px 0;">
-
-                    <div class="pet-block" style="border: none; padding: 0; margin: 0;">
-                        <div class="calc-row-input">
-                            <label>Mount Summon Lv:</label>
-                            <div style="display: flex; gap: 6px;">
-                                <select id="asc-mount-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateAscensionCaps('mount'); updateWeekly()">
-                                    <option value="0">Asc 0</option>
-                                    <option value="1">Asc 1</option>
-                                    <option value="2">Asc 2</option>
-                                    <option value="3">Asc 3</option>
-                                </select>
-                                <input type="number" id="asc-mount-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('mount'); updateWeekly()">
-                            </div>
-                        </div>
-                        <div class="calc-row-input">
-                            <label for="asc-mount-exp">Mount Summon Exp:</label>
-                            <div class="pet-flex-center" style="display: flex; align-items: center;">
-                                <input type="number" id="asc-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('mount'); updateWeekly()">
-                                <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-mount-max">16</span></span>
-                            </div>
-                        </div>
-                        <div class="calc-row-input">
-                            <label for="asc-mount-inv">Mount Keys:</label>
-                            <input type="text" id="asc-mount-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
-                        </div>
-                        <div class="calc-row-input">
-                            <label>Target Lv:</label>
-                            <div style="display: flex; gap: 6px;">
-                                <select id="asc-mount-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
-                                    <option value="0">Asc 0</option>
-                                    <option value="1">Asc 1</option>
-                                    <option value="2">Asc 2</option>
-                                    <option value="3">Asc 3</option>
-                                </select>
-                                <input type="number" id="asc-mount-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
-                            </div>
+                    <div class="calc-row-input">
+                        <label for="asc-skill-inv">Green Tickets:</label>
+                        <input type="text" id="asc-skill-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
+                    </div>
+                    <div class="calc-row-input">
+                        <label>Target Lv:</label>
+                        <div style="display: flex; gap: 6px;">
+                            <select id="asc-skill-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
+                                <option value="0">Asc 0</option>
+                                <option value="1">Asc 1</option>
+                                <option value="2">Asc 2</option>
+                                <option value="3">Asc 3</option>
+                            </select>
+                            <input type="number" id="asc-skill-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
                         </div>
                     </div>
-
-                    <hr class="pet-hr" style="margin: 15px 0;">
-
-                    <div style="text-align: center; margin: 5px 0 15px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">Estimated Weeks to Target Lv</div>
-                    <div class="calc-line"><span class="calc-label">Skill</span><div class="calc-val-group" id="asc-res-skill-target" style="font-weight: bold; color: #ffeb3b;">--</div></div>
-                    <div class="calc-line"><span class="calc-label">Pet</span><div class="calc-val-group" id="asc-res-pet-target" style="font-weight: bold; color: #ffeb3b;">--</div></div>
-                    <div class="calc-line"><span class="calc-label">Mount</span><div class="calc-val-group" id="asc-res-mount-target" style="font-weight: bold; color: #ffeb3b;">--</div></div>
-
-                    <hr class="pet-hr" style="margin: 15px 0;">
-
-                    <div style="text-align: center; margin: 5px 0 15px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">Estimated Weeks to Lv 100</div>
-                    <div class="calc-line"><span class="calc-label">Skill</span><div class="calc-val-group" id="asc-res-skill" style="font-weight: bold; color: #ffeb3b;">--</div></div>
-                    <div class="calc-line"><span class="calc-label">Pet</span><div class="calc-val-group" id="asc-res-pet" style="font-weight: bold; color: #ffeb3b;">--</div></div>
-                    <div class="calc-line"><span class="calc-label">Mount</span><div class="calc-val-group" id="asc-res-mount" style="font-weight: bold; color: #ffeb3b;">--</div></div>
                 </div>
+
+                <hr class="pet-hr" style="margin: 10px 0;">
+
+                <div class="pet-block" style="border: none; padding: 0; margin: 0 0 10px 0;">
+                    <div class="calc-row-input">
+                        <label>Pet Summon Lv:</label>
+                        <div style="display: flex; gap: 6px;">
+                            <select id="asc-pet-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateAscensionCaps('pet'); updateWeekly()">
+                                <option value="0">Asc 0</option>
+                                <option value="1">Asc 1</option>
+                                <option value="2">Asc 2</option>
+                                <option value="3">Asc 3</option>
+                            </select>
+                            <input type="number" id="asc-pet-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('pet'); updateWeekly()">
+                        </div>
+                    </div>
+                    <div class="calc-row-input">
+                        <label for="asc-pet-exp">Pet Summon Exp:</label>
+                        <div class="pet-flex-center" style="display: flex; align-items: center;">
+                            <input type="number" id="asc-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('pet'); updateWeekly()">
+                            <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-pet-max">3</span></span>
+                        </div>
+                    </div>
+                    <div class="calc-row-input">
+                        <label for="asc-pet-inv">Eggshells:</label>
+                        <input type="text" id="asc-pet-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
+                    </div>
+                    <div class="calc-row-input">
+                        <label>Target Lv:</label>
+                        <div style="display: flex; gap: 6px;">
+                            <select id="asc-pet-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
+                                <option value="0">Asc 0</option>
+                                <option value="1">Asc 1</option>
+                                <option value="2">Asc 2</option>
+                                <option value="3">Asc 3</option>
+                            </select>
+                            <input type="number" id="asc-pet-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="pet-hr" style="margin: 10px 0;">
+
+                <div class="pet-block" style="border: none; padding: 0; margin: 0;">
+                    <div class="calc-row-input">
+                        <label>Mount Summon Lv:</label>
+                        <div style="display: flex; gap: 6px;">
+                            <select id="asc-mount-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateAscensionCaps('mount'); updateWeekly()">
+                                <option value="0">Asc 0</option>
+                                <option value="1">Asc 1</option>
+                                <option value="2">Asc 2</option>
+                                <option value="3">Asc 3</option>
+                            </select>
+                            <input type="number" id="asc-mount-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('mount'); updateWeekly()">
+                        </div>
+                    </div>
+                    <div class="calc-row-input">
+                        <label for="asc-mount-exp">Mount Summon Exp:</label>
+                        <div class="pet-flex-center" style="display: flex; align-items: center;">
+                            <input type="number" id="asc-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('mount'); updateWeekly()">
+                            <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-mount-max">16</span></span>
+                        </div>
+                    </div>
+                    <div class="calc-row-input">
+                        <label for="asc-mount-inv">Mount Keys:</label>
+                        <input type="text" id="asc-mount-inv" class="calc-input-chunky" style="width: 80px;" placeholder="0" onfocus="unformatInput(this)" onblur="formatInput(this); updateWeekly()" oninput="cleanInput(this); updateWeekly()">
+                    </div>
+                    <div class="calc-row-input">
+                        <label>Target Lv:</label>
+                        <div style="display: flex; gap: 6px;">
+                            <select id="asc-mount-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
+                                <option value="0">Asc 0</option>
+                                <option value="1">Asc 1</option>
+                                <option value="2">Asc 2</option>
+                                <option value="3">Asc 3</option>
+                            </select>
+                            <input type="number" id="asc-mount-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="pet-hr" style="margin: 15px 0;">
+
+                <div style="text-align: center; margin: 5px 0 15px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">Estimated Weeks to Target Lv</div>
+                <div class="calc-line"><span class="calc-label">Skill</span><div class="calc-val-group" id="asc-res-skill-target" style="font-weight: bold; color: #ffeb3b;">--</div></div>
+                <div class="calc-line"><span class="calc-label">Pet</span><div class="calc-val-group" id="asc-res-pet-target" style="font-weight: bold; color: #ffeb3b;">--</div></div>
+                <div class="calc-line"><span class="calc-label">Mount</span><div class="calc-val-group" id="asc-res-mount-target" style="font-weight: bold; color: #ffeb3b;">--</div></div>
+
+                <hr class="pet-hr" style="margin: 15px 0;">
+
+                <div style="text-align: center; margin: 5px 0 15px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">Estimated Weeks to Lv 100</div>
+                <div class="calc-line"><span class="calc-label">Skill</span><div class="calc-val-group" id="asc-res-skill" style="font-weight: bold; color: #ffeb3b;">--</div></div>
+                <div class="calc-line"><span class="calc-label">Pet</span><div class="calc-val-group" id="asc-res-pet" style="font-weight: bold; color: #ffeb3b;">--</div></div>
+                <div class="calc-line"><span class="calc-label">Mount</span><div class="calc-val-group" id="asc-res-mount" style="font-weight: bold; color: #ffeb3b;">--</div></div>
             </div>
         </div>
 
-        <div id="weekly-tab-daily" style="display: none;">
-            <div class="daily-card card-compact">
-                <div class="daily-card-header strip-blue">
-                    <span class="daily-header-title">DUNGEON REWARDS</span>
-                </div>
-                <div class="daily-card-body" id="daily-rewards-container">
-                    <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="res-hammer-group"></div></div>
-                    <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="res-gold-group"></div></div>
-                    <div class="calc-line"><span class="calc-label">Green Ticket</span><div class="calc-val-group" id="res-ticket-group"></div></div>
-                    <div class="calc-line"><span class="calc-label">Eggshell</span><div class="calc-val-group" id="res-eggshell-group"></div></div>
-                    <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="res-potion-group"></div></div>
-                </div>
-            </div>
-
-            <div class="daily-card card-compact">
-                <div class="daily-card-header strip-green">
-                    <span class="daily-header-title">TOTAL DAILY INCOME</span>
-                </div>
-                <div class="daily-card-body" id="calc-res-4">
-                    <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="res-tot-hammer"></div></div>
-                    <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="res-tot-gold"></div></div>
-                    <div class="calc-line"><span class="calc-label">Gold after Hammering&nbsp;<button class="btn-info" id="btn-daily-info" style="vertical-align: middle; margin-bottom: 2px;">i</button></span><div class="calc-val-group" id="res-tot-grand"></div></div>
-                    <div class="calc-line"><span class="calc-label">Skill Summoned</span><div class="calc-val-group" id="res-skill-cards"></div></div>
-                    <div class="calc-line"><span class="calc-label">Egg</span><div class="calc-val-group" id="res-tot-egg"></div></div>                
-                    <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="res-tot-potion"></div></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="weekly-tab-league" style="display: none;">
-            <div class="daily-card card-compact">
-                <div class="daily-card-header strip-blue">
-                    <span class="daily-header-title">LEAGUE & WAR REWARDS</span>
-                </div>
-                <div class="daily-card-body">
-                    <div class="calc-line"><span class="calc-label">Hammer</span><div class="calc-val-group" id="league-base-hammer"></div></div>
-                    <div class="calc-line"><span class="calc-label">Gold</span><div class="calc-val-group" id="league-base-gold"></div></div>
-                    <div class="calc-line"><span class="calc-label">Green Ticket</span><div class="calc-val-group" id="league-base-ticket"></div></div>
-                    <div class="calc-line"><span class="calc-label">Eggshells</span><div class="calc-val-group" id="league-base-eggshell"></div></div>
-                    <div class="calc-line"><span class="calc-label">Red Potion</span><div class="calc-val-group" id="league-base-potion"></div></div>
-                    <div class="calc-line"><span class="calc-label">Mount Key</span><div class="calc-val-group" id="league-base-mountkey"></div></div>
-                    <div class="calc-line"><span class="calc-label">Green Potion</span><div class="calc-val-group" id="league-base-greenpotion"></div></div>
-                </div>
-            </div>
-            
-            <div class="daily-card card-compact">
-                <div class="daily-card-body" style="padding: 12px 15px;">
-                    <div style="display: flex; margin-bottom: 8px; padding: 0 10px;">
-                        <div style="flex: 0 0 26px;"></div> <div style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 700; color: #ffffff; font-size: 0.8rem; text-transform: uppercase;">League</div>
-                        <div style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 700; color: #ffffff; font-size: 0.8rem; text-transform: uppercase;">War</div>
-                        <div style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 700; color: #ffffff; font-size: 0.8rem; text-transform: uppercase;">Indiv</div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
-                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/fm_hammer.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
-                        <div id="bd-league-hammer" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-war-hammer" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-indiv-hammer" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
-                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/fm_gold.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
-                        <div id="bd-league-gold" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-war-gold" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-indiv-gold" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
-                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/green_ticket.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
-                        <div id="bd-league-ticket" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-war-ticket" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-indiv-ticket" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
-                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/eggshell.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
-                        <div id="bd-league-eggshell" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-war-eggshell" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-indiv-eggshell" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
-                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/red_potion.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
-                        <div id="bd-league-potion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-war-potion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-indiv-potion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; margin-bottom: 6px; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
-                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/mount_key.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
-                        <div id="bd-league-mountkey" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-war-mountkey" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-indiv-mountkey" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                    </div>
-
-                    <div style="display: flex; align-items: center; background-color: #e4e4e4; border-radius: 8px; padding: 8px 10px;">
-                        <div style="flex: 0 0 26px; display: flex; justify-content: flex-start;"><img src="icons/green_potion.png" style="width: 20px; height: 20px; object-fit: contain;"></div>
-                        <div id="bd-league-greenpotion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-war-greenpotion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                        <div id="bd-indiv-greenpotion" style="flex: 1; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">-</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="daily-card card-compact">
-                <div class="daily-card-header strip-green">
-                    <span class="daily-header-title">REWARDS BREAKDOWN</span>
-                </div>
-                <div class="daily-card-body">
-                    <div class="calc-line"><span class="calc-label">Effective Hammer</span><div class="calc-val-group" id="res-league-eff-hammer"></div></div>
-                    <div class="calc-line"><span class="calc-label">Gold After Hammering</span><div class="calc-val-group" id="res-league-grand"></div></div>
-                    <div class="calc-line"><span class="calc-label">Skill Summoned</span><div class="calc-val-group" id="res-league-cards"></div></div>
-                    <div class="calc-line"><span class="calc-label">Egg</span><div class="calc-val-group" id="res-league-eggs"></div></div>
-                    <div class="calc-line"><span class="calc-label">Mount Summoned</span><div class="calc-val-group" id="res-league-mounts"></div></div>
-                </div>
-            </div>
-        </div>
-        
     </div>
 </div>
 `;
@@ -1983,13 +2043,6 @@ const HTML_HELP = `
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
         </svg>
         <span>Source Code</span>
-    </a>
-
-    <a href="https://doraemon-forging.github.io/old-planner/" target="_blank" class="github-credit-link">
-        <svg height="22" width="22" viewBox="0 0 24 24">
-            <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm1-13h-2v6l5.25 3.15.75-1.23-4-2.37V7z"></path>
-        </svg>
-        <span>Old Version</span>
     </a>
 
                 <div class="help-card-inner" style="text-align: center;">

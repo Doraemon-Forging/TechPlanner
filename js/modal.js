@@ -411,528 +411,6 @@ function openPromptModal(message, onConfirmCallback) {
     setTimeout(() => { const input = document.getElementById('custom-prompt-input'); if (input) input.focus(); }, 50);
 }
 
-// --- WAR CALC MODALS ---
-function openWarYieldModal(type) {
-    if (!window.currentWarYields) return;
-    
-    const dataB = type === 'skill' ? window.currentWarYields.skillB : window.currentWarYields.mountB;
-    const dataA = type === 'skill' ? window.currentWarYields.skillA : window.currentWarYields.mountA;
-    const POINTS_MAP = type === 'skill' ? [125, 125, 125, 125, 125, 125] : [600, 600, 600, 600, 600, 600];
-    const ROW_COLORS = ['#f1f1f1', '#5dd9ff', '#5dfe8a', '#fdff5e', '#ff5d5e', '#d55cff'];
-    
-    let totalB = 0; let totalA = 0; let rowsHtml = '';
-    const fontStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; -webkit-text-stroke: 0px #000000 !important; font-size: 0.9rem;";
-    const arrowStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 650; font-size: 1rem; color: #198754; -webkit-text-stroke: 0px #000000 !important;margin: 0 4px;";
-    const afterStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000 !important; color: #000000;";
-
-    for (let i = 0; i < 6; i++) {
-        const vB = dataB[i] || 0; const vA = dataA[i] || 0;
-        totalB += vB; totalA += vA;
-        const fmtB = formatYield(vB); const fmtA = formatYield(vA);
-        const isSingleVal = (fmtB === fmtA);
-        
-        let amountHtml = isSingleVal ? `<span style="${fontStyle} color: #000;">${fmtB}</span>` : `
-            <div class="war-val-group-left" style="display: flex; justify-content: flex-start; align-items: center; gap: 4px; flex-wrap: wrap;">
-                <span style="${fontStyle} color: #000;">${fmtB}</span>
-                <div style="display: flex; align-items: center;"><span style="${arrowStyle}">➜</span><span style="${afterStyle}">${fmtA}</span></div>
-            </div>`;
-
-        const ptsB = vB * POINTS_MAP[i]; const ptsA = vA * POINTS_MAP[i];
-        const fmtPtsB = formatCompactGold(ptsB);
-        const fmtPtsA = formatCompactGold(ptsA);
-        const isSinglePts = (fmtPtsB === fmtPtsA);
-
-        let ptsHtml = isSinglePts ? `<span style="${fontStyle} color: #000;">${fmtPtsB}</span>` : `
-            <div class="war-val-group" style="display: flex; justify-content: flex-end; align-items: center; gap: 4px; flex-wrap: wrap;">
-                <span style="${fontStyle} color: #000;">${fmtPtsB}</span>
-                <div style="display: flex; align-items: center;"><span style="${arrowStyle}">➜</span><span style="${afterStyle}">${fmtPtsA}</span></div>
-            </div>`;
-
-        rowsHtml += `
-            <div style="background-color: ${ROW_COLORS[i]}; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <div style="text-align: left;">${amountHtml}</div><div style="text-align: right;">${ptsHtml}</div>
-            </div>`;
-    }
-
-    let summaryHtml = '';
-    const renderSummaryRow = (label, b, a) => {
-        const isSingle = (b === a);
-        let valHtml = isSingle ? `<span style="${fontStyle} color: #000;">${b}</span>` : `
-            <div class="war-val-group" style="display: flex; justify-content: flex-end; align-items: center; gap: 4px; flex-wrap: wrap;">
-                <span style="${fontStyle} color: #000;">${b}</span>
-                <div style="display: flex; align-items: center;"><span style="${arrowStyle}">➜</span><span style="${afterStyle}">${a}</span></div>
-            </div>`;
-        return `
-            <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="${fontStyle} color: #000;">${label}</span><div style="text-align: right;">${valHtml}</div>
-            </div>`;
-    };
-
-    // 1. Render Specific Pull/Summon Stats First
-    if (type === 'skill') {
-        summaryHtml += renderSummaryRow("Skill Summoned", Math.round(totalB).toLocaleString('en-US'), Math.round(totalA).toLocaleString('en-US'));
-    } else if (type === 'mount') {
-        const pullsB = window.currentWarYields.mountPullsB || 0; 
-        const pullsA = window.currentWarYields.mountPullsA || 0;
-        summaryHtml += renderSummaryRow("Mount Summoned", formatYield(totalB), formatYield(totalA));
-    }
-
-    const lvEl = document.getElementById(`wc-${type}-lv`);
-    const expEl = document.getElementById(`wc-${type}-exp`);
-    const ascEl = document.getElementById(`wc-${type}-asc`);
-
-    const currentLv = parseInt(lvEl ? lvEl.value : 1) || 1;
-    const currentExp = parseFloat(expEl ? expEl.value.replace(/,/g, '') : 0) || 0;
-    const currentAsc = parseInt(ascEl ? ascEl.value : 0) || 0;
-
-    const dataTable = type === 'skill' ? (typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : null) : (typeof MOUNT_LEVEL_DATA !== 'undefined' ? MOUNT_LEVEL_DATA : null);
-
-    if (dataTable && typeof getCumulativePulls === 'function' && typeof getLevelFromCumulative === 'function') {
-        const baseCumulative = getCumulativePulls(currentLv, currentExp, dataTable, currentAsc);
-        
-        const finalCumB = baseCumulative + totalB;
-        const finalCumA = baseCumulative + totalA;
-
-        const levelDataB = getLevelFromCumulative(finalCumB, dataTable);
-        const levelDataA = getLevelFromCumulative(finalCumA, dataTable);
-
-        const enforceRollover = (proj) => {
-            if (proj.level >= 100) {
-                let maxExp = dataTable[100] ? dataTable[100][0] : "MAX";
-                if (maxExp === "MAX" || proj.exp >= maxExp || proj.exp === "MAX") {
-                    if (proj.ascension < 3) {
-                        proj.ascension += 1;
-                        proj.level = 1;
-                        proj.exp = 0;
-                        proj.maxExp = dataTable[1] ? dataTable[1][0] : 0;
-                    }
-                }
-            }
-        };
-        enforceRollover(levelDataB);
-        enforceRollover(levelDataA);
-
-        const getAscStars = (asc) => {
-            if (asc === 1) return `<img src="icons/asc1.png" style="height: 1.1em; vertical-align: -3px; margin-right: 2px;">`;
-            if (asc === 2) return `<img src="icons/asc2.png" style="height: 1.1em; vertical-align: -3px; margin-right: 2px;">`;
-            if (asc === 3) return `<img src="icons/asc3.png" style="height: 1.1em; vertical-align: -3px; margin-right: 2px;">`;
-            return ``;
-        };
-
-        const formatLv = (ld) => {
-            let stars = getAscStars(ld.ascension);
-            let displayLv = ld.ascension > 0 ? `${stars}Lv ${ld.level}` : `Lv ${ld.level}`;
-            return ld.maxExp === "MAX" ? `${displayLv} (MAX)` : `${displayLv} (${Math.round(ld.exp).toLocaleString()}/${ld.maxExp.toLocaleString()})`;
-        };
-
-        summaryHtml += renderSummaryRow("Summon Lv", formatLv(levelDataB), formatLv(levelDataA));
-    }
-
-    const mobileStyle = `
-        <style>
-            @media (max-width: 768px) {
-                .war-val-group { flex-direction: column; align-items: flex-end !important; gap: 0 !important; }
-                .war-val-group-left { flex-direction: column; align-items: flex-start !important; gap: 0 !important; }
-            }
-        </style>`;
-
-    const finalHtml = `
-        ${mobileStyle}
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-            ${summaryHtml}
-            <div style="height: 10px;"></div> <div style="display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 5px;">
-                <span style="${fontStyle} color: #000;">Amount</span><span style="${fontStyle} color: #000;">War Points</span>
-            </div>
-            ${rowsHtml}
-        </div>`;
-
-    const backupTitle = MODAL_SETTINGS.warYield.title;
-    MODAL_SETTINGS.warYield.title = type === 'skill' ? "EXPECTED SKILL YIELD" : "EXPECTED MOUNT YIELD";
-    renderMasterModal('warYield', finalHtml);
-    MODAL_SETTINGS.warYield.title = backupTitle;
-}
-
-function openSkillLevelsModal() {
-    const lvEl = document.getElementById('wc-skill-lv');
-    const expEl = document.getElementById('wc-skill-exp');
-    
-    const currentLv = parseInt(lvEl ? lvEl.value : 1) || 1;
-    const currentExp = parseFloat(expEl ? expEl.value.replace(/,/g, '') : 0) || 0;
-
-    const historicalSkills = getHistoricalSkillCount(currentLv, currentExp);
-    const yields = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(1, 0, historicalSkills) : [0,0,0,0,0,0];
-    
-    const ROW_COLORS = ['#f1f1f1', '#5dd9ff', '#5dfe8a', '#fdff5e', '#ff5d5e', '#d55cff'];
-    const fontStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; -webkit-text-stroke: 0px #000000 !important; font-size: 0.9rem;";
-    
-    let rowsHtml = '';
-
-    for (let i = 0; i < 6; i++) {
-        const totalAmt = yields[i];
-        const eachAmt = totalAmt / 3; 
-        
-        const amtStr = formatSkillAmount(totalAmt);
-        const lvlStr = formatSkillLevel(eachAmt);
-
-        rowsHtml += `
-            <div style="background-color: ${ROW_COLORS[i]}; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <div style="text-align: left;"><span style="${fontStyle} color: #000;">${amtStr}</span></div><div style="text-align: right;"><span style="${fontStyle} color: #000;">${lvlStr}</span></div>
-            </div>`;
-    }
-
-    let summaryHtml = `
-        <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="${fontStyle} color: #000;">Total Skill Summoned</span>
-            <div style="text-align: right;"><span style="${fontStyle} color: #000;">${Math.round(historicalSkills).toLocaleString('en-US')}</span></div>
-        </div>`;
-
-    const finalHtml = `
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-            ${summaryHtml}
-            <div style="height: 10px;"></div> <div style="display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 5px;">
-                <span style="${fontStyle} color: #000;">Amount</span><span style="${fontStyle} color: #000;">Skill Lv</span>
-            </div>
-            ${rowsHtml}
-        </div>`;
-
-    renderMasterModal('skillLevels', finalHtml);
-}
-
-// --- SKILL LEVEL ESTIMATOR MODAL ---
-
-function getHistoricalSkillCount(level, exp) {
-    let total = 0;
-    for (let i = 1; i < level; i++) {
-        if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[i] && SKILL_LEVEL_DATA[i][0] !== "MAX") {
-            total += SKILL_LEVEL_DATA[i][0];
-        }
-    }
-    return total + exp;
-}
-
-function formatSkillAmount(amt) {
-    if (amt === 0) return "0";
-    if (amt > 0 && amt < 0.01) return "< 0.01";
-    if (amt >= 0.01 && amt < 10) return amt.toFixed(2);
-    return amt.toFixed(1);
-}
-
-function formatSkillLevel(eachAmt) {
-    if (eachAmt < 0.05) return "0";
-    
-    let currentLevel = 1;
-    let remainingPulls = eachAmt;
-
-    while (currentLevel < 100) {
-        let cost = 8;
-        if (typeof getSkillUpgradeCost === 'function') {
-            cost = getSkillUpgradeCost(currentLevel);
-        } else if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[currentLevel]) {
-            cost = SKILL_UPGRADE_COSTS[currentLevel];
-        } else {
-            if (currentLevel >= 1 && currentLevel <= 5) cost = 2;
-            else if (currentLevel >= 6 && currentLevel <= 10) cost = 3;
-            else if (currentLevel >= 11 && currentLevel <= 14) cost = 4;
-            else if (currentLevel >= 15 && currentLevel <= 21) cost = 5;
-            else if (currentLevel >= 22 && currentLevel <= 25) cost = 6;
-            else if (currentLevel >= 26 && currentLevel <= 29) cost = 7;
-        }
-
-        if (remainingPulls >= cost) {
-            remainingPulls -= cost;
-            currentLevel++;
-        } else {
-            if (currentLevel === 1) {
-                return `Lv 1 (${remainingPulls.toFixed(2)}/${cost})`;
-            } else {
-                return `Lv ${currentLevel} (${remainingPulls.toFixed(1)}/${cost})`;
-            }
-        }
-    }
-
-    return "Lv 100 (MAX)";
-}
-
-function getFractionalSkillLevel(eachAmt) {
-    let currentLevel = 1;
-    let remaining = eachAmt;
-    
-    while (currentLevel < 100) {
-        let cost = 8;
-        if (typeof getSkillUpgradeCost === 'function') {
-            cost = getSkillUpgradeCost(currentLevel);
-        } else if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[currentLevel]) {
-            cost = SKILL_UPGRADE_COSTS[currentLevel];
-        } else {
-            if (currentLevel >= 1 && currentLevel <= 5) cost = 2;
-            else if (currentLevel >= 6 && currentLevel <= 10) cost = 3;
-            else if (currentLevel >= 11 && currentLevel <= 14) cost = 4;
-            else if (currentLevel >= 15 && currentLevel <= 21) cost = 5;
-            else if (currentLevel >= 22 && currentLevel <= 25) cost = 6;
-            else if (currentLevel >= 26 && currentLevel <= 29) cost = 7;
-        }
-
-        if (remaining >= cost) {
-            remaining -= cost;
-            currentLevel++;
-        } else {
-            return currentLevel + (remaining / cost);
-        }
-    }
-    
-    return 100;
-}
-
-function getLevelFromTotalPulls(totalSkills) {
-    let lvl = 1;
-    let exp = totalSkills;
-    
-    while (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[lvl] && SKILL_LEVEL_DATA[lvl][0] !== "MAX") {
-        let maxExp = SKILL_LEVEL_DATA[lvl][0];
-        if (exp >= maxExp) {
-            exp -= maxExp;
-            lvl++;
-        } else {
-            return { level: lvl, exp: exp, maxExp: maxExp };
-        }
-    }
-    return { level: lvl, exp: exp, maxExp: "MAX" };
-}
-
-function openSkillUpgradeModal() {
-    if (!window.currentWarYields) return;
-
-    const baseLv = parseInt(document.getElementById('wc-skill-lv')?.value || 1);
-    const baseExp = parseFloat(document.getElementById('wc-skill-exp')?.value.replace(/,/g, '') || 0);
-    const baseAsc = parseInt(document.getElementById('wc-skill-asc')?.value || 0);
-
-    const historicalSkills = typeof getHistoricalSkillCount === 'function' ? getHistoricalSkillCount(baseLv, baseExp) : 0;
-    const baseYields = typeof calcWarSkillPulls === 'function' ? calcWarSkillPulls(1, 0, historicalSkills) : [0,0,0,0,0,0];
-
-    const getVal = (id) => { const el = document.getElementById(id); return el && el.value ? parseFloat(el.value.replace(/,/g, '')) || 0 : 0; };
-    const tickets = getVal('wc-ticket');
-    
-    const getTechVal = (tree, nodeId) => {
-        let beforeLvl = 0, afterLvl = 0;
-        if (typeof setupLevels !== 'undefined') { for (let t = 1; t <= 5; t++) beforeLvl += (setupLevels[`${tree}_T${t}_${nodeId}`] || 0); }
-        let planState = typeof calcState === 'function' ? calcState().levels : (typeof setupLevels !== 'undefined' ? setupLevels : {});
-        if (planState) { for (let t = 1; t <= 5; t++) afterLvl += (planState[`${tree}_T${t}_${nodeId}`] || 0); }
-        return { before: beforeLvl, after: afterLvl };
-    };
-    
-    const techTicket = getTechVal('spt', 'ticket');
-    const costB = 200 * (1 - (techTicket.before * 1) / 100);
-    const costA = 200 * (1 - (techTicket.after * 1) / 100);
-    
-    const yieldItemsB = Math.floor(tickets / (costB || 200)) * 5;
-    const yieldItemsA = Math.floor(tickets / (costA || 200)) * 5;
-
-    const config = { db: typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : null };
-    let phasesB = typeof simulatePhaseFlow === 'function' ? simulatePhaseFlow('skill', config, baseLv, baseExp, baseAsc, yieldItemsB, costB, 0, 0, 1) : [];
-    let phasesA = typeof simulatePhaseFlow === 'function' ? simulatePhaseFlow('skill', config, baseLv, baseExp, baseAsc, yieldItemsA, costA, 0, 0, 1) : [];
-
-    if (!phasesB.length) phasesB = [{ asc: baseAsc, yields: window.currentWarYields.skillB || [0,0,0,0,0,0] }];
-    if (!phasesA.length) phasesA = [{ asc: baseAsc, yields: window.currentWarYields.skillA || [0,0,0,0,0,0] }];
-
-    const UPGRADE_POINTS = [125, 125, 125, 125, 125, 125];
-    const ROW_COLORS = ['#f1f1f1', '#5dd9ff', '#5dfe8a', '#fdff5e', '#ff5d5e', '#d55cff'];
-    
-    const fontStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; -webkit-text-stroke: 0px #000000 !important; font-size: 0.9rem;";
-    const arrowStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 650; font-size: 1rem; color: #198754; -webkit-text-stroke: 0px #000000 !important; margin: 0 4px;";
-    const afterStyle = "font-family: 'Fredoka' !important, sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000 !important; color: #000000;";
-
-    const getFrac = (copies) => {
-        let cur = 1; let rem = copies;
-        while (cur < 100) {
-            let cost = 8;
-            if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[cur]) cost = SKILL_UPGRADE_COSTS[cur];
-            else {
-                if (cur >= 1 && cur <= 5) cost = 2; else if (cur >= 6 && cur <= 10) cost = 3;
-                else if (cur >= 11 && cur <= 14) cost = 4; else if (cur >= 15 && cur <= 21) cost = 5;
-                else if (cur >= 22 && cur <= 25) cost = 6; else if (cur >= 26 && cur <= 29) cost = 7;
-            }
-            if (rem >= cost) { rem -= cost; cur++; } 
-            else { return cur + (rem / cost); }
-        }
-        return 100.0;
-    };
-
-    const formatDisplayStr = (lvl, copies) => {
-        if (copies < 0.05) return "0"; // NEW THRESHOLD
-        if (lvl === 100.0) return "Lv 100 (MAX)";
-        
-        let cur = Math.floor(lvl);
-        let rem = lvl - cur;
-        let cost = 8;
-        if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[cur]) cost = SKILL_UPGRADE_COSTS[cur];
-        else {
-            if (cur >= 1 && cur <= 5) cost = 2; else if (cur >= 6 && cur <= 10) cost = 3;
-            else if (cur >= 11 && cur <= 14) cost = 4; else if (cur >= 15 && cur <= 21) cost = 5;
-            else if (cur >= 22 && cur <= 25) cost = 6; else if (cur >= 26 && cur <= 29) cost = 7;
-        }
-        return `Lv ${cur} (${(rem * cost).toFixed(1)}/${cost})`;
-    };
-
-    const ascMap = new Set();
-    phasesB.forEach(p => ascMap.add(p.asc));
-    phasesA.forEach(p => ascMap.add(p.asc));
-    const ascKeys = Array.from(ascMap).sort((a,b)=>a-b);
-    const showTabs = ascKeys.length > 1;
-
-    let tabsHtml = '';
-    if (showTabs) {
-        tabsHtml = `<div style="display: flex; justify-content: center; width: 100%;">
-                        <div id="modal-tabs-container" style="display: flex; flex-wrap: nowrap; margin: 12px 0 15px 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box;">`;
-    }
-
-    let contentHtml = '';
-    const btnClass = `seg-btn-skill-asc`;
-    const contentClass = `tab-content-skill-asc`;
-
-    const makeStacked = (b, a, align) => `
-        <div style="display: flex; flex-direction: column; align-items: ${align}; gap: 2px;">
-            <span style="${fontStyle} color: #000;">${b}</span>
-            <div style="display: flex; align-items: center;"><span style="${arrowStyle}">➜</span><span style="${afterStyle}">${a}</span></div>
-        </div>`;
-
-    ascKeys.forEach((asc, index) => {
-        const isActive = (index === 0) ? 'active' : '';
-        const tabId = `skill-asc-tab-${asc}`;
-        
-        if (showTabs) {
-            const tabLabel = asc === 0 ? 'Asc 0' : `<img src="icons/asc${asc}.png" style="height: 1.1em; vertical-align: -2px;" onerror="this.style.display='none'; this.nextSibling.textContent='Asc ${asc}';"><span style="display:none;"></span>`;
-            const switchJs = `document.querySelectorAll('.${contentClass}').forEach(el => el.style.display='none'); document.getElementById('${tabId}').style.display='block'; document.querySelectorAll('.${btnClass}').forEach(el => el.classList.remove('active')); this.classList.add('active');`;
-            tabsHtml += `<button class="${btnClass} seg-btn ${isActive}" onclick="${switchJs}" style="flex: 1 1 0 !important; min-width: 0 !important; padding: 0 2px !important; display: flex !important; justify-content: center !important; align-items: center !important;">${tabLabel}</button>`;
-        }
-
-        let pB = phasesB.find(p => p.asc === asc) || { yields: [0,0,0,0,0,0] };
-        let pA = phasesA.find(p => p.asc === asc) || { yields: [0,0,0,0,0,0] };
-
-        const isBasePhase = (asc === baseAsc);
-
-        let rowsHtml = '';
-        for (let i = 0; i < 6; i++) {
-            let copiesBase = isBasePhase ? (baseYields[i] / 3) : 0;
-            let copiesB = copiesBase + (pB.yields[i] / 3);
-            let copiesA = copiesBase + (pA.yields[i] / 3);
-
-            let fracBase = getFrac(copiesBase);
-            let fracB = getFrac(copiesB);
-            let fracA = getFrac(copiesA);
-
-            let gainedB = Math.max(0, fracB - fracBase);
-            let gainedA = Math.max(0, fracA - fracBase);
-
-            let ptsB = gainedB * UPGRADE_POINTS[i] * 3;
-            let ptsA = gainedA * UPGRADE_POINTS[i] * 3;
-
-            const lvlStrB = formatDisplayStr(fracB, copiesB);
-            const lvlStrA = formatDisplayStr(fracA, copiesA);
-
-            const fmtGainB = gainedB < 0.01 ? "0" : gainedB.toFixed(2);
-            const fmtGainA = gainedA < 0.01 ? "0" : gainedA.toFixed(2);
-            
-            const fmtPtsB = formatCompactGold(ptsB);
-            const fmtPtsA = formatCompactGold(ptsA);
-
-            const isSingleLvl = (lvlStrB === lvlStrA);
-            const isSingleGain = (fmtGainB === fmtGainA);
-            const isSinglePts = (fmtPtsB === fmtPtsA);
-
-            const leftHtml = isSingleLvl ? `<span style="${fontStyle} color: #000;">${lvlStrB}</span>` : makeStacked(lvlStrB, lvlStrA, 'flex-start');
-            const midHtml = isSingleGain ? `<span style="${fontStyle} color: #000;">${fmtGainB}</span>` : makeStacked(fmtGainB, fmtGainA, 'center');
-            const rightHtml = isSinglePts ? `<span style="${fontStyle} color: #000;">${fmtPtsB}</span>` : makeStacked(fmtPtsB, fmtPtsA, 'flex-end');
-
-            rowsHtml += `
-                <div style="background-color: ${ROW_COLORS[i]}; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; gap: 5px;">
-                    <div style="text-align: left; width: 40%;">${leftHtml}</div>
-                    <div style="text-align: center; width: 30%;">${midHtml}</div>
-                    <div style="text-align: right; width: 30%;">${rightHtml}</div>
-                </div>`;
-        }
-
-        contentHtml += `
-            <div id="${tabId}" class="tab-content-area ${contentClass}" style="display: ${index === 0 ? 'block' : 'none'};">
-                <div style="display: flex; justify-content: space-between; padding: 0 15px; margin-bottom: 5px; gap: 5px;">
-                    <div style="width: 40%; text-align: left;"><span style="${fontStyle} color: #000;">Projected Lv</span></div>
-                    <div style="width: 30%; text-align: center;"><span style="${fontStyle} color: #000;">Lv Gained</span></div>
-                    <div style="width: 30%; text-align: right;"><span style="${fontStyle} color: #000;">War Points</span></div>
-                </div>
-                ${rowsHtml}
-            </div>`;
-    });
-
-    if (showTabs) tabsHtml += `</div></div>`;
-
-    const finalHtml = `
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-            ${tabsHtml}
-            ${contentHtml}
-        </div>`;
-    
-    renderMasterModal('skillLevels', finalHtml);
-}
-
-// --- DAILY MODAL ---
-function openDailyGoldModal(md) {
-    const getHammerData = (valB, valA) => {
-        const fmtB = Math.round(valB).toLocaleString('en-US'); const fmtA = Math.round(valA).toLocaleString('en-US');
-        const icon = `<img src="icons/fm_hammer.png" style="height: 1.2em; vertical-align: -3px; margin-right: 2px;">`;
-        return { b: `${icon}${fmtB}`, a: `${icon}${fmtA}`, isUpgrade: fmtB !== fmtA };
-    };
-
-    const getGoldData = (valB, valA) => {
-        const fmtB = formatCompactGold(valB); const fmtA = formatCompactGold(valA);
-        const icon = `<img src="icons/fm_gold.png" style="height: 1.2em; vertical-align: -3px; margin-right: 2px;">`;
-        return { b: `${icon}${fmtB}`, a: `${icon}${fmtA}`, isUpgrade: fmtB !== fmtA };
-    };
-
-    const hammerRows = [
-        ["Offline Hammer", getHammerData(md.offHB, md.offHA)],["Thief Hammer (x2)", getHammerData(md.thiefHB, md.thiefHA)],
-        ["Effective Hammer", getHammerData(md.effHB, md.effHA)]
-    ];
-
-    const goldRows = [["Offline Coin", getGoldData(md.offGB, md.offGA)],["Thief Coin (x2)", getGoldData(md.thiefGB, md.thiefGA)],["Gold from Hammering", getGoldData(md.forgeGB, md.forgeGA)]
-    ];
-
-    const customStyles = `
-        <style>
-            .dg-box { border: 3px solid #000; border-radius: 14px; padding: 8px; margin-bottom: 15px; background: #fff; }
-            .dg-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
-            .dg-table td { background: #EBEBEB; padding: 10px 15px; font-family: 'Fredoka', sans-serif !important; -webkit-text-stroke: 0px !important; }
-            .dg-table td:first-child { border-radius: 10px 0 0 10px; width: 45%; font-weight: 600; font-size: 0.9rem; color: #000; }
-            .dg-table td:last-child { border-radius: 0 10px 10px 0; width: 55%; text-align: right; }
-            .dg-val-wrapper { display: flex; align-items: center; justify-content: flex-end; }
-            .dg-val-before { font-weight: 600; color: #000; display: flex; align-items: center; font-size: 0.9rem; }
-            .dg-val-after-group { display: flex; align-items: center; font-size: 0.9rem; font-weight: 600; }
-            .dg-val-arrow { margin: 0 8px; font-size: 1.1rem; color: #198754; -webkit-text-stroke: 0px transparent !important; font-family: 'Fredoka', sans-serif !important; font-weight: 800; }
-            .dg-val-after { color: #198754; font-weight: 600; display: flex; align-items: center; }
-
-            @media (max-width: 768px) {
-                .dg-box { padding: 4px; border-width: 2px; }
-                .dg-table td { padding: 8px 10px; }
-                .dg-val-wrapper { flex-direction: column; align-items: flex-end; justify-content: center; }
-                .dg-val-after-group { margin-top: 4px; }
-            }
-        </style>`;
-
-    function buildBox(rows) {
-        let trs = '';
-        for (let row of rows) {
-            let leftLabel = row[0]; let data = row[1];
-            let rightHtml = `<div class="dg-val-wrapper"><div class="dg-val-before">${data.b}</div>`;
-            if (data.isUpgrade) {
-                rightHtml += `<div class="dg-val-after-group"><div class="dg-val-arrow">➜</div><div class="dg-val-after">${data.a}</div></div>`;
-            }
-            rightHtml += `</div>`;
-            trs += `<tr><td>${leftLabel}</td><td>${rightHtml}</td></tr>`;
-        }
-        return `<div class="dg-box"><table class="dg-table"><tbody>${trs}</tbody></table></div>`;
-    }
-
-    renderMasterModal('dailyGold', customStyles + buildBox(hammerRows) + buildBox(goldRows));
-}
-
 // --- STATS TAB MODALS ---
 function showPotionTable(cur, proj) {
     const isUpgrade = proj > cur; const headers = ['Level', 'Upgrade Cost']; const allRows = [];
@@ -1207,6 +685,11 @@ function openForgeScheduleModal() {
         return `${dateStr}, ${timeStr}`;
     };
 
+    const getGemCost = (mins) => {
+        if (mins <= 0) return 0;
+        return Math.max(1, Math.round(mins / 7.24643));
+    };
+
     let globalIndex = 0;
     window.currentForgeSchedule.forEach(step => {
         step.globalIndex = globalIndex++;
@@ -1216,6 +699,13 @@ function openForgeScheduleModal() {
             step.gems = window.forgeGemsMemory[memoryKey] || 0;
         }
         if (typeof step.originalFinish === 'undefined') step.originalFinish = step.finish;
+        
+        if (!step.isAscension && step.durationMs !== undefined) {
+            const maxAllowed = getGemCost(step.durationMs / 60000);
+            if (step.gems > maxAllowed) {
+                step.gems = maxAllowed;
+            }
+        }
     });
 
     window.promptGlobalForgeGems = function() {
@@ -1226,8 +716,11 @@ function openForgeScheduleModal() {
         
         window.currentForgeSchedule.forEach(step => {
             if (!step.isAscension) {
-                step.gems = gems;
-                window.forgeGemsMemory[step.label] = gems; // Save to global memory
+                const maxAllowed = getGemCost(step.durationMs / 60000);
+                let cappedGems = Math.min(gems, maxAllowed);
+
+                step.gems = cappedGems;
+                window.forgeGemsMemory[step.label] = cappedGems; 
             }
         });
         
@@ -1236,14 +729,18 @@ function openForgeScheduleModal() {
     };
 
     window.promptRowForgeGems = function(idx) {
-        let currentGems = window.currentForgeSchedule[idx].gems || 0;
+        let step = window.currentForgeSchedule[idx];
+        let currentGems = step.gems || 0;
         let val = prompt(`Enter Gem amount for this level:`, currentGems);
         if (val === null) return;
         let gems = parseInt(val);
         if (isNaN(gems) || gems < 0) gems = 0;
         
-        window.currentForgeSchedule[idx].gems = gems;
-        window.forgeGemsMemory[window.currentForgeSchedule[idx].label] = gems; // Save to global memory
+        const maxAllowed = getGemCost(step.durationMs / 60000);
+        let cappedGems = Math.min(gems, maxAllowed);
+        
+        step.gems = cappedGems;
+        window.forgeGemsMemory[step.label] = cappedGems; 
 
         if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
         window.recalcAndRenderForgeScheduleGems();
@@ -1256,7 +753,18 @@ function openForgeScheduleModal() {
             if (!step.isAscension) {
                 let savedMs = 0;
                 if (step.gems && step.gems > 0) {
-                    savedMs = (step.gems + 0.5) * 7.24643 * 60000;
+                    const maxAllowed = getGemCost(step.durationMs / 60000);
+                    step.gems = Math.min(step.gems, maxAllowed); // Fallback safeguard
+                    
+                    if (step.gems >= maxAllowed) {
+
+                        savedMs = step.durationMs; 
+                    } else {
+
+                        let maxTimeSavedMins = (step.gems + 0.5) * 7.24643;
+                        savedMs = maxTimeSavedMins * 60000;
+                        savedMs = Math.min(savedMs, step.durationMs); // Hard cap just in case
+                    }
                 }
                 cumulativeSavedMs += savedMs;
             }
@@ -1506,7 +1014,7 @@ function openForgeCostBreakdownModal() {
     renderMasterModal('forgeCostBreakdown', tabsHtml + contentHtml);
 }
 
-// --- FORGE PROBABILITY MODAL ---
+// --- FORGE PROBABILITY MODAL (FORGE CALC)---
 let currentForgeProbModalLevel = 1;
 
 function openForgeProbModal(levelOverride = null) {

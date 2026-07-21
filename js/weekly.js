@@ -1,42 +1,10 @@
 /**
  * WEEKLY.JS 
- * Logic for Weekly League, Clan War, Individual Rewards, and Ascension ETA.
+ * Logic for Weekly Overview, Individual Rewards, and Ascension ETA.
  */
 
 // ==========================================
-// 1. UI CONTROLS & TOGGLES 
-// ==========================================
-function toggleWeeklyTab(tab) {
-    const btnDaily = document.getElementById('btn-weekly-daily');
-    const btnTotal = document.getElementById('btn-weekly-total');
-    const btnLeague = document.getElementById('btn-weekly-league');
-
-    const viewDaily = document.getElementById('weekly-tab-daily');
-    const viewTotal = document.getElementById('weekly-tab-total');
-    const viewLeague = document.getElementById('weekly-tab-league');
-
-    if (btnDaily) btnDaily.classList.remove('active');
-    if (btnTotal) btnTotal.classList.remove('active');
-    if (btnLeague) btnLeague.classList.remove('active');
-
-    if (viewDaily) viewDaily.style.display = 'none';
-    if (viewTotal) viewTotal.style.display = 'none';
-    if (viewLeague) viewLeague.style.display = 'none';
-
-    if (tab === 'daily') {
-        if (btnDaily) btnDaily.classList.add('active');
-        if (viewDaily) viewDaily.style.display = 'block';
-    } else if (tab === 'total') {
-        if (btnTotal) btnTotal.classList.add('active');
-        if (viewTotal) viewTotal.style.display = 'block';
-    } else if (tab === 'league') {
-        if (btnLeague) btnLeague.classList.add('active');
-        if (viewLeague) viewLeague.style.display = 'block';
-    }
-}
-
-// ==========================================
-// 2. ASCENSION DYNAMIC UI
+// 1. ASCENSION DYNAMIC UI
 // ==========================================
 function updateAscensionCaps(type) {
     const lvEl = document.getElementById(`asc-${type}-lv`);
@@ -78,7 +46,7 @@ function updateAscensionCaps(type) {
 }
 
 // ==========================================
-// 3. MAIN UPDATE LOGIC
+// 2. MAIN UPDATE LOGIC
 // ==========================================
 function updateWeekly() {
     const getStrVal = (id, defaultVal = "") => document.getElementById(id)?.value || defaultVal;
@@ -89,59 +57,64 @@ function updateWeekly() {
     const clanWin = getStrVal('weekly-war-win', 'Lose');
     const indivTier = getStrVal('weekly-indiv', 'None');
 
-    const lRewards = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league] && LEAGUE_REWARDS[league][rank]) ? LEAGUE_REWARDS[league][rank] : [0,0,0,0,0,0,0];
-    const cRewards = (typeof CLAN_WAR_REWARDS !== 'undefined' && CLAN_WAR_REWARDS[clanTier] && CLAN_WAR_REWARDS[clanTier][clanWin]) ? CLAN_WAR_REWARDS[clanTier][clanWin] : [0,0,0,0,0,0,0];
+    const baseLRewards = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league] && LEAGUE_REWARDS[league][rank]) ? LEAGUE_REWARDS[league][rank] : [0,0,0,0,0,0,0];
+    const baseCRewards = (typeof CLAN_WAR_REWARDS !== 'undefined' && CLAN_WAR_REWARDS[clanTier] && CLAN_WAR_REWARDS[clanTier][clanWin]) ? CLAN_WAR_REWARDS[clanTier][clanWin] : [0,0,0,0,0,0,0];
 
-    let iRewards = [0, 0, 0, 0, 0, 0, 0];
+    let baseIRewards = [0, 0, 0, 0, 0, 0, 0];
     if (typeof INDIV_REWARDS !== 'undefined') {
         const targetVal = INDIV_REWARDS[indivTier] ? INDIV_REWARDS[indivTier].val : 0;
         for (const key in INDIV_REWARDS) {
             if (INDIV_REWARDS[key].val <= targetVal) {
                 const tierRew = INDIV_REWARDS[key].rewards || [0,0,0,0,0,0,0];
-                for (let i = 0; i < 7; i++) iRewards[i] += tierRew[i];
+                for (let i = 0; i < 7; i++) baseIRewards[i] += tierRew[i];
             }
         }
     }
 
-    const setBd = (id, val, formatType = 'whole') => {
+    // --- CLAN TECH MULTIPLIERS ---
+    const getCtVal = (id, memKey) => {
         const el = document.getElementById(id);
-        if (!el) return;
-        if (!val || val === 0) {
-            el.innerText = "-";
-            return;
-        }
-        if (formatType === 'gold') {
-            if (val < 10000) el.innerText = Math.round(val).toLocaleString('en-US');
-            else if (val < 1000000) el.innerText = parseFloat((val / 1000).toFixed(1)) + 'k';
-            else el.innerText = parseFloat((val / 1000000).toFixed(2)) + 'm';
-        } else {
-            el.innerText = Math.round(val).toLocaleString('en-US');
-        }
+        if (el) return parseInt(el.value) || 0;
+        return parseInt(window.clanTechMemory?.[memKey]) || 0;
     };
+    
+    const ctWarPersonal = getCtVal('ct-war-personal', 'warPersonal');
+    const ctWarWin      = getCtVal('ct-war-win', 'warWin');
+    const ctWarLose     = getCtVal('ct-war-lose', 'warLose');
+    const ctPotPersonal = getCtVal('ct-pot-personal', 'potPersonal');
+    const ctPotWin      = getCtVal('ct-pot-win', 'potWin');
+    const ctPotLose     = getCtVal('ct-pot-lose', 'potLose');
+    const potAsc = parseInt(document.getElementById('weekly-potion-asc')?.value) || 0; 
+    
+    const gpAscMult = 1 + (potAsc / 100);
+    const indivMult = 1 + (ctWarPersonal / 100);
+    const indivGpTechMult = 1 + (ctWarPersonal / 100) + (ctPotPersonal * 5 / 100);
+    
+    let warMult = 1;
+    let warGpTechMult = 1;
+    if (clanWin === 'Win') {
+        warMult = 1 + (ctWarWin / 100);
+        warGpTechMult = 1 + (ctWarWin / 100) + (ctPotWin * 5 / 100);
+    } else {
+        warMult = 1 + (ctWarLose / 100);
+        warGpTechMult = 1 + (ctWarLose / 100) + (ctPotLose * 5 / 100);
+    }
 
-    setBd('bd-league-hammer', lRewards[0], 'whole');
-    setBd('bd-league-gold', lRewards[1], 'gold');
-    setBd('bd-league-ticket', lRewards[2], 'whole');
-    setBd('bd-league-eggshell', lRewards[3], 'whole');
-    setBd('bd-league-potion', lRewards[4], 'gold');
-    setBd('bd-league-mountkey', lRewards[5], 'whole');
-    setBd('bd-league-greenpotion', lRewards[6], 'whole');
+    const lRewards = [0,0,0,0,0,0,0];
+    const cRewards = [0,0,0,0,0,0,0];
+    const iRewards = [0,0,0,0,0,0,0];
 
-    setBd('bd-war-hammer', cRewards[0], 'whole');
-    setBd('bd-war-gold', cRewards[1], 'gold');
-    setBd('bd-war-ticket', cRewards[2], 'whole');
-    setBd('bd-war-eggshell', cRewards[3], 'whole');
-    setBd('bd-war-potion', cRewards[4], 'gold');
-    setBd('bd-war-mountkey', cRewards[5], 'whole');
-    setBd('bd-war-greenpotion', cRewards[6], 'whole');
-
-    setBd('bd-indiv-hammer', iRewards[0], 'whole');
-    setBd('bd-indiv-gold', iRewards[1], 'gold');
-    setBd('bd-indiv-ticket', iRewards[2], 'whole');
-    setBd('bd-indiv-eggshell', iRewards[3], 'whole');
-    setBd('bd-indiv-potion', iRewards[4], 'gold');
-    setBd('bd-indiv-mountkey', iRewards[5], 'whole');
-    setBd('bd-indiv-greenpotion', iRewards[6], 'whole');
+    for (let i = 0; i < 7; i++) {
+        if (i === 6) { 
+            lRewards[i] = Math.round(baseLRewards[i] * gpAscMult); 
+            cRewards[i] = Math.round(baseCRewards[i] * warGpTechMult * gpAscMult);
+            iRewards[i] = Math.round(baseIRewards[i] * indivGpTechMult * gpAscMult);
+        } else {
+            lRewards[i] = baseLRewards[i];
+            cRewards[i] = Math.round(baseCRewards[i] * warMult);
+            iRewards[i] = Math.round(baseIRewards[i] * indivMult);
+        }
+    }
 
     const finalRewards = {
         hammer:   lRewards[0] + cRewards[0] + iRewards[0],
@@ -180,40 +153,107 @@ function updateWeekly() {
     const dailyData = typeof calculateDailyMath === 'function' ? calculateDailyMath() : null;
     if (!dailyData) return; 
 
+    const dLvl = typeof getDungeonLevels === 'function' ? getDungeonLevels() : { thief: {lvl: 1, sub: 1} };
+    const slots = typeof getMissionSlots === 'function' ? getMissionSlots() : {};
+    let mWeekly = { gold: 0, ticket: 0, egg: 0, pot: 0, key: 0, gp: 0, hammer: (slots.rally || 0) * 7 };
+    if (typeof calculateMissionYields === 'function') {
+        const ms = calculateMissionYields(dLvl.thief.lvl, dLvl.thief.sub, slots);
+        mWeekly = {
+            gold: ms.dailyTotal.gold * 7,
+            ticket: ms.dailyTotal.ticket * 7,
+            egg: ms.dailyTotal.egg * 7,
+            pot: ms.dailyTotal.pot * 7,
+            key: ms.dailyTotal.key * 7,
+            gp: ms.dailyTotal.gp * 7,
+            hammer: (slots.rally || 0) * 7
+        };
+    }
+
     const freeB = 1 - (dailyData.curStats.free || 0) / 100;
+    const weeklyFixedHammersB = finalRewards.hammer + mWeekly.hammer;
+    const extraEffHB = weeklyFixedHammersB / (freeB <= 0 ? 1 : freeB);
+    const totalEffHB = extraEffHB + (dailyData.effHB * 7);
+    const hammerGoldContributionB = totalEffHB * (dailyData.curStats.avgGold || 0);
+    
     const freeA = 1 - (dailyData.projStats.free || 0) / 100;
+    const weeklyFixedHammersA = finalRewards.hammer + mWeekly.hammer;
+    const extraEffHA = weeklyFixedHammersA / (freeA <= 0 ? 1 : freeA);
+    const totalEffHA = extraEffHA + (dailyData.effHA * 7);
+    const hammerGoldContributionA = totalEffHA * (dailyData.projStats.avgGold || 0);
 
-    let leagueEffHB = finalRewards.hammer / (freeB <= 0 ? 1 : freeB);
-    let leagueEffHA = finalRewards.hammer / (freeA <= 0 ? 1 : freeA);
-    let leagueGrandGoldB = finalRewards.gold + (leagueEffHB * (dailyData.curStats.avgGold || 0));
-    let leagueGrandGoldA = finalRewards.gold + (leagueEffHA * (dailyData.projStats.avgGold || 0));
-    let leagueCardsB = (finalRewards.ticket / (costB <= 0 ? 200 : costB)) * 5;
-    let leagueCardsA = (finalRewards.ticket / (costA <= 0 ? 200 : costA)) * 5;
-    
-    let leagueEggsB = (finalRewards.eggshell / 100) * luckyMultB;
-    let leagueEggsA = (finalRewards.eggshell / 100) * luckyMultA;
-    
-    let leagueMYieldB = (finalRewards.mountKey / safeCostB) * (1 + (techMountChance.before * 2) / 100);
-    let leagueMYieldA = (finalRewards.mountKey / safeCostA) * (1 + (techMountChance.after * 2) / 100);
+    window.latestWeeklyBreakdown = {
+        hammer: {
+            Dungeon: { b: dailyData.rewards.hammer.before * 14, a: dailyData.rewards.hammer.after * 14 },
+            Idle: { b: 1440 * (1 + (dailyData.curStats.offH || 0) / 100) * 7, a: 1440 * (1 + (dailyData.projStats.offH || 0) / 100) * 7 },
+            League: { b: lRewards[0], a: lRewards[0] },
+            War: { b: cRewards[0], a: cRewards[0] },
+            'Indiv Rewards': { b: iRewards[0], a: iRewards[0] },
+            'Rally Bonus': { b: mWeekly.hammer, a: mWeekly.hammer } 
+        },
+        gold: {
+            Dungeon: { b: dailyData.rewards.gold.before * 14, a: dailyData.rewards.gold.after * 14 },
+            Idle: { b: 86400 * (1 + (dailyData.curStats.offC || 0) / 100) * 7, a: 86400 * (1 + (dailyData.projStats.offC || 0) / 100) * 7 },
+            League: { b: lRewards[1], a: lRewards[1] },
+            'Indiv Rewards': { b: iRewards[1], a: iRewards[1] },
+            Mission: { b: mWeekly.gold, a: mWeekly.gold },
+            Hammer: { b: hammerGoldContributionB, a: hammerGoldContributionA }
+        },
+        ticket: {
+            Dungeon: { b: dailyData.rewards.ticket.before * 14, a: dailyData.rewards.ticket.after * 14 },
+            Idle: { b: 0, a: 0 },
+            League: { b: lRewards[2], a: lRewards[2] },
+            War: { b: cRewards[2], a: cRewards[2] },
+            'Indiv Rewards': { b: iRewards[2], a: iRewards[2] },
+            Mission: { b: mWeekly.ticket, a: mWeekly.ticket }
+        },
+        eggshell: {
+            Dungeon: { b: dailyData.rewards.eggshell.before * 14, a: dailyData.rewards.eggshell.after * 14 },
+            Idle: { b: 0, a: 0 },
+            League: { b: lRewards[3], a: lRewards[3] },
+            War: { b: cRewards[3], a: cRewards[3] },
+            'Indiv Rewards': { b: iRewards[3], a: iRewards[3] },
+            Mission: { b: mWeekly.egg, a: mWeekly.egg }
+        },
+        potion: {
+            Dungeon: { b: dailyData.rewards.potion.before * 14, a: dailyData.rewards.potion.after * 14 },
+            Idle: { b: 0, a: 0 },
+            League: { b: lRewards[4], a: lRewards[4] },
+            War: { b: cRewards[4], a: cRewards[4] },
+            'Indiv Rewards': { b: iRewards[4], a: iRewards[4] },
+            Mission: { b: mWeekly.pot, a: mWeekly.pot }
+        },
+        mountKey: {
+            Dungeon: { b: 0, a: 0 },
+            Idle: { b: 0, a: 0 },
+            League: { b: lRewards[5], a: lRewards[5] },
+            War: { b: cRewards[5], a: cRewards[5] },
+            'Indiv Rewards': { b: iRewards[5], a: iRewards[5] },
+            Mission: { b: mWeekly.key, a: mWeekly.key }
+        },
+        greenPotion: {
+            Dungeon: { b: 0, a: 0 },
+            Idle: { b: 0, a: 0 },
+            League: { b: lRewards[6], a: lRewards[6] },
+            War: { b: cRewards[6], a: cRewards[6] },
+            'Indiv Rewards': { b: iRewards[6], a: iRewards[6] },
+            Mission: { b: mWeekly.gp, a: mWeekly.gp }
+        }
+    };
 
-    const totalHammerB = finalRewards.hammer + (dailyData.totHammerB * 7);
-    const totalHammerA = finalRewards.hammer + (dailyData.totHammerA * 7);
-    const totalBaseGoldB = finalRewards.gold + (dailyData.totGoldB * 7);
-    const totalBaseGoldA = finalRewards.gold + (dailyData.totGoldA * 7);
-    const totalBaseTicketB = finalRewards.ticket + (dailyData.rewards.ticket.before * 2 * 7);
-    const totalBaseTicketA = finalRewards.ticket + (dailyData.rewards.ticket.after * 2 * 7);
-    const totalEffHB = leagueEffHB + (dailyData.effHB * 7);
-    const totalEffHA = leagueEffHA + (dailyData.effHA * 7);
-    const totalGrandGoldB = leagueGrandGoldB + (dailyData.grandTotalB * 7);
-    const totalGrandGoldA = leagueGrandGoldA + (dailyData.grandTotalA * 7);
-    const totalCardsB = leagueCardsB + (dailyData.totCardsB * 7);
-    const totalCardsA = leagueCardsA + (dailyData.totCardsA * 7);
-    const totalEggsB = leagueEggsB + (dailyData.totEggB * 7);
-    const totalEggsA = leagueEggsA + (dailyData.totEggA * 7);
-    const totalPotionB = finalRewards.potion + (dailyData.totPotionB * 7);
-    const totalPotionA = finalRewards.potion + (dailyData.totPotionA * 7);
-    const totalBaseEggshellB = finalRewards.eggshell + (dailyData.totEggshellB * 7);
-    const totalBaseEggshellA = finalRewards.eggshell + (dailyData.totEggshellA * 7);
+    const totalHammerB = finalRewards.hammer + (dailyData.totHammerB * 7) + mWeekly.hammer;
+    const totalHammerA = finalRewards.hammer + (dailyData.totHammerA * 7) + mWeekly.hammer;
+    const totalBaseGoldB = finalRewards.gold + (dailyData.totGoldB * 7) + mWeekly.gold;
+    const totalBaseGoldA = finalRewards.gold + (dailyData.totGoldA * 7) + mWeekly.gold;
+    const totalBaseTicketB = finalRewards.ticket + (dailyData.rewards.ticket.before * 2 * 7) + mWeekly.ticket;
+    const totalBaseTicketA = finalRewards.ticket + (dailyData.rewards.ticket.after * 2 * 7) + mWeekly.ticket;
+    const totalPotionB = finalRewards.potion + (dailyData.totPotionB * 7) + mWeekly.pot;
+    const totalPotionA = finalRewards.potion + (dailyData.totPotionA * 7) + mWeekly.pot;
+    const totalBaseEggshellB = finalRewards.eggshell + (dailyData.totEggshellB * 7) + mWeekly.egg;
+    const totalBaseEggshellA = finalRewards.eggshell + (dailyData.totEggshellA * 7) + mWeekly.egg;
+    const finalMountKeyB = finalRewards.mountKey + mWeekly.key;
+    const finalMountKeyA = finalRewards.mountKey + mWeekly.key;
+    const finalGreenPotionB = finalRewards.greenPotion + mWeekly.gp;
+    const finalGreenPotionA = finalRewards.greenPotion + mWeekly.gp;
 
     const renderCalcGroup = (valBefore, valAfter, iconName, formatType = 'smart') => {
         const iconHtml = iconName ? `<img src="icons/${iconName}" class="calc-icon-left" style="margin-right: 4px;" onerror="this.style.display='none'">` : '';
@@ -224,15 +264,7 @@ function updateWeekly() {
                 if (safeV < 1000000) return parseFloat((safeV / 1000).toFixed(1)) + 'k';
                 return parseFloat((safeV / 1000000).toFixed(2)) + 'm';
             }
-            if (formatType === 'whole') return Math.round(safeV).toLocaleString('en-US');
-            if (formatType === 'egg') {
-                if (safeV === 0) return "0";
-                if (safeV <= 10) return safeV.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                return safeV.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
-            }
-            if (safeV === 0) return "0";
-            if (safeV < 10) return safeV.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            return safeV.toLocaleString('en-US', {minimumFractionDigits: 1, maximumFractionDigits: 1});
+            return Math.round(safeV).toLocaleString('en-US');
         };
         
         const strB = fmt(valBefore || 0); const strA = fmt(valAfter || 0);
@@ -249,56 +281,17 @@ function updateWeekly() {
         if (el) el.innerHTML = renderCalcGroup(b, a, icon, formatType);
     };
 
-    const processTab = (prefix, stats) => {
-        setBreakdown(`${prefix}-base-hammer`, stats.baseHammerB, stats.baseHammerA, 'fm_hammer.png', 'whole');
-        setBreakdown(`${prefix}-base-gold`, stats.baseGoldB, stats.baseGoldA, 'fm_gold.png', 'gold');
-        setBreakdown(`${prefix}-base-ticket`, stats.baseTicketB, stats.baseTicketA, 'green_ticket.png', 'whole');
-        setBreakdown(`${prefix}-base-eggshell`, stats.baseEggshellB, stats.baseEggshellA, 'eggshell.png', 'whole');
-        setBreakdown(`${prefix}-base-potion`, stats.basePotionB, stats.basePotionA, 'red_potion.png', 'gold');
-        setBreakdown(`${prefix}-base-mountkey`, stats.baseMountKeyB, stats.baseMountKeyA, 'mount_key.png', 'whole');
-        setBreakdown(`${prefix}-base-greenpotion`, stats.baseGreenPotionB, stats.baseGreenPotionA, 'green_potion.png', 'whole');
-
-        setBreakdown(`res-${prefix}-eff-hammer`, stats.effHB, stats.effHA, 'fm_hammer.png', 'whole');
-        setBreakdown(`res-${prefix}-grand`, stats.grandB, stats.grandA, 'fm_gold.png', 'gold');
-        setBreakdown(`res-${prefix}-cards`, stats.cardsB, stats.cardsA, null, 'smart');
-        setBreakdown(`res-${prefix}-eggs`, stats.eggsB, stats.eggsA, 'EggCommon.png', 'egg'); 
-        setBreakdown(`res-${prefix}-mounts`, stats.mountsB, stats.mountsA, null, 'smart');
-    };
-
-    processTab('weekly', {
-        baseHammerB: totalHammerB,         baseHammerA: totalHammerA,
-        baseGoldB: totalBaseGoldB,         baseGoldA: totalBaseGoldA,
-        baseTicketB: totalBaseTicketB,     baseTicketA: totalBaseTicketA,
-        baseEggshellB: totalBaseEggshellB, baseEggshellA: totalBaseEggshellA,
-        basePotionB: totalPotionB,         basePotionA: totalPotionA,
-        baseMountKeyB: finalRewards.mountKey, baseMountKeyA: finalRewards.mountKey,
-        baseGreenPotionB: finalRewards.greenPotion, baseGreenPotionA: finalRewards.greenPotion,
-        effHB: totalEffHB,                 effHA: totalEffHA,
-        grandB: totalGrandGoldB,           grandA: totalGrandGoldA,
-        cardsB: totalCardsB,               cardsA: totalCardsA,
-        eggsB: totalEggsB,                 eggsA: totalEggsA,
-        mountsB: leagueMYieldB,            mountsA: leagueMYieldA
-    });
-
-    processTab('league', {
-        baseHammerB: finalRewards.hammer,  baseHammerA: finalRewards.hammer,
-        baseGoldB: finalRewards.gold,      baseGoldA: finalRewards.gold,
-        baseTicketB: finalRewards.ticket,  baseTicketA: finalRewards.ticket,
-        baseEggshellB: finalRewards.eggshell, baseEggshellA: finalRewards.eggshell,
-        basePotionB: finalRewards.potion,  basePotionA: finalRewards.potion,
-        baseMountKeyB: finalRewards.mountKey, baseMountKeyA: finalRewards.mountKey,
-        baseGreenPotionB: finalRewards.greenPotion, baseGreenPotionA: finalRewards.greenPotion,
-        effHB: leagueEffHB,                effHA: leagueEffHA,
-        grandB: leagueGrandGoldB,          grandA: leagueGrandGoldA,
-        cardsB: leagueCardsB,              cardsA: leagueCardsA,
-        eggsB: leagueEggsB,                eggsA: leagueEggsA,
-        mountsB: leagueMYieldB,            mountsA: leagueMYieldA
-    });
+    setBreakdown('weekly-base-hammer', totalHammerB, totalHammerA, 'fm_hammer.png', 'whole');
+    setBreakdown('weekly-base-gold', totalBaseGoldB, totalBaseGoldA, 'fm_gold.png', 'gold');
+    setBreakdown('weekly-base-ticket', totalBaseTicketB, totalBaseTicketA, 'green_ticket.png', 'whole');
+    setBreakdown('weekly-base-eggshell', totalBaseEggshellB, totalBaseEggshellA, 'eggshell.png', 'whole');
+    setBreakdown('weekly-base-potion', totalPotionB, totalPotionA, 'red_potion.png', 'whole');
+    setBreakdown('weekly-base-mountkey', finalMountKeyB, finalMountKeyA, 'mount_key.png', 'whole');
+    setBreakdown('weekly-base-greenpotion', finalGreenPotionB, finalGreenPotionA, 'green_potion.png', 'whole');
 
     // ------------------------------------------
     // Ascension Progress (ETA) Math
     // ------------------------------------------
-
     const getExpDiff = (type, db, isTarget = false) => {
         if (!db || typeof getCumulativePulls !== 'function') return isTarget ? null : 0;
         
@@ -344,6 +337,9 @@ function updateWeekly() {
     const invPet = getInvVal('asc-pet-inv');
     const invMount = getInvVal('asc-mount-inv');
 
+    const leagueMYieldB = (finalMountKeyB / safeCostB) * (1 + (techMountChance.before * 2) / 100);
+    const leagueMYieldA = (finalMountKeyA / safeCostA) * (1 + (techMountChance.after * 2) / 100);
+
     const skillInvYieldB = Math.floor(invSkill / (costB <= 0 ? 200 : costB)) * 5;
     const skillInvYieldA = Math.floor(invSkill / (costA <= 0 ? 200 : costA)) * 5;
     
@@ -366,6 +362,11 @@ function updateWeekly() {
     const adjPetRemTargetA = petRemTarget !== null ? Math.max(0, petRemTarget - petInvYieldA) : null;
     const adjMountRemTargetB = mountRemTarget !== null ? Math.max(0, mountRemTarget - mountInvYieldB) : null;
     const adjMountRemTargetA = mountRemTarget !== null ? Math.max(0, mountRemTarget - mountInvYieldA) : null;
+
+    const totalCardsB = (totalBaseTicketB / (costB <= 0 ? 200 : costB)) * 5;
+    const totalCardsA = (totalBaseTicketA / (costA <= 0 ? 200 : costA)) * 5;
+    const totalEggsB = (totalBaseEggshellB / 100) * luckyMultB;
+    const totalEggsA = (totalBaseEggshellA / 100) * luckyMultA;
 
     const weeksSkillB = totalCardsB > 0 ? (adjSkillRemB / totalCardsB) : Infinity;
     const weeksSkillA = totalCardsA > 0 ? (adjSkillRemA / totalCardsA) : Infinity;

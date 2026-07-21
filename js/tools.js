@@ -1,45 +1,7 @@
 /**
  * TOOLS.JS
- * Forge Calculator, Stats Rendering, and Egg Planner
+ * Forge Calculator, Stats Summary, and Egg Planner
  */
-
-const CALC_FORGE_RATES = {
-    1:  [100, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    2:  [99, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    3:  [98, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-    4:  [96, 4, 0, 0, 0, 0, 0, 0, 0, 0],
-    5:  [91.5, 8, 0.5, 0, 0, 0, 0, 0, 0, 0],
-    6:  [82, 16, 2, 0, 0, 0, 0, 0, 0, 0],
-    7:  [64, 32, 4, 0, 0, 0, 0, 0, 0, 0],
-    8:  [27.8, 64, 8, 0.2, 0, 0, 0, 0, 0, 0],
-    9:  [13, 70, 16, 1, 0, 0, 0, 0, 0, 0],
-    10: [6, 60, 32, 2, 0, 0, 0, 0, 0, 0],
-    11: [0, 31.9, 64, 4, 0.1, 0, 0, 0, 0, 0],
-    12: [0, 27.5, 64, 8, 0.5, 0, 0, 0, 0, 0],
-    13: [0, 8, 75, 16, 1, 0, 0, 0, 0, 0],
-    14: [0, 0, 66, 32, 2, 0.05, 0, 0, 0, 0],
-    15: [0, 0, 31.7, 64, 4, 0.25, 0, 0, 0, 0],
-    16: [0, 0, 21.5, 70, 8, 0.5, 0, 0, 0, 0],
-    17: [0, 0, 0, 82.9, 16, 1, 0.05, 0, 0, 0],
-    18: [0, 0, 0, 65.7, 32, 2, 0.25, 0, 0, 0],
-    19: [0, 0, 0, 31.5, 64, 4, 0.5, 0, 0, 0],
-    20: [0, 0, 0, 0, 91, 8, 1, 0.05, 0, 0],
-    21: [0, 0, 0, 0, 81.7, 16, 2, 0.25, 0, 0],
-    22: [0, 0, 0, 0, 63.5, 32, 4, 0.5, 0, 0],
-    23: [0, 0, 0, 0, 27, 64, 8, 1, 0, 0],
-    24: [0, 0, 0, 0, 0, 82, 16, 2, 0.02, 0],
-    25: [0, 0, 0, 0, 0, 64, 32, 4, 0.05, 0],
-    26: [0, 0, 0, 0, 0, 43.8, 50, 6, 0.25, 0],
-    27: [0, 0, 0, 0, 0, 31.5, 60, 8, 0.5, 0],
-    28: [0, 0, 0, 0, 0, 21, 65, 13, 1, 0],
-    29: [0, 0, 0, 0, 0, 6.99, 68, 23, 2, 0.02],
-    30: [0, 0, 0, 0, 0, 0, 60, 36, 4, 0.05],
-    31: [0, 0, 0, 0, 0, 0, 50.8, 43, 6, 0.25],
-    32: [0, 0, 0, 0, 0, 0, 41.5, 50, 8, 0.5],
-    33: [0, 0, 0, 0, 0, 0, 28, 58, 13, 1],
-    34: [0, 0, 0, 0, 0, 0, 11, 64, 23, 2],
-    35: [0, 0, 0, 0, 0, 0, 0, 60, 36, 4]
-};
 
 // ==========================================
 // 1. STATS RENDERING
@@ -114,7 +76,7 @@ function renderStats() {
             let infoBtnHTML = '';
             let disclaimerHTML = ''; 
             
-           if (key === 'forge' && ns.id === 'sell') { 
+            if (key === 'forge' && ns.id === 'sell') { 
                 txtCur += ` <span style="color:#000000;">(Avg: <img src="icons/fm_gold.png" class="stat-key-icon"> ${formatResourceValue(globCur, 'gold')})</span>`; 
                 
                 if (globProj_SellCombined > globProj_SellIso) {
@@ -129,7 +91,6 @@ function renderStats() {
             else if (meta.isSlot) { const sCur = getSlotStats(99 + curT * 2, state.totalSellBonusCur); const sProj = getSlotStats(99 + projT * 2, state.totalSellBonusCur); txtCur = `Max ${99 + curT * 2} (Range: ${sCur.range} | Avg: <img src="icons/fm_gold.png" class="stat-key-icon"> ${formatResourceValue(sCur.avg, 'gold')})</span>`; txtProj = `Max ${99 + projT * 2} (Range: ${sProj.range} | Avg: <img src="icons/fm_gold.png" class="stat-key-icon"> ${formatResourceValue(sProj.avg, 'gold')})</span>`; }
             else if (meta.isDiscount) { infoBtnHTML = `<button class="btn-info" onclick="showPotionTable(${curT * 2}, ${projT * 2})">i</button>`; }
             else if (key === 'spt' && ns.id === 'timer') { infoBtnHTML = `<button class="btn-info" onclick="showTechTimerTable(${curT * 4}, ${projT * 4})">i</button>`; }
-            
             else if (key === 'forge' && ns.id === 'disc') { 
                 const discVal = meta.val !== undefined ? meta.val : 1;
                 infoBtnHTML = `<button class="btn-info" onclick="showForgeTable('cost',${curT * discVal},${projT * discVal})">i</button>`; 
@@ -140,9 +101,27 @@ function renderStats() {
             }
             
             let finalHTML = txtCur; 
-                if (projT > curT || (key === 'forge' && ns.id === 'sell' && globProj_SellCombined > globCur)) {
-                    finalHTML += `<span class="stat-arrow">➜</span> <span class="stat-new">${txtProj}</span>`;
+            if (projT > curT || (key === 'forge' && ns.id === 'sell' && globProj_SellCombined > globCur)) {
+                finalHTML += ` <span class="stat-arrow">➜</span> <span class="stat-new">${txtProj}</span>`;
+            }
+
+            if (meta.isEgg) {
+                let clanLvl = typeof window.getClanEggLvl === 'function' ? window.getClanEggLvl(ns.id) : 0;
+                if (clanLvl > 0) {
+                    let totalCur = (curT * 10) + (clanLvl * 5);
+                    let totalProj = (projT * 10) + (clanLvl * 5);
+                    let txtC = `Speed +${totalCur}% (${formatEggTime(meta.base / (1 + totalCur / 100))})`;
+                    let txtP = `Speed +${totalProj}% (${formatEggTime(meta.base / (1 + totalProj / 100))})`;
+                    
+                    let clanLine = txtC;
+                    if (projT > curT) {
+                        clanLine += ` <span class="stat-arrow">➜</span> <span class="stat-new">${txtP}</span>`;
+                    }
+                    
+                    finalHTML += `<div style="margin-top: 4px; font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 0.85rem; font-weight: 300; color: #ffffff; -webkit-text-stroke: 3px #000;">With Clan Tech:</div><div>${clanLine}</div>`;
                 }
+            }
+            
             const row = document.createElement('div'); row.className = 'stats-row ' + key; 
             
             if (disclaimerHTML !== '') {
@@ -410,9 +389,6 @@ function updateCalculator() {
         } 
     });
 
-    // ==========================================
-    // 3rd CARD: HAMMER YIELD & GOLD CALC
-    // ==========================================
     let effH1 = hIn / (1 - curStats.free / 100); 
     let effH2 = hIn / (1 - projStats.free / 100);
     
@@ -431,7 +407,7 @@ function updateCalculator() {
             const amountB = effH1 * (rates[i] / 100);
             const amountA = effH2 * (rates[i] / 100);
             
-            yieldHtml += `<div class="calc-line" style="background-color: ${TIER_COLORS[i]}; border-radius: 6px; padding: 4px 8px; border-bottom: none; color: #000;">
+            yieldHtml += `<div class="calc-line" style="background-color: ${TIER_COLORS[i]}; border-bottom: none; color: #000;">
                 <div class="calc-label" style="color: #000;">${TIER_NAMES[i]}</div>
                 ${renderForgeGroup(amountB, amountA, null, 'yield')}
             </div>`;
@@ -441,15 +417,9 @@ function updateCalculator() {
     const res1 = document.getElementById('calc-res-1'); 
     if (res1) res1.innerHTML = h1 + yieldHtml;
     
-    // ==========================================
-    // 4th CARD: TARGET GOLD CALC
-    // ==========================================
     const res2 = document.getElementById('calc-res-2');
     if (res2) res2.innerHTML = genLine('Hammer Needed', gTarget / curStats.avgGold * (1 - curStats.free / 100), gTarget / projStats.avgGold * (1 - projStats.free / 100), 'fm_hammer', 'hammer');
     
-    // ==========================================
-    // 1st & 2nd CARDS: FORGE UPGRADES
-    // ==========================================
     const res5 = document.getElementById('calc-res-5');
     const resTarget = document.getElementById('calc-res-target-forge');
 
@@ -535,6 +505,21 @@ function updateCalculator() {
         let currentTimeCur = mainStartTime;
         let currentTimeProj = mainStartTime;
 
+        let previousSchedule = [];
+        if (window.forgeScheduleSnapshot && 
+            window.forgeScheduleSnapshot.startDate === sDateVal && 
+            window.forgeScheduleSnapshot.startAsc === fAsc && 
+            window.forgeScheduleSnapshot.startLv === fLv) {
+            previousSchedule = window.forgeScheduleSnapshot.schedule || [];
+        } else {
+            window.forgeScheduleSnapshot = {
+                startDate: sDateVal,
+                startAsc: fAsc,
+                startLv: fLv,
+                schedule: []
+            };
+        }
+
         window.currentForgeSchedule = [];
 
         while (cAsc < tAsc || (cAsc === tAsc && cLv < endLv)) {
@@ -542,13 +527,20 @@ function updateCalculator() {
                 totalCostCur += 3000000;
                 totalCostProj += 3000000;
                 
-                window.currentForgeSchedule.push({
-                    label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
+                let ascLabel = `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`;
+                let ascStep = {
+                    label: ascLabel,
                     finish: currentTimeProj,
+                    durationMs: 0,
                     isAscension: true,
                     costCur: 3000000,
                     costProj: 3000000
-                });
+                };
+                window.currentForgeSchedule.push(ascStep);
+                
+                if (!previousSchedule.find(s => s.label === ascLabel)) {
+                    window.forgeScheduleSnapshot.schedule.push(ascStep);
+                }
                 
                 cAsc++;
                 cLv = 1;
@@ -566,6 +558,8 @@ function updateCalculator() {
                         }
                     });
 
+                    let stepLabel = `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`;
+
                     if (cAsc === fAsc && cLv === fLv && useSnapshot) {
                         currentTimeProj = window.ongoingForgeSnapshot.finishTimeProj;
                         currentTimeCur = window.ongoingForgeSnapshot.finishTimeCur;
@@ -579,13 +573,21 @@ function updateCalculator() {
                         totalGemsCur += Math.round(window.ongoingForgeSnapshot.minsCur / 7.24643);
                         totalGemsProj += Math.round(window.ongoingForgeSnapshot.minsProj / 7.24643);
 
-                        window.currentForgeSchedule.push({
-                            label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
+                        let snapStep = {
+                            label: stepLabel,
                             finish: currentTimeProj,
+                            durationMs: window.ongoingForgeSnapshot.minsProj * 60000,
+                            durationMsCur: window.ongoingForgeSnapshot.minsCur * 60000,
                             isAscension: false,
                             costCur: window.ongoingForgeSnapshot.costCur,
                             costProj: window.ongoingForgeSnapshot.costProj
-                        });
+                        };
+                        window.currentForgeSchedule.push(snapStep);
+                        
+                        if (!previousSchedule.find(s => s.label === stepLabel)) {
+                            window.forgeScheduleSnapshot.schedule.push(snapStep);
+                        }
+                        
                         cLv++;
                         continue; 
                     }
@@ -593,27 +595,46 @@ function updateCalculator() {
                     let stepCostCur = Math.round(baseCost * (1 - curStats.forgeDisc / 100));
                     let stepCostProj = Math.round(baseCost * (1 - activeProjDisc / 100));
                     
+                    let curLvlMins = baseMins / (1 + curStats.speed / 100);
+                    let projLvlMins = baseMins / (1 + activeProjSpeed / 100);
+
+                    let existingStep = previousSchedule.find(s => s.label === stepLabel);
+
+                    if (existingStep && currentTimeProj < Math.max(Date.now(), planStartMs)) {
+                        projLvlMins = existingStep.durationMs / 60000;
+                        stepCostProj = existingStep.costProj;
+                        
+                        curLvlMins = (existingStep.durationMsCur || existingStep.durationMs) / 60000;
+                        stepCostCur = existingStep.costCur;
+                    }
+
                     totalCostCur += stepCostCur;
                     totalCostProj += stepCostProj;
 
-                    const curLvlMins = baseMins / (1 + curStats.speed / 100);
                     currentTimeCur += curLvlMins * 60000;
                     totalMinsCur += curLvlMins;
                     
-                    const projLvlMins = baseMins / (1 + activeProjSpeed / 100);
                     currentTimeProj += projLvlMins * 60000;
                     totalMinsProj += projLvlMins;
                     
                     totalGemsCur += Math.round(curLvlMins / 7.24643);
                     totalGemsProj += Math.round(projLvlMins / 7.24643);
 
-                    window.currentForgeSchedule.push({
-                        label: `Asc ${cAsc} | Lv ${cLv} ➜ ${cLv + 1}`,
+                    let newStep = {
+                        label: stepLabel,
                         finish: currentTimeProj,
+                        durationMs: projLvlMins * 60000,
+                        durationMsCur: curLvlMins * 60000,
                         isAscension: false,
                         costCur: stepCostCur,
                         costProj: stepCostProj
-                    });
+                    };
+                    
+                    window.currentForgeSchedule.push(newStep);
+                    
+                    if (!existingStep) {
+                        window.forgeScheduleSnapshot.schedule.push(newStep);
+                    }
                     
                     if (cAsc === fAsc && cLv === fLv && !useSnapshot) {
                         window.ongoingForgeSnapshot = {
@@ -636,13 +657,21 @@ function updateCalculator() {
         if (isAscendTarget && cAsc === tAsc && cLv === 35) {
             totalCostCur += 3000000;
             totalCostProj += 3000000;
-            window.currentForgeSchedule.push({
-                label: `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`,
+            
+            let ascLabel = `Ascension (Asc ${cAsc} ➜ ${cAsc + 1})`;
+            let ascStep = {
+                label: ascLabel,
                 finish: currentTimeProj,
+                durationMs: 0,
                 isAscension: true,
                 costCur: 3000000,
                 costProj: 3000000
-            });
+            };
+            window.currentForgeSchedule.push(ascStep);
+            
+            if (!previousSchedule.find(s => s.label === ascLabel)) {
+                window.forgeScheduleSnapshot.schedule.push(ascStep);
+            }
         }
 
         let finishLabel = 'Finish';
@@ -676,6 +705,20 @@ function syncCalcMobileDate(isoStr) { if(!isoStr) return; const d = new Date(iso
 let eggPlanQueue = []; let eggInsertIdx = -1; let expandedEggIdx = -1;
 let eggHistoryStack = []; let eggRedoStack = [];
 
+window.getClanEggLvl = function(id) {
+    const memMap = { 'egg1': 'eggTimerCommon', 'egg2': 'eggTimerRare', 'egg3': 'eggTimerEpic', 'egg4': 'eggTimerLegendary', 'egg5': 'eggTimerUltimate', 'egg6': 'eggTimerMythic' };
+    const domMap = { 'egg1': 'ct-egg-timer-common', 'egg2': 'ct-egg-timer-rare', 'egg3': 'ct-egg-timer-epic', 'egg4': 'ct-egg-timer-legendary', 'egg5': 'ct-egg-timer-ultimate', 'egg6': 'ct-egg-timer-mythic' };
+    
+    let val = 0;
+    const el = document.getElementById(domMap[id]);
+    if (el) {
+        val = parseInt(el.value) || 0;
+    } else if (window.clanTechMemory && window.clanTechMemory[memMap[id]] !== undefined) {
+        val = parseInt(window.clanTechMemory[memMap[id]]) || 0;
+    }
+    return val;
+};
+
 function captureEggState() { return { queue: JSON.parse(JSON.stringify(eggPlanQueue)), start: document.getElementById('egg-date-desktop').value }; }
 function pushEggHistory() { if (eggHistoryStack.length > 50) eggHistoryStack.shift(); eggHistoryStack.push(captureEggState()); eggRedoStack = []; updateEggUndoButtons(); }
 function undoEgg() { if (eggHistoryStack.length === 0) return; eggRedoStack.push(captureEggState()); const state = eggHistoryStack.pop(); eggPlanQueue = state.queue; if (state.start) syncEggDate(state.start, false); renderEggLog(); updateEggUndoButtons(); if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); }
@@ -689,11 +732,23 @@ function updateEggUndoButtons() {
 
 function populateEggDropdowns() { populateDateDropdowns(); }
 function getEggSpeedAtTime(techIdSuffix, targetTimeMs) {
-    let totalLvl = 0; for (let t = 1; t <= 5; t++) { totalLvl += (setupLevels[`spt_T${t}_${techIdSuffix}`] || 0); }
+    let personalLvl = 0; 
+    for (let t = 1; t <= 5; t++) { personalLvl += (setupLevels[`spt_T${t}_${techIdSuffix}`] || 0); }
     let mainStartTime = new Date(document.getElementById('start-date').value).getTime();
-    let techState = calcState(); let runningTimeOffset = 0;
-    techState.history.forEach(h => { let stepDuration = (h.type === 'delay' ? h.mins : h.added); runningTimeOffset += stepDuration; if (h.id && h.id.endsWith(techIdSuffix)) { let techFinishTime = mainStartTime + (runningTimeOffset * 60000); if (techFinishTime <= targetTimeMs) totalLvl++; } });
-    return totalLvl;
+    
+    let techState = calcState(); 
+    let runningTimeOffset = 0;
+    techState.history.forEach(h => { 
+        let stepDuration = (h.type === 'delay' ? h.mins : h.added); 
+        runningTimeOffset += stepDuration; 
+        if (h.id && h.id.endsWith(techIdSuffix)) { 
+            let techFinishTime = mainStartTime + (runningTimeOffset * 60000); 
+            if (techFinishTime <= targetTimeMs) personalLvl++; 
+        } 
+    });
+    
+    let clanLvl = window.getClanEggLvl(techIdSuffix);
+    return 1 + (personalLvl * 0.10) + (clanLvl * 0.05);
 }
 
 function activateEggInsert(idx) { 
@@ -787,8 +842,7 @@ function renderEggLog() {
                 const pts = EGG_POINTS[item.key] || 0; 
                 totalPoints += pts;
                 
-                const techLvl = getEggSpeedAtTime(data.id, curTime); 
-                const speedMult = 1 + (techLvl * 0.1); 
+                const speedMult = getEggSpeedAtTime(data.id, curTime); 
                 const finalMins = data.t / speedMult;
                 
                 totalQueueMins += finalMins; curTime += finalMins * 60000;
