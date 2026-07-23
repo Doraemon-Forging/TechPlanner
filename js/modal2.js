@@ -268,15 +268,150 @@ window.switchWeeklyTab = function(tabName) {
     }
 };
 
+window.runMissionSimulation = function() {
+    const btn = document.getElementById('runSimBtn');
+    const textSpan = document.getElementById('runSimText');
+    const originalText = textSpan.innerText;
+    
+    btn.disabled = true;
+
+    setTimeout(() => {
+        const resourceIds = ['fm_gold', 'green_ticket', 'eggshell', 'red_potion', 'mount_key', 'green_potion'];
+        const weights = resourceIds.map(id => parseFloat(document.getElementById('weight_' + id).value) || 0);
+        
+        const numDays = 100000;
+        let totalYield = [0, 0, 0, 0, 0, 0];
+
+        for (let day = 0; day < numDays; day++) {
+            let dailyMissions = [];
+
+            for (let m = 0; m < 6; m++) {
+                let counts = [0, 0, 0, 0, 0, 0];
+                for (let r = 0; r < 4; r++) {
+                    counts[Math.floor(Math.random() * 6)]++;
+                }
+                let score = 0;
+                for (let i = 0; i < 6; i++) {
+                    score += counts[i] * weights[i];
+                }
+                dailyMissions.push({ counts: counts, score: score });
+            }
+
+            dailyMissions.sort((a, b) => b.score - a.score);
+
+            for (let m = 0; m < 3; m++) {
+                for (let i = 0; i < 6; i++) {
+                    totalYield[i] += dailyMissions[m].counts[i];
+                }
+            }
+        }
+
+        resourceIds.forEach((id, i) => {
+            const avg = (totalYield[i] / numDays).toFixed(2);
+            const resultEl = document.getElementById('result_' + id);
+            resultEl.innerText = avg;
+        });
+        
+        textSpan.innerText = originalText;
+        btn.disabled = false;
+    }, 50);
+};
+
+window.copySimulationToSlots = function() {
+    const mapping = {
+        'fm_gold': 'gold',
+        'green_ticket': 'ticket',
+        'eggshell': 'egg',
+        'red_potion': 'pot',
+        'mount_key': 'key',
+        'green_potion': 'gp'
+    };
+
+    if (!window.missionSlotsMemory) window.missionSlotsMemory = {};
+
+    let updated = false;
+    for (const [resId, slotId] of Object.entries(mapping)) {
+        const resultEl = document.getElementById('result_' + resId);
+        if (resultEl && resultEl.innerText !== '-' && resultEl.innerText !== '') {
+            let numVal = parseFloat(resultEl.innerText);
+            if (!isNaN(numVal)) {
+                let formatted = numVal.toFixed(2);
+                window.missionSlotsMemory[slotId] = formatted;
+        
+                const inputEl = document.getElementById('ms-slot-' + slotId);
+                if (inputEl) inputEl.value = formatted;
+                
+                updated = true;
+            }
+        }
+    }
+
+    if (updated) {
+        if (typeof window.updateMissionCalc === 'function') window.updateMissionCalc();
+        if (typeof window.updateWeekly === 'function') window.updateWeekly();
+
+        if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+       
+        const textSpan = document.getElementById('copySlotsText');
+        if (textSpan) {
+            const originalText = textSpan.innerText;
+            textSpan.innerText = "COPIED!";
+            
+            setTimeout(() => { 
+                textSpan.innerText = originalText; 
+            }, 1000);
+        }
+    }
+};
+
 window.openMissionInfoModal = function() {
     if (typeof MODAL_SETTINGS !== 'undefined') {
         MODAL_SETTINGS.missionInfo = { 
             title: "MISSION SLOTS INFO", 
             headerColor: "#ebf8fa", 
             titleColor: "#000000", 
-            disclaimer: "Expected average slots per day based on targeting." 
+            disclaimer: "Expected average slots per day." 
         };
     }
+
+    const resources = [
+        { id: 'fm_gold', file: 'icons/fm_gold.png', defaultScore: 0, name: 'Gold' },
+        { id: 'green_ticket', file: 'icons/green_ticket.png', defaultScore: 1, name: 'Green Ticket' },
+        { id: 'eggshell', file: 'icons/eggshell.png', defaultScore: 2, name: 'Eggshell' },
+        { id: 'red_potion', file: 'icons/red_potion.png', defaultScore: 0, name: 'Red Potion' },
+        { id: 'mount_key', file: 'icons/mount_key.png', defaultScore: 2, name: 'Mount Key' },
+        { id: 'green_potion', file: 'icons/green_potion.png', defaultScore: 10, name: 'Green Potion' }
+    ];
+
+    let tableHtml = `
+        <div style="display: flex; padding: 4px 12px 6px 12px; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; color: #000; text-transform: uppercase;">
+            <div style="flex: 0 0 20%; text-align: center;"></div>
+            <div style="flex: 0 0 40%; text-align: center;">Value</div>
+            <div style="flex: 0 0 40%; text-align: center;">Expected Slots</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;">
+    `;
+    
+    resources.forEach(r => {
+        let savedWeight = window.missionSlotsMemory?.['w_' + r.id] !== undefined 
+            ? window.missionSlotsMemory['w_' + r.id] 
+            : r.defaultScore;
+
+        tableHtml += `
+            <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; padding: 6px 12px; border-radius: 8px; box-sizing: border-box;">
+                <div style="flex: 0 0 20%; display: flex; justify-content: center; align-items: center;">
+                    <img src="${r.file}" title="${r.name}" style="width: 24px; height: 24px; object-fit: contain;">
+                </div>
+                <div style="flex: 0 0 40%; display: flex; justify-content: center; align-items: center;">
+                    <input type="number" id="weight_${r.id}" value="${savedWeight}" step="1" onfocus="this.select()" oninput="document.getElementById('result_${r.id}').innerText='-';" style="width: 55px; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; background-color: #fff; -webkit-text-stroke: 0px transparent !important;">
+                </div>
+                <div style="flex: 0 0 40%; display: flex; justify-content: center; align-items: center;">
+                    <span id="result_${r.id}" style="font-family: 'Fredoka', sans-serif; font-size: 1.1rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">-</span>
+                </div>
+            </div>
+        `;
+    });
+    tableHtml += `</div>`;
 
     const contentHtml = `
         <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000; line-height: 1.4; padding: 5px;">
@@ -285,7 +420,7 @@ window.openMissionInfoModal = function() {
                 A slot is a single reward drop. Each mission gives 4 reward drops and those drops can be duplicates. Because you can complete 3 missions a day, you get exactly 12 reward slots per day.
             </div>
 
-            <div style="margin-bottom: 12px;">
+            <div style="margin-top: 15px; border-top: 2px solid #ccc; padding-top: 15px; margin-bottom: 12px;">
                 <span style="font-size: 1rem; text-transform: uppercase;">Targeting Strategy</span><br>
                 Your expected daily slots depend on how many different types of resources you choose to focus on. For example, most players target 4 types (Green Ticket, Eggshell, Mount Key, and Green Potion) while actively avoiding Gold and Red Potion.
             </div>
@@ -312,6 +447,38 @@ window.openMissionInfoModal = function() {
             </div>
 
             <p style="margin-bottom: 8px;"> The averages above assume no rerolls. If you spend gems to refresh the missions, your slot distributions may be different. If you have different resource target distribution, you can manually type your actual numbers into the inputs and make sure the total adds up to 12. </p>
+
+            <div style="margin-top: 15px; border-top: 2px solid #ccc; padding-top: 15px;">
+                <span style="font-size: 1rem; text-transform: uppercase;">Expected Slots Calculator</span><br>
+                Assign a value to each resource below (higher number = higher priority, 0 = avoid). The tool will simulate 100,000 times to show your expected daily slots. <p>Note: These results are only accurate if your actual in-game choices match the priorities you set here.</p></span>
+                
+                ${tableHtml}
+                
+                <style>
+                    .btn-calc-slots:hover:not(:disabled) { background-color: #33b5ff !important; transform: translateY(-2px); box-shadow: inset 0 -5px 0 0 #005d96 !important; }
+                    .btn-calc-slots:active:not(:disabled) { transform: translateY(3px) !important; box-shadow: inset 0 -2px 0 0 #005d96 !important; padding-bottom: 2px !important; }
+                    .btn-calc-slots:disabled { opacity: 0.7; cursor: not-allowed; }
+                    
+                    .btn-copy-slots:hover:not(:disabled) { background-color: #33b5ff !important; transform: translateY(-2px); box-shadow: inset 0 -5px 0 0 #005d96 !important; }
+                    .btn-copy-slots:active:not(:disabled) { transform: translateY(3px) !important; box-shadow: inset 0 -2px 0 0 #005d96 !important; padding-bottom: 2px !important; }
+                    .btn-copy-slots:disabled { opacity: 0.7; cursor: not-allowed; }
+                </style>
+
+                <div style="padding: 10px 0 5px 0; display: flex; justify-content: space-between; gap: 8px;">
+                    <button id="runSimBtn" class="btn-calc-slots" onclick="window.runMissionSimulation()" style="flex: 1; padding: 0 8px 5px 8px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; height: 45px; background-color: #02a2ff; border: 2px solid #000; border-radius: 12px; cursor: pointer; box-shadow: inset 0 -5px 0 0 #005d96; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;">
+                        <span id="runSimText" style="font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 0.85rem; font-weight: 500; color: #fff; text-transform: uppercase; letter-spacing: 0px; -webkit-text-stroke: 1.5px #000; paint-order: stroke fill; text-align: center; line-height: 1.1;">
+                            Calculate Slots
+                        </span>
+                    </button>
+                    
+                    <button id="copySlotsBtn" class="btn-copy-slots" onclick="window.copySimulationToSlots()" style="flex: 1; padding: 0 8px 5px 8px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; height: 45px; background-color: #02a2ff; border: 2px solid #000; border-radius: 12px; cursor: pointer; box-shadow: inset 0 -5px 0 0 #005d96; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;">
+                        <span id="copySlotsText" style="font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 0.85rem; font-weight: 500; color: #fff; text-transform: uppercase; letter-spacing: 0px; -webkit-text-stroke: 1.5px #000; paint-order: stroke fill; text-align: center; line-height: 1.1;">
+                            Apply Slots
+                        </span>
+                    </button>
+                </div>
+
+            </div>
         </div>
 
         <img src="x" style="display:none;" onerror="
@@ -486,17 +653,17 @@ window.openWeeklyBreakdownModal = function() {
                     return `
                     <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; padding: 6px 12px; border-radius: 8px;">
                         <img src="icons/${item.icon}" style="width: 24px; height: 24px; object-fit: contain;">
-                        <input type="number" id="ms-slot-${item.id}" value="${val}" min="0" max="12" step="0.1" oninput="if(this.value > 12) this.value = 12; window.updateMissionCalc(); window.updateWeekly();" style="width: 60px; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; -webkit-text-stroke: 0px transparent !important;">
+                        <input type="number" id="ms-slot-${item.id}" value="${val}" min="0" max="12" step="0.01" oninput="if(this.value > 12) this.value = 12; window.updateMissionCalc(); window.updateWeekly();" style="width: 60px; flex-shrink: 0; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; -webkit-text-stroke: 0px transparent !important;">
                     </div>
                     `;
                 }).join('')}
 
                 <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; padding: 6px 12px; border-radius: 8px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <img src="icons/fm_hammer.png" style="width: 24px; height: 24px; object-fit: contain;">
-                        <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000;">Rally Bonus (max 300)</span>
+                        <img src="icons/fm_hammer.png" style="width: 24px; height: 24px; flex-shrink: 0; object-fit: contain;">
+                        <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000; line-height: 1.1;">Rally Bonus (max 300)</span>
                     </div>
-                    <input type="number" id="ms-slot-rally" value="${window.missionSlotsMemory?.rally !== undefined ? window.missionSlotsMemory.rally : '300'}" min="0" max="300" step="1" oninput="if(this.value > 300) this.value = 300; window.updateMissionCalc(); window.updateWeekly();" style="width: 60px; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; -webkit-text-stroke: 0px transparent !important;">
+                    <input type="number" id="ms-slot-rally" value="${window.missionSlotsMemory?.rally !== undefined ? window.missionSlotsMemory.rally : '300'}" min="0" max="300" step="1" oninput="if(this.value > 300) this.value = 300; window.updateMissionCalc(); window.updateWeekly();" style="width: 60px; flex-shrink: 0; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; -webkit-text-stroke: 0px transparent !important;">
                 </div>
 
             </div>
