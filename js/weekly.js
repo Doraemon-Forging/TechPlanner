@@ -57,21 +57,6 @@ function updateWeekly() {
     const clanWin = getStrVal('weekly-war-win', 'Lose');
     const indivTier = getStrVal('weekly-indiv', 'None');
 
-    const baseLRewards = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league] && LEAGUE_REWARDS[league][rank]) ? LEAGUE_REWARDS[league][rank] : [0,0,0,0,0,0,0];
-    const baseCRewards = (typeof CLAN_WAR_REWARDS !== 'undefined' && CLAN_WAR_REWARDS[clanTier] && CLAN_WAR_REWARDS[clanTier][clanWin]) ? CLAN_WAR_REWARDS[clanTier][clanWin] : [0,0,0,0,0,0,0];
-
-    let baseIRewards = [0, 0, 0, 0, 0, 0, 0];
-    if (typeof INDIV_REWARDS !== 'undefined') {
-        const targetVal = INDIV_REWARDS[indivTier] ? INDIV_REWARDS[indivTier].val : 0;
-        for (const key in INDIV_REWARDS) {
-            if (INDIV_REWARDS[key].val <= targetVal) {
-                const tierRew = INDIV_REWARDS[key].rewards || [0,0,0,0,0,0,0];
-                for (let i = 0; i < 7; i++) baseIRewards[i] += tierRew[i];
-            }
-        }
-    }
-
-    // --- CLAN TECH MULTIPLIERS ---
     const getCtVal = (id, memKey) => {
         const el = document.getElementById(id);
         if (el) return parseInt(el.value) || 0;
@@ -100,6 +85,9 @@ function updateWeekly() {
         warGpTechMult = 1 + (ctWarLose / 100) + (ctPotLose * 5 / 100);
     }
 
+    const baseLRewards = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league] && LEAGUE_REWARDS[league][rank]) ? LEAGUE_REWARDS[league][rank] : [0,0,0,0,0,0,0];
+    const baseCRewards = (typeof CLAN_WAR_REWARDS !== 'undefined' && CLAN_WAR_REWARDS[clanTier] && CLAN_WAR_REWARDS[clanTier][clanWin]) ? CLAN_WAR_REWARDS[clanTier][clanWin] : [0,0,0,0,0,0,0];
+
     const lRewards = [0,0,0,0,0,0,0];
     const cRewards = [0,0,0,0,0,0,0];
     const iRewards = [0,0,0,0,0,0,0];
@@ -108,11 +96,25 @@ function updateWeekly() {
         if (i === 6) { 
             lRewards[i] = Math.round(baseLRewards[i] * gpAscMult); 
             cRewards[i] = Math.round(baseCRewards[i] * warGpTechMult * gpAscMult);
-            iRewards[i] = Math.round(baseIRewards[i] * indivGpTechMult * gpAscMult);
         } else {
             lRewards[i] = baseLRewards[i];
             cRewards[i] = Math.round(baseCRewards[i] * warMult);
-            iRewards[i] = Math.round(baseIRewards[i] * indivMult);
+        }
+    }
+
+    if (typeof INDIV_REWARDS !== 'undefined') {
+        const targetVal = INDIV_REWARDS[indivTier] ? INDIV_REWARDS[indivTier].val : 0;
+        for (const key in INDIV_REWARDS) {
+            if (INDIV_REWARDS[key].val <= targetVal) {
+                const tierRew = INDIV_REWARDS[key].rewards || [0,0,0,0,0,0,0];
+                for (let i = 0; i < 7; i++) {
+                    if (i === 6) { 
+                        iRewards[i] += Math.round(tierRew[i] * indivGpTechMult * gpAscMult);
+                    } else { 
+                        iRewards[i] += Math.round(tierRew[i] * indivMult);
+                    }
+                }
+            }
         }
     }
 
