@@ -141,7 +141,7 @@ function getMissionSlots() {
 }
 
 function calculateMissionYields(lvl, sub, slots) {
-    let th = (lvl - 1) * 10 + sub;
+    let th = ((lvl - 1) * 10) + sub + 1;
 
     let minLv = 1, maxLv = 4;
     if (typeof MISSION_CHECKPOINTS !== 'undefined') {

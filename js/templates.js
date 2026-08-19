@@ -944,7 +944,9 @@ const HTML_WEEKLY = `
                     <label class="daily-label">League:</label>
                     <div class="war-select-group flex-center">
                         <select id="weekly-league" class="war-select" style="width: 95px;" onchange="updateWeekly()">
-                            <option value="Diamond" selected>Diamond</option>
+                            <option value="Diamond III" selected>Dmd III</option>
+                            <option value="Diamond II">Dmd II</option>
+                            <option value="Diamond I">Dmd I</option>
                             <option value="Platinum">Platinum</option>
                             <option value="Gold">Gold</option>
                             <option value="Silver">Silver</option>
@@ -1011,6 +1013,19 @@ const HTML_WEEKLY = `
                             <option value="50k">50k</option>
                             <option value="20k">20k</option>
                             <option value="10k">10k</option>
+                            <option value="None">None</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="daily-input-row">
+                    <label class="daily-label">Clan Tech Race:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="weekly-race" class="war-select" style="width: 75px;" onchange="updateWeekly()">
+                            <option value="1st" selected>1st</option>
+                            <option value="2nd">2nd</option>
+                            <option value="3rd">3rd</option>
+                            <option value="4th">4th</option>
                             <option value="None">None</option>
                         </select>
                     </div>
@@ -1939,7 +1954,7 @@ const HTML_HELP = `
                     <span class="help-header-text">3. Organize the Schedule</span>
                     <div class="help-body-text">Open the <b>Schedule</b> tab to manage your queue.</div>
                     <ul class="help-body-text help-ul">
-                        <li><b>War Start:</b> Set the time when Day 1 of clan war starts. Tech upgrades finishing on Day 1 or Day 4 of war will be highlighted based on the matchmaking cycle: <b style="color: #5d9cec;">Steel Blue</b> for a similar strength opponent, and <b style="color: #00a2ff;">Standard Blue</b> for a random same-tier opponent. <i>Note: This tool isn't smart enough to automatically adjust the blue highlights for Daylight Saving Time! Since game servers don't observe DST, you will need to manually update your War Start time here twice a year when your local clocks shift.</i></li>
+                        <li><b>War Start:</b> Set the time when Day 1 of clan war starts. Tech upgrades finishing on Day 2 or Day 5 of war will be highlighted blue color. <p>Note: This tool isn't smart enough to automatically adjust the blue highlights for Daylight Saving Time. Since game servers don't observe DST, you will need to manually update your War Start time here twice a year when your local clocks shift.</P></i></li>
                         <li><b>Mark Done:</b> Click an item in your schedule to reveal its controls, then hit "DONE" to clear it and update your start time and tech.</li>
                         <li><b>Manage Upgrades:</b> Reorder tasks, insert new ones, or add custom delays (like when you are sleeping or working). To change the amount of gem on a tech, click the gem icon in the Schedule tab.</li>
                     </ul>

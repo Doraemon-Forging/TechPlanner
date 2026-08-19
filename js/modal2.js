@@ -78,6 +78,7 @@ window.openCombinedClanTechModal = function(initialTab = 'rewards') {
             'ct-war-lose': 'warLose', 'ct-mission': 'mission',
             'ct-pot-mission': 'potMission', 'ct-pot-personal': 'potPersonal',
             'ct-pot-win': 'potWin', 'ct-pot-lose': 'potLose',
+            'ct-pot-race': 'potRace',
             
             'cw-forge-eq': 'cwForgeEq', 'cw-summon-skill': 'cwSummonSkill',
             'cw-upgrade-skill': 'cwUpgradeSkill', 'cw-tech-tree': 'cwTechTree',
@@ -125,7 +126,8 @@ window.openCombinedClanTechModal = function(initialTab = 'rewards') {
         { id: 'ct-pot-mission',  label: 'Potion from Mission',  max: 20, icon: 'cr_missionpot.png' },
         { id: 'ct-pot-personal', label: 'Potion from Personal', max: 20, icon: 'cr_personalpot.png' },
         { id: 'ct-pot-win',      label: 'Potion from War Win',  max: 20, icon: 'cr_warwinpot.png' },
-        { id: 'ct-pot-lose',     label: 'Potion from War Lose', max: 20, icon: 'cr_warlosepot.png' }
+        { id: 'ct-pot-lose',     label: 'Potion from War Lose', max: 20, icon: 'cr_warlosepot.png' },
+        { id: 'ct-pot-race',     label: 'Potion from Race',     max: 20, icon: 'cr_racepot.png' }
     ];
 
     const warNodes = [
@@ -247,24 +249,24 @@ window.updateMissionCalc = function() {
 };
 
 window.switchWeeklyTab = function(tabName) {
-    const overviewTab = document.getElementById('tab-overview');
-    const missionTab = document.getElementById('tab-mission');
-    const btnOverview = document.getElementById('btn-tab-overview');
-    const btnMission = document.getElementById('btn-tab-mission');
+    const tabs = ['resource', 'source', 'mission'];
+    tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`btn-tab-${t}`);
+        
+        if (el && btn) {
+            if (t === tabName) {
+                el.style.display = 'block';
+                btn.classList.add('active');
+            } else {
+                el.style.display = 'none';
+                btn.classList.remove('active');
+            }
+        }
+    });
 
-    if (!overviewTab || !missionTab) return;
-
-    if (tabName === 'overview') {
-        overviewTab.style.display = 'block';
-        missionTab.style.display = 'none';
-        btnOverview.classList.add('active');
-        btnMission.classList.remove('active');
-    } else {
-        overviewTab.style.display = 'none';
-        missionTab.style.display = 'block';
-        btnOverview.classList.remove('active');
-        btnMission.classList.add('active');
-        if (typeof window.updateMissionCalc === 'function') window.updateMissionCalc();
+    if (tabName === 'mission' && typeof window.updateMissionCalc === 'function') {
+        window.updateMissionCalc();
     }
 };
 
@@ -521,7 +523,7 @@ window.openWeeklyBreakdownModal = function() {
     
     const resources = [
         { key: 'hammer', name: 'Hammer', icon: 'fm_hammer.png' },
-        { key: 'gold', name: 'Gold After Hammering', icon: 'fm_gold.png' },
+        { key: 'gold', name: 'Gold', icon: 'fm_gold.png' },
         { key: 'ticket', name: 'Green Ticket', icon: 'green_ticket.png' },
         { key: 'eggshell', name: 'Eggshell', icon: 'eggshell.png' },
         { key: 'potion', name: 'Red Potion', icon: 'red_potion.png' },
@@ -529,14 +531,49 @@ window.openWeeklyBreakdownModal = function() {
         { key: 'greenPotion', name: 'Green Potion', icon: 'green_potion.png' }
     ];
 
-    let overviewHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+    // --- REUSABLE RENDER FUNCTION ---
+    const renderBA = (vB, vA, isPct, key, isTitle = false) => {
+        const fmt = (v) => {
+            if (isPct) return v.toFixed(1) + '%';
+            if (!v || v === 0) return isPct ? "0.0%" : "-";
+            if (key === 'gold') {
+                if (v < 10000) return Math.round(v).toLocaleString('en-US');
+                if (v < 1000000) return parseFloat((v/1000).toFixed(1)) + 'k';
+                return parseFloat((v/1000000).toFixed(2)) + 'm';
+            }
+            return Math.round(v).toLocaleString('en-US');
+        };
+
+        const strB = fmt(vB);
+        const strA = fmt(vA);
+        const fontSize = isTitle ? '1rem' : '0.9rem';
+
+        if (Math.abs(vB - vA) < (isPct ? 0.1 : 0.001) || strB === strA) {
+            return `
+            <div style="width: 100%; display: flex; justify-content: flex-end;">
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #000; white-space: nowrap;">${strB}</div>
+            </div>`;
+        } else {
+            return `
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;">
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #000; white-space: nowrap; margin-bottom: 2px;">${strB}</div>
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #27ae60; white-space: nowrap; display: flex; align-items: center;">
+                    <span class="calc-arrow" style="margin-right: 4px; font-size: 0.85em;">➜</span>${strA}
+                </div>
+            </div>`;
+        }
+    };
+
+    // ==========================================
+    // TAB 1: BY RESOURCE
+    // ==========================================
+    let resourceHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
     
     resources.forEach(res => {
         const data = bd[res.key] || {};
-        
         let totalB = 0, totalA = 0;
         
-        const sources = ['Dungeon', 'Idle', 'League', 'War', 'Indiv Rewards', 'Mission', 'Rally Bonus', 'Hammer'];
+        const sources = ['Dungeon', 'Idle', 'League', 'War', 'Indiv Rewards', 'Mission', 'Rally Bonus', 'Hammer', 'Clan Race'];
         sources.forEach(src => {
             if (data[src]) {
                 totalB += (data[src].b || 0);
@@ -549,44 +586,12 @@ window.openWeeklyBreakdownModal = function() {
         const getPctB = (val) => totalB > 0 ? (val / totalB) * 100 : 0;
         const getPctA = (val) => totalA > 0 ? (val / totalA) * 100 : 0;
 
-        const renderBA = (vB, vA, isPct, key, isTitle = false) => {
-            const fmt = (v) => {
-                if (isPct) return v.toFixed(1) + '%';
-                if (!v || v === 0) return isPct ? "0.0%" : "-";
-                if (key === 'gold') {
-                    if (v < 10000) return Math.round(v).toLocaleString('en-US');
-                    if (v < 1000000) return parseFloat((v/1000).toFixed(1)) + 'k';
-                    return parseFloat((v/1000000).toFixed(2)) + 'm';
-                }
-                return Math.round(v).toLocaleString('en-US');
-            };
-
-            const strB = fmt(vB);
-            const strA = fmt(vA);
-            const fontSize = isTitle ? '1rem' : '0.9rem';
-
-            if (Math.abs(vB - vA) < (isPct ? 0.1 : 0.001) || strB === strA) {
-                return `
-                <div style="width: 100%; display: flex; justify-content: flex-end;">
-                    <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #000; white-space: nowrap;">${strB}</div>
-                </div>`;
-            } else {
-                return `
-                <div style="width: 100%; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;">
-                    <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #000; white-space: nowrap; margin-bottom: 2px;">${strB}</div>
-                    <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #27ae60; white-space: nowrap; display: flex; align-items: center;">
-                        <span class="calc-arrow" style="margin-right: 4px; font-size: 0.85em;">➜</span>${strA}
-                    </div>
-                </div>`;
-            }
-        };
-
         const generateRow = (label, srcData) => {
             if (!srcData) return '';
             const vB = srcData.b || 0;
             const vA = srcData.a || 0;
 
-            if (vB === 0 && vA === 0 && (label === 'Idle' || label === 'Dungeon')) return ''; 
+            if (vB === 0 && vA === 0 && (label === 'Idle' || label === 'Dungeon' || label === 'Clan Tech Race')) return ''; 
             
             return `
             <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;">
@@ -600,13 +605,15 @@ window.openWeeklyBreakdownModal = function() {
             </div>`;
         };
 
-        overviewHtml += `
+        let displayName = res.key === 'gold' ? 'Gold After Hammering' : res.name;
+
+        resourceHtml += `
         <div style="background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 2px solid #000; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
             <div style="background-color: #ebf8fa; padding: 10px 12px; border-bottom: 2px solid #000; display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <img src="icons/${res.icon}" style="width: 24px; height: 24px; object-fit: contain;">
                     <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 0px #000000; text-transform: uppercase; color: #000;">
-                        ${res.name}
+                        ${displayName}
                     </span>
                 </div>
                 <div style="flex: 1; display: flex; justify-content: flex-end;">
@@ -625,13 +632,81 @@ window.openWeeklyBreakdownModal = function() {
                 ${res.key === 'gold' ? '' : generateRow('War', data.War)}
                 ${generateRow('Indiv Rewards', data['Indiv Rewards'])}
                 ${res.key === 'hammer' ? generateRow('Rally Bonus', data['Rally Bonus']) : generateRow('Mission', data.Mission)}
+                ${res.key === 'greenPotion' ? generateRow('Clan Tech Race', data['Clan Race']) : ''}
                 ${res.key === 'gold' ? generateRow('Hammer', data.Hammer) : ''}
             </div>
         </div>`;
     });
     
-    overviewHtml += '</div>';
+    resourceHtml += '</div>';
 
+    // ==========================================
+    // TAB 2: BY SOURCE
+    // ==========================================
+    let sourceHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+    
+    // Using divider and suffix gives us exact control over how the math and headers are displayed
+    const sourceGroups = [
+        { id: 'Dungeon', name: 'Dungeon', divider: 14, suffix: ' / Key' },
+        { id: 'Idle', name: 'Idle', divider: 7, suffix: ' / Day' },
+        { id: 'League', name: 'League', divider: 1, suffix: '' },
+        { id: 'War', name: 'Clan War', divider: 1, suffix: '' },
+        { id: 'Indiv Rewards', name: 'Indiv. Rewards', divider: 1, suffix: '' },
+        { id: 'Mission', name: 'Mission', divider: 1, suffix: '' },
+        { id: 'Rally Bonus', name: 'Rally Bonus', divider: 7, suffix: ' / Day' },
+        { id: 'Clan Race', name: 'Clan Tech Race', divider: 1, suffix: '' } 
+    ];
+
+    sourceGroups.forEach(src => {
+        let rowsHtml = '';
+        
+        resources.forEach(res => {
+            const data = bd[res.key]?.[src.id];
+            if (data) {
+                // Apply the specific divider for this source
+                let vB = data.b / src.divider;
+                let vA = data.a / src.divider;
+
+                if (vB > 0 || vA > 0) {
+                    rowsHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;">
+                        <div style="flex: 0 0 50%; display: flex; align-items: center; gap: 8px; box-sizing: border-box;">
+                            <img src="icons/${res.icon}" style="width: 20px; height: 20px; object-fit: contain;">
+                            <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000;">${res.name}</span>
+                        </div>
+                        <div style="flex: 0 0 50%; padding-right: 8px; box-sizing: border-box;">
+                            ${renderBA(vB, vA, false, res.key, false)}
+                        </div>
+                    </div>`;
+                }
+            }
+        });
+
+        // Only render the card if the source yields at least one resource
+        if (rowsHtml !== '') {
+            sourceHtml += `
+            <div style="background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 2px solid #000; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
+                <div style="background-color: #ebf8fa; padding: 10px 12px; border-bottom: 2px solid #000; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 0px #000000; text-transform: uppercase; color: #000;">
+                        ${src.name}
+                    </span>
+                </div>
+                <div style="padding: 10px;">
+                    <div style="display: flex; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000; padding: 0 12px 6px 12px;">
+                        <div style="flex: 0 0 50%; box-sizing: border-box;">Resource</div>
+                        <div style="flex: 0 0 50%; text-align: right; padding-right: 8px; box-sizing: border-box;">Amount${src.suffix}</div>
+                    </div>
+                    ${rowsHtml}
+                </div>
+            </div>`;
+        }
+    });
+
+    sourceHtml += '</div>';
+
+    // ==========================================
+    // TAB 3: MISSION CALC HTML
+    // ==========================================
     const missionHtml = `
         <div class="daily-card config-card" style="margin-bottom: 15px; border-radius: 10px; border: 2px solid #000; overflow: hidden; background-color: #ffffff !important; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
             <div style="padding: 12px; display: flex; flex-direction: column; gap: 8px;">
@@ -701,6 +776,9 @@ window.openWeeklyBreakdownModal = function() {
         </div>
     `;
 
+    // ==========================================
+    // FINAL MODAL HTML ASSEMBLY
+    // ==========================================
     const contentHtml = `
         <style>
             #modal-tabs-container .seg-btn {
@@ -708,14 +786,19 @@ window.openWeeklyBreakdownModal = function() {
             }
         </style>
         <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-            <div id="modal-tabs-container" class="segmented-control" style="width: 100%; max-width: 250px; height: 38px; display: flex;">
-                <button id="btn-tab-overview" class="seg-btn active" onclick="window.switchWeeklyTab('overview')" style="flex: 1;">Overview</button>
+            <div id="modal-tabs-container" class="segmented-control" style="width: 100%; max-width: 320px; height: 38px; display: flex;">
+                <button id="btn-tab-resource" class="seg-btn active" onclick="window.switchWeeklyTab('resource')" style="flex: 1;">Resource</button>
+                <button id="btn-tab-source" class="seg-btn" onclick="window.switchWeeklyTab('source')" style="flex: 1;">Source</button>
                 <button id="btn-tab-mission" class="seg-btn" onclick="window.switchWeeklyTab('mission')" style="flex: 1;">Mission</button>
             </div>
         </div>
         
-        <div id="tab-overview">
-            ${overviewHtml}
+        <div id="tab-resource">
+            ${resourceHtml}
+        </div>
+
+        <div id="tab-source" style="display: none;">
+            ${sourceHtml}
         </div>
         
         <div id="tab-mission" style="display: none;">
@@ -729,7 +812,7 @@ window.openWeeklyBreakdownModal = function() {
             if (typeof window.updateMissionCalc === 'function') window.updateMissionCalc();
         }, 50);
     }
-}
+};
 
 // --- WAR CALC MODAL ---
 window.openWarOverviewModal = function() {

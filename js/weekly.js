@@ -56,6 +56,7 @@ function updateWeekly() {
     const clanTier = getStrVal('weekly-war-tier', 'None');
     const clanWin = getStrVal('weekly-war-win', 'Lose');
     const indivTier = getStrVal('weekly-indiv', 'None');
+    const raceRank = getStrVal('weekly-race', 'None');
 
     const getCtVal = (id, memKey) => {
         const el = document.getElementById(id);
@@ -69,6 +70,7 @@ function updateWeekly() {
     const ctPotPersonal = getCtVal('ct-pot-personal', 'potPersonal');
     const ctPotWin      = getCtVal('ct-pot-win', 'potWin');
     const ctPotLose     = getCtVal('ct-pot-lose', 'potLose');
+    const ctPotRace     = getCtVal('ct-pot-race', 'potRace');
     const potAsc = parseInt(document.getElementById('weekly-potion-asc')?.value) || 0; 
     
     const gpAscMult = 1 + (potAsc / 100);
@@ -93,11 +95,11 @@ function updateWeekly() {
     const iRewards = [0,0,0,0,0,0,0];
 
     for (let i = 0; i < 7; i++) {
+        lRewards[i] = baseLRewards[i]; 
+        
         if (i === 6) { 
-            lRewards[i] = Math.round(baseLRewards[i] * gpAscMult); 
             cRewards[i] = Math.round(baseCRewards[i] * warGpTechMult * gpAscMult);
         } else {
-            lRewards[i] = baseLRewards[i];
             cRewards[i] = Math.round(baseCRewards[i] * warMult);
         }
     }
@@ -118,6 +120,15 @@ function updateWeekly() {
         }
     }
 
+    let baseRaceGp = 0;
+    if (raceRank === '1st') baseRaceGp = 200;
+    else if (raceRank === '2nd') baseRaceGp = 100;
+    else if (raceRank === '3rd') baseRaceGp = 50;
+    else if (raceRank === '4th') baseRaceGp = 20;
+
+    const raceGpMult = 1 + (ctPotRace * 5 / 100);
+    const raceGpReward = Math.round(baseRaceGp * raceGpMult); // Not affected by Potion Asc
+
     const finalRewards = {
         hammer:   lRewards[0] + cRewards[0] + iRewards[0],
         gold:     lRewards[1] + cRewards[1] + iRewards[1],
@@ -125,7 +136,7 @@ function updateWeekly() {
         eggshell: lRewards[3] + cRewards[3] + iRewards[3],
         potion:   lRewards[4] + cRewards[4] + iRewards[4],
         mountKey: lRewards[5] + cRewards[5] + iRewards[5],
-        greenPotion: lRewards[6] + cRewards[6] + iRewards[6]
+        greenPotion: lRewards[6] + cRewards[6] + iRewards[6] + raceGpReward
     };
 
     const getWeeklyTechVal = (tree, nodeId) => {
@@ -238,7 +249,8 @@ function updateWeekly() {
             League: { b: lRewards[6], a: lRewards[6] },
             War: { b: cRewards[6], a: cRewards[6] },
             'Indiv Rewards': { b: iRewards[6], a: iRewards[6] },
-            Mission: { b: mWeekly.gp, a: mWeekly.gp }
+            Mission: { b: mWeekly.gp, a: mWeekly.gp },
+            'Clan Race': { b: raceGpReward, a: raceGpReward }
         }
     };
 

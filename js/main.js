@@ -22,8 +22,8 @@ window.refTablePrefs = {
 window.forgeGemsMemory = {};
 
 window.clanTechMemory = {
-    warPersonal: "", warWin: "", warLose: "", mission: "",
-    potMission: "", potPersonal: "", potWin: "", potLose: ""
+    warPersonal: "", warWin: "", warLose: "", mission: "",
+    potMission: "", potPersonal: "", potWin: "", potLose: "", potRace: ""
 };
 
 window.missionSlotsMemory = {
@@ -274,127 +274,128 @@ function toggleDashboard() {
 // 3. DATA PERSISTENCE
 // =========================================
 function captureFullState() {
-    const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
-    const dateInput = document.getElementById('start-date');
-    const exactTime = dateInput ? dateInput.getAttribute('data-exact-time') : null;
-    
-    const ctMap = {
-        'ct-war-personal': 'warPersonal', 'ct-war-win': 'warWin',
-        'ct-war-lose': 'warLose', 'ct-mission': 'mission',
-        'ct-pot-mission': 'potMission', 'ct-pot-personal': 'potPersonal',
-        'ct-pot-win': 'potWin', 'ct-pot-lose': 'potLose'
-    };
-    for (let id in ctMap) {
-        const el = document.getElementById(id);
-        if (el) window.clanTechMemory[ctMap[id]] = el.value;
-    }
+    const getVal = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const dateInput = document.getElementById('start-date');
+    const exactTime = dateInput ? dateInput.getAttribute('data-exact-time') : null;
 
-    const msMap = ['gold', 'ticket', 'egg', 'pot', 'key', 'gp', 'rally'];
-    msMap.forEach(id => {
-        const el = document.getElementById(`ms-slot-${id}`);
-        if (el) window.missionSlotsMemory[id] = el.value;
-    });
+    const ctMap = {
+        'ct-war-personal': 'warPersonal', 'ct-war-win': 'warWin',
+        'ct-war-lose': 'warLose', 'ct-mission': 'mission',
+        'ct-pot-mission': 'potMission', 'ct-pot-personal': 'potPersonal',
+        'ct-pot-win': 'potWin', 'ct-pot-lose': 'potLose', 'ct-pot-race': 'potRace'
+    };
+    for (let id in ctMap) {
+        const el = document.getElementById(id);
+        if (el) window.clanTechMemory[ctMap[id]] = el.value;
+    }
 
-    return {
-        setupLevels: (typeof setupLevels !== 'undefined') ? JSON.parse(JSON.stringify(setupLevels)) : {},
-        planQueue: (typeof planQueue !== 'undefined') ? JSON.parse(JSON.stringify(planQueue)) :[],
-        startDate: getVal('start-date'),
-        exactStartDate: exactTime,
-        calcData: { 
-            world: getVal('calc-world'), 
-            stage: getVal('calc-stage'), 
-            forgeAsc: getVal('calc-forge-asc'), 
-            forgeLv: getVal('calc-forge-lv'), 
-            targetForgeAsc: getVal('calc-target-forge-asc'),
-            targetForgeLv: getVal('calc-target-forge-lv'), 
-            hammers: getVal('calc-hammers'), 
-            target: getVal('calc-target'), 
-            calcStart: getVal('calc-start-date') 
-        },
-        eggData: { queue: (typeof eggPlanQueue !== 'undefined') ? JSON.parse(JSON.stringify(eggPlanQueue)) :[], start: getVal('egg-date-desktop') },
-        dailyData: { 
-            thiefLvl: getVal('thief-lvl'), thiefSub: getVal('thief-sub'),
-            ghostLvl: getVal('ghost-lvl'), ghostSub: getVal('ghost-sub'),
-            invLvl: getVal('inv-lvl'), invSub: getVal('inv-sub'),
-            zombieLvl: getVal('zombie-lvl'), zombieSub: getVal('zombie-sub')
-        },
-        weeklyData: { 
-            league: getVal('weekly-league'), rank: getVal('weekly-rank'),
-            warTier: getVal('weekly-war-tier'), warWin: getVal('weekly-war-win'),
-            indiv: getVal('weekly-indiv'),
-            potionAsc: getVal('weekly-potion-asc'), 
-            ascSkillAsc: getVal('asc-skill-asc'), ascSkillLv: getVal('asc-skill-lv'), ascSkillExp: getVal('asc-skill-exp'), ascSkillInv: getVal('asc-skill-inv'), ascSkillTargetAsc: getVal('asc-skill-target-asc'), ascSkillTargetLv: getVal('asc-skill-target-lv'),
-            ascPetAsc: getVal('asc-pet-asc'), ascPetLv: getVal('asc-pet-lv'), ascPetExp: getVal('asc-pet-exp'), ascPetInv: getVal('asc-pet-inv'), ascPetTargetAsc: getVal('asc-pet-target-asc'), ascPetTargetLv: getVal('asc-pet-target-lv'),
-            ascMountAsc: getVal('asc-mount-asc'), ascMountLv: getVal('asc-mount-lv'), ascMountExp: getVal('asc-mount-exp'), ascMountInv: getVal('asc-mount-inv'), ascMountTargetAsc: getVal('asc-mount-target-asc'), ascMountTargetLv: getVal('asc-mount-target-lv')
-        },
-        clanTechData: window.clanTechMemory,
-        missionSlotsData: window.missionSlotsMemory,
-        warCalcData: {
-            // Day 1
-            d1ForgeLv: getVal('wc-d1-forge-lv'), hammer: getVal('wc-hammer'), dungeonKey: getVal('wc-dungeon-key'),
-            skillAsc: getVal('wc-skill-asc'), skillLv: getVal('wc-skill-lv'), skillExp: getVal('wc-skill-exp'), ticket: getVal('wc-ticket'),
-            
-            // Day 2
-            d2ForgeLv: getVal('wc-d2-forge-lv'), forgeNodes: getVal('wc-forge-nodes'), forgeGem: getVal('wc-forge-gem'),
-            techI: getVal('wc-tech-I'), techII: getVal('wc-tech-II'), techIII: getVal('wc-tech-III'), techIV: getVal('wc-tech-IV'), techV: getVal('wc-tech-V'),
-            mountKey: getVal('wc-mount-key'), mergeMountTotal: getVal('wc-merge-mount-total'),
+    const msMap = ['gold', 'ticket', 'egg', 'pot', 'key', 'gp', 'rally'];
+    msMap.forEach(id => {
+        const el = document.getElementById(`ms-slot-${id}`);
+        if (el) window.missionSlotsMemory[id] = el.value;
+    });
 
-            // Day 3
-            d3ForgeLv: getVal('wc-d3-forge-lv'), d3Hammer: getVal('wc-d3-hammer'),
-            d3SkillAsc: getVal('wc-d3-skill-asc'), d3SkillLv: getVal('wc-d3-skill-lv'), d3SkillExp: getVal('wc-d3-skill-exp'), d3Ticket: getVal('wc-d3-ticket'),
-            hatch: ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`wc-hatch-${c}`)),
-            mergePetTotal: getVal('wc-merge-pet-total'),
+    return {
+        setupLevels: (typeof setupLevels !== 'undefined') ? JSON.parse(JSON.stringify(setupLevels)) : {},
+        planQueue: (typeof planQueue !== 'undefined') ? JSON.parse(JSON.stringify(planQueue)) :[],
+        startDate: getVal('start-date'),
+        exactStartDate: exactTime,
+        calcData: { 
+            world: getVal('calc-world'), 
+            stage: getVal('calc-stage'), 
+            forgeAsc: getVal('calc-forge-asc'), 
+            forgeLv: getVal('calc-forge-lv'), 
+            targetForgeAsc: getVal('calc-target-forge-asc'),
+            targetForgeLv: getVal('calc-target-forge-lv'), 
+            hammers: getVal('calc-hammers'), 
+            target: getVal('calc-target'), 
+            calcStart: getVal('calc-start-date') 
+        },
+        eggData: { queue: (typeof eggPlanQueue !== 'undefined') ? JSON.parse(JSON.stringify(eggPlanQueue)) :[], start: getVal('egg-date-desktop') },
+        dailyData: { 
+            thiefLvl: getVal('thief-lvl'), thiefSub: getVal('thief-sub'),
+            ghostLvl: getVal('ghost-lvl'), ghostSub: getVal('ghost-sub'),
+            invLvl: getVal('inv-lvl'), invSub: getVal('inv-sub'),
+            zombieLvl: getVal('zombie-lvl'), zombieSub: getVal('zombie-sub')
+        },
+        weeklyData: { 
+            league: getVal('weekly-league'), rank: getVal('weekly-rank'),
+            warTier: getVal('weekly-war-tier'), warWin: getVal('weekly-war-win'),
+            indiv: getVal('weekly-indiv'),
+            race: getVal('weekly-race'),
+            potionAsc: getVal('weekly-potion-asc'), 
+            ascSkillAsc: getVal('asc-skill-asc'), ascSkillLv: getVal('asc-skill-lv'), ascSkillExp: getVal('asc-skill-exp'), ascSkillInv: getVal('asc-skill-inv'), ascSkillTargetAsc: getVal('asc-skill-target-asc'), ascSkillTargetLv: getVal('asc-skill-target-lv'),
+            ascPetAsc: getVal('asc-pet-asc'), ascPetLv: getVal('asc-pet-lv'), ascPetExp: getVal('asc-pet-exp'), ascPetInv: getVal('asc-pet-inv'), ascPetTargetAsc: getVal('asc-pet-target-asc'), ascPetTargetLv: getVal('asc-pet-target-lv'),
+            ascMountAsc: getVal('asc-mount-asc'), ascMountLv: getVal('asc-mount-lv'), ascMountExp: getVal('asc-mount-exp'), ascMountInv: getVal('asc-mount-inv'), ascMountTargetAsc: getVal('asc-mount-target-asc'), ascMountTargetLv: getVal('asc-mount-target-lv')
+        },
+        clanTechData: window.clanTechMemory,
+        missionSlotsData: window.missionSlotsMemory,
+        warCalcData: {
+            // Day 1
+            d1ForgeLv: getVal('wc-d1-forge-lv'), hammer: getVal('wc-hammer'), dungeonKey: getVal('wc-dungeon-key'),
+            skillAsc: getVal('wc-skill-asc'), skillLv: getVal('wc-skill-lv'), skillExp: getVal('wc-skill-exp'), ticket: getVal('wc-ticket'),
 
-            // Day 4
-            d4ForgeLv: getVal('wc-d4-forge-lv'), d4ForgeNodes: getVal('wc-d4-forge-nodes'), d4ForgeGem: getVal('wc-d4-forge-gem'),
-            d4DungeonKey: getVal('wc-d4-dungeon-key'), d4MountKey: getVal('wc-d4-mount-key'), d4MergeMountTotal: getVal('wc-d4-merge-mount-total'),
+            // Day 2
+            d2ForgeLv: getVal('wc-d2-forge-lv'), forgeNodes: getVal('wc-forge-nodes'), forgeGem: getVal('wc-forge-gem'),
+            techI: getVal('wc-tech-I'), techII: getVal('wc-tech-II'), techIII: getVal('wc-tech-III'), techIV: getVal('wc-tech-IV'), techV: getVal('wc-tech-V'),
+            mountKey: getVal('wc-mount-key'), mergeMountTotal: getVal('wc-merge-mount-total'),
 
-            // Day 5
-            d5ForgeLv: getVal('wc-d5-forge-lv'), d5Hammer: getVal('wc-d5-hammer'),
-            d5TechI: getVal('wc-d5-tech-I'), d5TechII: getVal('wc-d5-tech-II'), d5TechIII: getVal('wc-d5-tech-III'), d5TechIV: getVal('wc-d5-tech-IV'), d5TechV: getVal('wc-d5-tech-V'),
-            d5Hatch: ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`wc-d5-hatch-${c}`)),
-            d5MergePetTotal: getVal('wc-d5-merge-pet-total')
-        },
-        petData: {
-            petAscension: getVal('pet-ascension'), mountAscension: getVal('mount-ascension'),
-            p1: { rarity: getVal('pet-1-rarity'), id: getVal('pet-1-id'), lvl: getVal('pet-1-lvl'), exp: getVal('pet-1-exp') },
-            p2: { rarity: getVal('pet-2-rarity'), id: getVal('pet-2-id'), lvl: getVal('pet-2-lvl'), exp: getVal('pet-2-exp') },
-            p3: { rarity: getVal('pet-3-rarity'), id: getVal('pet-3-id'), lvl: getVal('pet-3-lvl'), exp: getVal('pet-3-exp') },
-            mergePet: {
-                tRarity: getVal('merge-target-rarity'), tId: getVal('merge-target-id'), tLvl: getVal('merge-target-lvl'), tExp: getVal('merge-target-exp'),
-                fRarity: getVal('merge-fodder-rarity'), fId: getVal('merge-fodder-id'), fLvl: getVal('merge-fodder-lvl'), fExp: getVal('merge-fodder-exp'),
-                bulk:['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`bulk-${c}`))
-            },
-            mergeMount: {
-                tRarity: getVal('mount-target-rarity'), tLvl: getVal('mount-target-lvl'), tExp: getVal('mount-target-exp'),
-                fRarity: getVal('mount-fodder-rarity'), fLvl: getVal('mount-fodder-lvl'), fExp: getVal('mount-fodder-exp'),
-                bulk:['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`bulk-mount-${c}`))
-            }
-        },
-        summonData: {
-            skill: { asc: getVal('sum-skill-asc'), lvl: getVal('sum-skill-lvl'), exp: getVal('sum-skill-exp'), res: getVal('sum-skill-res'), prob: getVal('sum-skill-prob'), targetAsc: getVal('sum-skill-target-asc'), targetLv: getVal('sum-skill-target-lv') },
-            pet: { asc: getVal('sum-pet-asc'), lvl: getVal('sum-pet-lvl'), exp: getVal('sum-pet-exp'), res: getVal('sum-pet-res'), prob: getVal('sum-pet-prob'), targetAsc: getVal('sum-pet-target-asc'), targetLv: getVal('sum-pet-target-lv') },
-            mount: { asc: getVal('sum-mount-asc'), lvl: getVal('sum-mount-lvl'), exp: getVal('sum-mount-exp'), res: getVal('sum-mount-res'), prob: getVal('sum-mount-prob'), targetAsc: getVal('sum-mount-target-asc'), targetLv: getVal('sum-mount-target-lv') }
-        },
-        equipmentData: {
-            ascension: getVal('eq-ascension'),
-            helmet: { tier: getVal('eq-helmet-tier'), lvl: getVal('eq-helmet-lvl') },
-            armor: { tier: getVal('eq-armor-tier'), lvl: getVal('eq-armor-lvl') },
-            boots: { tier: getVal('eq-boots-tier'), lvl: getVal('eq-boots-lvl') },
-            belt: { tier: getVal('eq-belt-tier'), lvl: getVal('eq-belt-lvl') },
-            weapon: { type: getVal('eq-weapon-type'), tier: getVal('eq-weapon-tier'), lvl: getVal('eq-weapon-lvl') },
-            gloves: { tier: getVal('eq-gloves-tier'), lvl: getVal('eq-gloves-lvl') },
-            neck: { tier: getVal('eq-neck-tier'), lvl: getVal('eq-neck-lvl') },
-            ring: { tier: getVal('eq-ring-tier'), lvl: getVal('eq-ring-lvl') },
-            avgTier: getVal('eq-avg-tier'),
-            avgWeapon: getVal('eq-avg-weapon-type')
-        },
-        refTableData: window.refTablePrefs, 
-        warConfig: (typeof warConfig !== 'undefined') ? warConfig : { day: 2, hour: 12, min: 0, ampm: 'AM' },
-        activeTree: (typeof activeTreeKey !== 'undefined') ? activeTreeKey : 'forge',
-        ongoingForgeSnapshot: (typeof window.ongoingForgeSnapshot !== 'undefined') ? window.ongoingForgeSnapshot : null,
-        forgeGemsMemory: window.forgeGemsMemory 
-    };
+            // Day 3
+            d3ForgeLv: getVal('wc-d3-forge-lv'), d3Hammer: getVal('wc-d3-hammer'),
+            d3SkillAsc: getVal('wc-d3-skill-asc'), d3SkillLv: getVal('wc-d3-skill-lv'), d3SkillExp: getVal('wc-d3-skill-exp'), d3Ticket: getVal('wc-d3-ticket'),
+            hatch: ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`wc-hatch-${c}`)),
+            mergePetTotal: getVal('wc-merge-pet-total'),
+
+            // Day 4
+            d4ForgeLv: getVal('wc-d4-forge-lv'), d4ForgeNodes: getVal('wc-d4-forge-nodes'), d4ForgeGem: getVal('wc-d4-forge-gem'),
+            d4DungeonKey: getVal('wc-d4-dungeon-key'), d4MountKey: getVal('wc-d4-mount-key'), d4MergeMountTotal: getVal('wc-d4-merge-mount-total'),
+
+            // Day 5
+            d5ForgeLv: getVal('wc-d5-forge-lv'), d5Hammer: getVal('wc-d5-hammer'),
+            d5TechI: getVal('wc-d5-tech-I'), d5TechII: getVal('wc-d5-tech-II'), d5TechIII: getVal('wc-d5-tech-III'), d5TechIV: getVal('wc-d5-tech-IV'), d5TechV: getVal('wc-d5-tech-V'),
+            d5Hatch: ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`wc-d5-hatch-${c}`)),
+            d5MergePetTotal: getVal('wc-d5-merge-pet-total')
+        },
+        petData: {
+            petAscension: getVal('pet-ascension'), mountAscension: getVal('mount-ascension'),
+            p1: { rarity: getVal('pet-1-rarity'), id: getVal('pet-1-id'), lvl: getVal('pet-1-lvl'), exp: getVal('pet-1-exp') },
+            p2: { rarity: getVal('pet-2-rarity'), id: getVal('pet-2-id'), lvl: getVal('pet-2-lvl'), exp: getVal('pet-2-exp') },
+            p3: { rarity: getVal('pet-3-rarity'), id: getVal('pet-3-id'), lvl: getVal('pet-3-lvl'), exp: getVal('pet-3-exp') },
+            mergePet: {
+                tRarity: getVal('merge-target-rarity'), tId: getVal('merge-target-id'), tLvl: getVal('merge-target-lvl'), tExp: getVal('merge-target-exp'),
+                fRarity: getVal('merge-fodder-rarity'), fId: getVal('merge-fodder-id'), fLvl: getVal('merge-fodder-lvl'), fExp: getVal('merge-fodder-exp'),
+                bulk:['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`bulk-${c}`))
+            },
+            mergeMount: {
+                tRarity: getVal('mount-target-rarity'), tLvl: getVal('mount-target-lvl'), tExp: getVal('mount-target-exp'),
+                fRarity: getVal('mount-fodder-rarity'), fLvl: getVal('mount-fodder-lvl'), fExp: getVal('mount-fodder-exp'),
+                bulk:['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].map(c => getVal(`bulk-mount-${c}`))
+            }
+        },
+        summonData: {
+            skill: { asc: getVal('sum-skill-asc'), lvl: getVal('sum-skill-lvl'), exp: getVal('sum-skill-exp'), res: getVal('sum-skill-res'), prob: getVal('sum-skill-prob'), targetAsc: getVal('sum-skill-target-asc'), targetLv: getVal('sum-skill-target-lv') },
+            pet: { asc: getVal('sum-pet-asc'), lvl: getVal('sum-pet-lvl'), exp: getVal('sum-pet-exp'), res: getVal('sum-pet-res'), prob: getVal('sum-pet-prob'), targetAsc: getVal('sum-pet-target-asc'), targetLv: getVal('sum-pet-target-lv') },
+            mount: { asc: getVal('sum-mount-asc'), lvl: getVal('sum-mount-lvl'), exp: getVal('sum-mount-exp'), res: getVal('sum-mount-res'), prob: getVal('sum-mount-prob'), targetAsc: getVal('sum-mount-target-asc'), targetLv: getVal('sum-mount-target-lv') }
+        },
+        equipmentData: {
+            ascension: getVal('eq-ascension'),
+            helmet: { tier: getVal('eq-helmet-tier'), lvl: getVal('eq-helmet-lvl') },
+            armor: { tier: getVal('eq-armor-tier'), lvl: getVal('eq-armor-lvl') },
+            boots: { tier: getVal('eq-boots-tier'), lvl: getVal('eq-boots-lvl') },
+            belt: { tier: getVal('eq-belt-tier'), lvl: getVal('eq-belt-lvl') },
+            weapon: { type: getVal('eq-weapon-type'), tier: getVal('eq-weapon-tier'), lvl: getVal('eq-weapon-lvl') },
+            gloves: { tier: getVal('eq-gloves-tier'), lvl: getVal('eq-gloves-lvl') },
+            neck: { tier: getVal('eq-neck-tier'), lvl: getVal('eq-neck-lvl') },
+            ring: { tier: getVal('eq-ring-tier'), lvl: getVal('eq-ring-lvl') },
+            avgTier: getVal('eq-avg-tier'),
+            avgWeapon: getVal('eq-avg-weapon-type')
+        },
+        refTableData: window.refTablePrefs, 
+        warConfig: (typeof warConfig !== 'undefined') ? warConfig : { day: 2, hour: 12, min: 0, ampm: 'AM' },
+        activeTree: (typeof activeTreeKey !== 'undefined') ? activeTreeKey : 'forge',
+        ongoingForgeSnapshot: (typeof window.ongoingForgeSnapshot !== 'undefined') ? window.ongoingForgeSnapshot : null,
+        forgeGemsMemory: window.forgeGemsMemory 
+    };
 }
 
 function loadState(d) {
@@ -462,6 +463,7 @@ function loadState(d) {
             safeSetVal('weekly-war-tier', d.weeklyData.warTier); safeSetVal('weekly-war-win', d.weeklyData.warWin);
             safeSetVal('weekly-indiv', d.weeklyData.indiv);
             
+            if (d.weeklyData.race !== undefined) safeSetVal('weekly-race', d.weeklyData.race);
             if (d.weeklyData.potionAsc !== undefined) safeSetVal('weekly-potion-asc', d.weeklyData.potionAsc); 
 
             if (d.weeklyData.ascSkillAsc !== undefined) safeSetVal('asc-skill-asc', d.weeklyData.ascSkillAsc);
@@ -482,18 +484,19 @@ function loadState(d) {
     } catch (e) {}
 
     try {
-        if (d.clanTechData) {
-            window.clanTechMemory = { ...d.clanTechData };
-            safeSetVal('ct-war-personal', d.clanTechData.warPersonal);
-            safeSetVal('ct-war-win', d.clanTechData.warWin);
-            safeSetVal('ct-war-lose', d.clanTechData.warLose);
-            safeSetVal('ct-mission', d.clanTechData.mission);
-            safeSetVal('ct-pot-mission', d.clanTechData.potMission);
-            safeSetVal('ct-pot-personal', d.clanTechData.potPersonal);
-            safeSetVal('ct-pot-win', d.clanTechData.potWin);
-            safeSetVal('ct-pot-lose', d.clanTechData.potLose);
-        }
-    } catch (e) {}
+        if (d.clanTechData) {
+            window.clanTechMemory = { ...d.clanTechData };
+            safeSetVal('ct-war-personal', d.clanTechData.warPersonal);
+            safeSetVal('ct-war-win', d.clanTechData.warWin);
+            safeSetVal('ct-war-lose', d.clanTechData.warLose);
+            safeSetVal('ct-mission', d.clanTechData.mission);
+            safeSetVal('ct-pot-mission', d.clanTechData.potMission);
+            safeSetVal('ct-pot-personal', d.clanTechData.potPersonal);
+            safeSetVal('ct-pot-win', d.clanTechData.potWin);
+            safeSetVal('ct-pot-lose', d.clanTechData.potLose);
+            safeSetVal('ct-pot-race', d.clanTechData.potRace);
+        }
+    } catch (e) {}
 
     try {
         if (d.missionSlotsData) {
@@ -865,36 +868,36 @@ window.addEventListener('keydown', (e) => {
 });
 
 ['change', 'input'].forEach(evt => {
-    document.addEventListener(evt, function(e) {
-        if (e.target.matches('input, select, textarea')) {
+    document.addEventListener(evt, function(e) {
+        if (e.target.matches('input, select, textarea')) {
 
-            if (e.target.id.startsWith('ct-')) {
-                const memKeyMap = {
-                    'ct-war-personal': 'warPersonal', 'ct-war-win': 'warWin', 'ct-war-lose': 'warLose', 
-                    'ct-mission': 'mission', 'ct-pot-mission': 'potMission', 'ct-pot-personal': 'potPersonal',
-                    'ct-pot-win': 'potWin', 'ct-pot-lose': 'potLose'
-                };
-                if (memKeyMap[e.target.id]) {
-                    window.clanTechMemory[memKeyMap[e.target.id]] = e.target.value;
-                }
-            }
+            if (e.target.id.startsWith('ct-')) {
+                const memKeyMap = {
+                    'ct-war-personal': 'warPersonal', 'ct-war-win': 'warWin', 'ct-war-lose': 'warLose', 
+                    'ct-mission': 'mission', 'ct-pot-mission': 'potMission', 'ct-pot-personal': 'potPersonal',
+                    'ct-pot-win': 'potWin', 'ct-pot-lose': 'potLose', 'ct-pot-race': 'potRace'
+                };
+                if (memKeyMap[e.target.id]) {
+                    window.clanTechMemory[memKeyMap[e.target.id]] = e.target.value;
+                }
+            }
 
-            if (e.target.id.startsWith('ms-slot-')) {
-                const key = e.target.id.replace('ms-slot-', '');
-                window.missionSlotsMemory[key] = e.target.value;
-            }
+            if (e.target.id.startsWith('ms-slot-')) {
+                const key = e.target.id.replace('ms-slot-', '');
+                window.missionSlotsMemory[key] = e.target.value;
+            }
 
             if (e.target.id.startsWith('weight_')) {
                 const key = 'w_' + e.target.id.replace('weight_', '');
                 window.missionSlotsMemory[key] = e.target.value;
             }
-            
-            syncSharedInputs(e.target);
-            
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(saveToLocalStorage, 300);
-        }
-    });
+
+            syncSharedInputs(e.target);
+
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveToLocalStorage, 300);
+        }
+    });
 });
 
 window.addEventListener('load', init);
