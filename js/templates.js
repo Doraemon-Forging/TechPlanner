@@ -970,9 +970,9 @@ const HTML_WEEKLY = `
                     <label class="daily-label">Clan War:</label>
                     <div class="war-select-group flex-center">
                         <select id="weekly-war-tier" class="war-select" style="width: 95px;" onchange="updateWeekly()">
-                            <option value="SSS-Tier" selected>S+++ Tier</option>
-                            <option value="SS-Tier">S++ Tier</option>
-                            <option value="S-Tier">S+ Tier</option>
+                            <option value="SSS-Tier" selected>S++ Tier</option>
+                            <option value="SS-Tier">S+ Tier</option>
+                            <option value="S-Tier">S Tier</option>
                             <option value="A-Tier">A Tier</option>
                             <option value="B-Tier">B Tier</option>
                             <option value="C-Tier">C Tier</option>

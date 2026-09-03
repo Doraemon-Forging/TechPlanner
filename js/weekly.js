@@ -95,11 +95,11 @@ function updateWeekly() {
     const iRewards = [0,0,0,0,0,0,0];
 
     for (let i = 0; i < 7; i++) {
-        lRewards[i] = baseLRewards[i]; 
-        
-        if (i === 6) { 
+        if (i === 6) {
+            lRewards[i] = Math.round(baseLRewards[i] * gpAscMult);
             cRewards[i] = Math.round(baseCRewards[i] * warGpTechMult * gpAscMult);
         } else {
+            lRewards[i] = baseLRewards[i]; 
             cRewards[i] = Math.round(baseCRewards[i] * warMult);
         }
     }
@@ -121,13 +121,13 @@ function updateWeekly() {
     }
 
     let baseRaceGp = 0;
-    if (raceRank === '1st') baseRaceGp = 200;
-    else if (raceRank === '2nd') baseRaceGp = 100;
+    if (raceRank === '1st') baseRaceGp = 400;
+    else if (raceRank === '2nd') baseRaceGp = 150;
     else if (raceRank === '3rd') baseRaceGp = 50;
-    else if (raceRank === '4th') baseRaceGp = 20;
+    else if (raceRank === '4th') baseRaceGp = 30;
 
-    const raceGpMult = 1 + (ctPotRace * 5 / 100);
-    const raceGpReward = Math.round(baseRaceGp * raceGpMult); // Not affected by Potion Asc
+    const raceGpMult = 1 + (ctPotRace * 5 / 100) + (potAsc / 100);
+    const raceGpReward = Math.round(baseRaceGp * raceGpMult);
 
     const finalRewards = {
         hammer:   lRewards[0] + cRewards[0] + iRewards[0],
