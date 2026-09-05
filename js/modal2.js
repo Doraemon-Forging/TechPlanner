@@ -249,7 +249,7 @@ window.updateMissionCalc = function() {
 };
 
 window.switchWeeklyTab = function(tabName) {
-    const tabs = ['resource', 'source', 'mission'];
+    const tabs = ['source', 'resource', 'mission'];
     tabs.forEach(t => {
         const el = document.getElementById(`tab-${t}`);
         const btn = document.getElementById(`btn-tab-${t}`);
@@ -564,8 +564,70 @@ window.openWeeklyBreakdownModal = function() {
         }
     };
 
+        // ==========================================
+    // TAB 1: BY SOURCE
     // ==========================================
-    // TAB 1: BY RESOURCE
+    let sourceHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+    
+    const sourceGroups = [
+        { id: 'Dungeon', name: 'Dungeon', divider: 14, suffix: ' / Key' },
+        { id: 'Idle', name: 'Idle', divider: 7, suffix: ' / Day' },
+        { id: 'League', name: 'League', divider: 1, suffix: '' },
+        { id: 'War', name: 'Clan War', divider: 1, suffix: '' },
+        { id: 'Indiv Rewards', name: 'Indiv. Rewards', divider: 1, suffix: '' },
+        { id: 'Mission', name: 'Mission', divider: 1, suffix: '' },
+        { id: 'Rally Bonus', name: 'Rally Bonus', divider: 7, suffix: ' / Day' },
+        { id: 'Clan Race', name: 'Clan Tech Race', divider: 1, suffix: '' } 
+    ];
+
+    sourceGroups.forEach(src => {
+        let rowsHtml = '';
+        
+        resources.forEach(res => {
+            const data = bd[res.key]?.[src.id];
+            if (data) {
+                let vB = data.b / src.divider;
+                let vA = data.a / src.divider;
+
+                if (vB > 0 || vA > 0) {
+                    rowsHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;">
+                        <div style="flex: 0 0 50%; display: flex; align-items: center; gap: 8px; box-sizing: border-box;">
+                            <img src="icons/${res.icon}" style="width: 20px; height: 20px; object-fit: contain;">
+                            <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000;">${res.name}</span>
+                        </div>
+                        <div style="flex: 0 0 50%; padding-right: 8px; box-sizing: border-box;">
+                            ${renderBA(vB, vA, false, res.key, false)}
+                        </div>
+                    </div>`;
+                }
+            }
+        });
+
+        if (rowsHtml !== '') {
+            sourceHtml += `
+            <div style="background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 2px solid #000; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
+                <div style="background-color: #ebf8fa; padding: 10px 12px; border-bottom: 2px solid #000; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 0px #000000; text-transform: uppercase; color: #000;">
+                        ${src.name}
+                    </span>
+                </div>
+                <div style="padding: 10px;">
+                    <div style="display: flex; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000; padding: 0 12px 6px 12px;">
+                        <div style="flex: 0 0 50%; box-sizing: border-box;">Resource</div>
+                        <div style="flex: 0 0 50%; text-align: right; padding-right: 8px; box-sizing: border-box;">Amount${src.suffix}</div>
+                    </div>
+                    ${rowsHtml}
+                </div>
+            </div>`;
+        }
+    });
+
+    sourceHtml += '</div>';
+
+
+    // ==========================================
+    // TAB 2: BY RESOURCE
     // ==========================================
     let resourceHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
     
@@ -639,70 +701,6 @@ window.openWeeklyBreakdownModal = function() {
     });
     
     resourceHtml += '</div>';
-
-    // ==========================================
-    // TAB 2: BY SOURCE
-    // ==========================================
-    let sourceHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
-    
-    // Using divider and suffix gives us exact control over how the math and headers are displayed
-    const sourceGroups = [
-        { id: 'Dungeon', name: 'Dungeon', divider: 14, suffix: ' / Key' },
-        { id: 'Idle', name: 'Idle', divider: 7, suffix: ' / Day' },
-        { id: 'League', name: 'League', divider: 1, suffix: '' },
-        { id: 'War', name: 'Clan War', divider: 1, suffix: '' },
-        { id: 'Indiv Rewards', name: 'Indiv. Rewards', divider: 1, suffix: '' },
-        { id: 'Mission', name: 'Mission', divider: 1, suffix: '' },
-        { id: 'Rally Bonus', name: 'Rally Bonus', divider: 7, suffix: ' / Day' },
-        { id: 'Clan Race', name: 'Clan Tech Race', divider: 1, suffix: '' } 
-    ];
-
-    sourceGroups.forEach(src => {
-        let rowsHtml = '';
-        
-        resources.forEach(res => {
-            const data = bd[res.key]?.[src.id];
-            if (data) {
-                // Apply the specific divider for this source
-                let vB = data.b / src.divider;
-                let vA = data.a / src.divider;
-
-                if (vB > 0 || vA > 0) {
-                    rowsHtml += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;">
-                        <div style="flex: 0 0 50%; display: flex; align-items: center; gap: 8px; box-sizing: border-box;">
-                            <img src="icons/${res.icon}" style="width: 20px; height: 20px; object-fit: contain;">
-                            <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000;">${res.name}</span>
-                        </div>
-                        <div style="flex: 0 0 50%; padding-right: 8px; box-sizing: border-box;">
-                            ${renderBA(vB, vA, false, res.key, false)}
-                        </div>
-                    </div>`;
-                }
-            }
-        });
-
-        // Only render the card if the source yields at least one resource
-        if (rowsHtml !== '') {
-            sourceHtml += `
-            <div style="background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 2px solid #000; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
-                <div style="background-color: #ebf8fa; padding: 10px 12px; border-bottom: 2px solid #000; display: flex; align-items: center; justify-content: center;">
-                    <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 0px #000000; text-transform: uppercase; color: #000;">
-                        ${src.name}
-                    </span>
-                </div>
-                <div style="padding: 10px;">
-                    <div style="display: flex; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000; padding: 0 12px 6px 12px;">
-                        <div style="flex: 0 0 50%; box-sizing: border-box;">Resource</div>
-                        <div style="flex: 0 0 50%; text-align: right; padding-right: 8px; box-sizing: border-box;">Amount${src.suffix}</div>
-                    </div>
-                    ${rowsHtml}
-                </div>
-            </div>`;
-        }
-    });
-
-    sourceHtml += '</div>';
 
     // ==========================================
     // TAB 3: MISSION CALC HTML
@@ -787,20 +785,20 @@ window.openWeeklyBreakdownModal = function() {
         </style>
         <div style="display: flex; justify-content: center; margin-bottom: 15px;">
             <div id="modal-tabs-container" class="segmented-control" style="width: 100%; max-width: 320px; height: 38px; display: flex;">
-                <button id="btn-tab-resource" class="seg-btn active" onclick="window.switchWeeklyTab('resource')" style="flex: 1;">Resource</button>
-                <button id="btn-tab-source" class="seg-btn" onclick="window.switchWeeklyTab('source')" style="flex: 1;">Source</button>
+                <button id="btn-tab-source" class="seg-btn active" onclick="window.switchWeeklyTab('source')" style="flex: 1;">Source</button>
+                <button id="btn-tab-resource" class="seg-btn" onclick="window.switchWeeklyTab('resource')" style="flex: 1;">Resource</button>
                 <button id="btn-tab-mission" class="seg-btn" onclick="window.switchWeeklyTab('mission')" style="flex: 1;">Mission</button>
             </div>
         </div>
         
-        <div id="tab-resource">
-            ${resourceHtml}
-        </div>
-
-        <div id="tab-source" style="display: none;">
+        <div id="tab-source">
             ${sourceHtml}
         </div>
         
+        <div id="tab-resource" style="display: none;">
+            ${resourceHtml}
+        </div>
+
         <div id="tab-mission" style="display: none;">
             ${missionHtml}
         </div>

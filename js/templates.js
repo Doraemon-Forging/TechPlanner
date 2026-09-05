@@ -939,35 +939,9 @@ const HTML_WEEKLY = `
                         <select id="zombie-sub" class="war-select select-mini" onchange="updateDaily()"></select>
                     </div>
                 </div>
-
-                <div class="daily-input-row">
-                    <label class="daily-label">League:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="weekly-league" class="war-select" style="width: 95px;" onchange="updateWeekly()">
-                            <option value="Diamond III" selected>Dmd III</option>
-                            <option value="Diamond II">Dmd II</option>
-                            <option value="Diamond I">Dmd I</option>
-                            <option value="Platinum">Platinum</option>
-                            <option value="Gold">Gold</option>
-                            <option value="Silver">Silver</option>
-                            <option value="Bronze">Bronze</option>
-                            <option value="Unranked">Unranked</option>
-                        </select>
-                        <select id="weekly-rank" class="war-select select-small" style="width: 75px;" onchange="updateWeekly()">
-                            <option value="1st" selected>1st</option>
-                            <option value="2nd">2nd</option>
-                            <option value="3rd">3rd</option>
-                            <option value="4-5">4-5</option>
-                            <option value="6-10">6-10</option>
-                            <option value="11-20">11-20</option>
-                            <option value="21-50">21-50</option>
-                            <option value="51-100">51-100</option>
-                        </select>
-                    </div>
-                </div>
                 
                 <div class="daily-input-row">
-                    <label class="daily-label">Clan War:</label>
+                    <label class="daily-label">Clan Tier:</label>
                     <div class="war-select-group flex-center">
                         <select id="weekly-war-tier" class="war-select" style="width: 95px;" onchange="updateWeekly()">
                             <option value="SSS-Tier" selected>S++ Tier</option>
@@ -980,17 +954,21 @@ const HTML_WEEKLY = `
                             <option value="E-Tier">E Tier</option>
                             <option value="None">None</option>
                         </select>
-                        <select id="weekly-war-win" class="war-select select-small" style="width: 75px;" onchange="updateWeekly()">
-                            <option value="Win" selected>Win</option>
-                            <option value="Lose">Lose</option>
-                        </select>
+                    </div>
+                </div>
+                
+                <div class="daily-input-row">
+                    <label class="daily-label">War Win Rate:</label>
+                    <div class="war-select-group flex-center" style="justify-content: flex-start; gap: 6px;">
+                        <input type="number" id="weekly-war-win-rate" class="calc-input-chunky hide-spinners" style="width: 56px; text-align: center;" value="100" min="0" max="100" oninput="updateWeekly()">
+                        <span class="calc-label" style="font-family: 'Fredoka', sans-serif; font-size: 1rem; color: #000;">%</span>
                     </div>
                 </div>
                 
                 <div class="daily-input-row">
                     <label class="daily-label">Indiv. Rewards:</label>
                     <div class="war-select-group flex-center">
-                        <select id="weekly-indiv" class="war-select select-small" style="width: 75px;" onchange="updateWeekly()">
+                        <select id="weekly-indiv" class="war-select" style="width: 95px;" onchange="updateWeekly()">
                             <option value="3m">3m</option>
                             <option value="2.5m">2.5m</option>
                             <option value="2m">2m</option>
@@ -1021,7 +999,7 @@ const HTML_WEEKLY = `
                 <div class="daily-input-row">
                     <label class="daily-label">Clan Tech Race:</label>
                     <div class="war-select-group flex-center">
-                        <select id="weekly-race" class="war-select" style="width: 75px;" onchange="updateWeekly()">
+                        <select id="weekly-race" class="war-select" style="width: 95px;" onchange="updateWeekly()">
                             <option value="1st" selected>1st</option>
                             <option value="2nd">2nd</option>
                             <option value="3rd">3rd</option>
@@ -1034,7 +1012,7 @@ const HTML_WEEKLY = `
                 <div class="daily-input-row">
                     <label class="daily-label">Potion Asc Bonus:</label>
                     <div class="war-select-group flex-center">
-                        <select id="weekly-potion-asc" class="war-select" style="width: 75px;" onchange="updateWeekly()">
+                        <select id="weekly-potion-asc" class="war-select" style="width: 95px;" onchange="updateWeekly()">
                             <option value="0" selected>0%</option>
                             <option value="10">10%</option>
                             <option value="20">20%</option>
@@ -1052,6 +1030,61 @@ const HTML_WEEKLY = `
                     </div>
                 </div>
 
+                <div class="daily-input-row" style="margin-top: 8px;">
+                    <label class="daily-label">League:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="weekly-league-mode" class="war-select" style="width: 120px;" onchange="toggleLeagueMode(); updateWeekly()">
+                            <option value="Fixed" selected>Fixed</option>
+                            <option value="Alternating">Alternating</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="daily-input-row">
+                    <label class="daily-label"></label>
+                    <div class="war-select-group flex-center">
+                        <select id="weekly-league" class="war-select" style="width: 95px;" onchange="updateSecondaryLeagueOptions(); updateWeekly()">
+                            <option value="Diamond III" selected>Dmd III</option>
+                            <option value="Diamond II">Dmd II</option>
+                            <option value="Diamond I">Dmd I</option>
+                            <option value="Platinum">Platinum</option>
+                            <option value="Gold">Gold</option>
+                            <option value="Silver">Silver</option>
+                            <option value="Bronze">Bronze</option>
+                            <option value="Unranked">Unranked</option>
+                        </select>
+                        <select id="weekly-rank" class="war-select select-small" style="width: 75px;" onchange="updateWeekly()">
+                            <option value="1st" selected>1st</option>
+                            <option value="2nd">2nd</option>
+                            <option value="3rd">3rd</option>
+                            <option value="4-5">4-5</option>
+                            <option value="6-10">6-10</option>
+                            <option value="11-20">11-20</option>
+                            <option value="21-50">21-50</option>
+                            <option value="51-100">51-100</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="daily-input-row" id="row-league-alt" style="display: none;">
+                    <label class="daily-label"></label>
+                    <div class="war-select-group flex-center">
+                        <select id="weekly-league-2" class="war-select" style="width: 95px;" onchange="updateWeekly()">
+                            <!-- Automatically populated via JS -->
+                        </select>
+                        <select id="weekly-rank-2" class="war-select select-small" style="width: 75px;" onchange="updateWeekly()">
+                            <option value="1st" selected>1st</option>
+                            <option value="2nd">2nd</option>
+                            <option value="3rd">3rd</option>
+                            <option value="4-5">4-5</option>
+                            <option value="6-10">6-10</option>
+                            <option value="11-20">11-20</option>
+                            <option value="21-50">21-50</option>
+                            <option value="51-100">51-100</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- CENTERED CLAN TECH BUTTON -->
                 <div style="padding: 10px 0 5px 0; display: flex; justify-content: center;">
                     <button class="btn-clan-tech" onclick="openClanTechModal()" style="padding: 0 24px 5px 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; height: 45px; background-color: #02a2ff; border: 2px solid #000; border-radius: 12px; cursor: pointer; box-shadow: inset 0 -5px 0 0 #005d96; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;">
@@ -1064,6 +1097,16 @@ const HTML_WEEKLY = `
                 <style>
                     .btn-clan-tech:hover { background-color: #33b5ff !important; transform: translateY(-2px); box-shadow: inset 0 -5px 0 0 #005d96 !important; }
                     .btn-clan-tech:active { transform: translateY(3px) !important; box-shadow: inset 0 -2px 0 0 #005d96 !important; padding-bottom: 2px !important; }
+                    
+                    /* Hide native number spinners */
+                    input[type=number].hide-spinners::-webkit-inner-spin-button, 
+                    input[type=number].hide-spinners::-webkit-outer-spin-button { 
+                        -webkit-appearance: none; 
+                        margin: 0; 
+                    }
+                    input[type=number].hide-spinners { 
+                        -moz-appearance: textfield; 
+                    }
                 </style>
             </div>
         </div>
@@ -1100,13 +1143,13 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-skill-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('skill'); updateWeekly()">
+                            <input type="number" id="asc-skill-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('skill'); updateWeekly()">
                         </div>
                     </div>
                     <div class="calc-row-input">
                         <label for="asc-skill-exp">Skill Summon Exp:</label>
                         <div class="pet-flex-center" style="display: flex; align-items: center;">
-                            <input type="number" id="asc-skill-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('skill'); updateWeekly()">
+                            <input type="number" id="asc-skill-exp" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="0" min="0" oninput="updateAscensionCaps('skill'); updateWeekly()">
                             <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-skill-max">10</span></span>
                         </div>
                     </div>
@@ -1123,7 +1166,7 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-skill-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                            <input type="number" id="asc-skill-target-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
                         </div>
                     </div>
                 </div>
@@ -1140,13 +1183,13 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-pet-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('pet'); updateWeekly()">
+                            <input type="number" id="asc-pet-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('pet'); updateWeekly()">
                         </div>
                     </div>
                     <div class="calc-row-input">
                         <label for="asc-pet-exp">Pet Summon Exp:</label>
                         <div class="pet-flex-center" style="display: flex; align-items: center;">
-                            <input type="number" id="asc-pet-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('pet'); updateWeekly()">
+                            <input type="number" id="asc-pet-exp" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="0" min="0" oninput="updateAscensionCaps('pet'); updateWeekly()">
                             <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-pet-max">3</span></span>
                         </div>
                     </div>
@@ -1163,7 +1206,7 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-pet-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                            <input type="number" id="asc-pet-target-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
                         </div>
                     </div>
                 </div>
@@ -1180,13 +1223,13 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-mount-lv" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('mount'); updateWeekly()">
+                            <input type="number" id="asc-mount-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('mount'); updateWeekly()">
                         </div>
                     </div>
                     <div class="calc-row-input">
                         <label for="asc-mount-exp">Mount Summon Exp:</label>
                         <div class="pet-flex-center" style="display: flex; align-items: center;">
-                            <input type="number" id="asc-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updateAscensionCaps('mount'); updateWeekly()">
+                            <input type="number" id="asc-mount-exp" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="0" min="0" oninput="updateAscensionCaps('mount'); updateWeekly()">
                             <span class="calc-label pet-label-sub" style="margin-left: 5px;">/ <span id="asc-mount-max">16</span></span>
                         </div>
                     </div>
@@ -1203,7 +1246,7 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-mount-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                            <input type="number" id="asc-mount-target-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
                         </div>
                     </div>
                 </div>

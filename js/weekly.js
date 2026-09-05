@@ -46,17 +46,72 @@ function updateAscensionCaps(type) {
 }
 
 // ==========================================
-// 2. MAIN UPDATE LOGIC
+// 2. LEAGUE ALTERNATING LOGIC
+// ==========================================
+const LEAGUES_ORDER = ['Diamond III', 'Diamond II', 'Diamond I', 'Platinum', 'Gold', 'Silver', 'Bronze', 'Unranked'];
+const LEAGUES_LABELS = ['Dmd III', 'Dmd II', 'Dmd I', 'Platinum', 'Gold', 'Silver', 'Bronze', 'Unranked'];
+
+function toggleLeagueMode() {
+    const mode = document.getElementById('weekly-league-mode')?.value;
+    const rowAlt = document.getElementById('row-league-alt');
+    if (rowAlt) {
+        rowAlt.style.display = (mode === 'Alternating') ? 'flex' : 'none';
+    }
+}
+
+function updateSecondaryLeagueOptions() {
+    const league1 = document.getElementById('weekly-league')?.value;
+    const league2Select = document.getElementById('weekly-league-2');
+    if (!league1 || !league2Select) return;
+    
+    const currentVal2 = league2Select.value;
+    league2Select.innerHTML = '';
+    
+    const idx = LEAGUES_ORDER.indexOf(league1);
+    if (idx === -1) return;
+    
+    const addOption = (i) => {
+        if (i >= 0 && i < LEAGUES_ORDER.length) {
+            const opt = document.createElement('option');
+            opt.value = LEAGUES_ORDER[i];
+            opt.text = LEAGUES_LABELS[i];
+            league2Select.appendChild(opt);
+        }
+    };
+    
+    // Add +1, 0, -1 tiers relative to Week 1
+    addOption(idx - 1);
+    addOption(idx);
+    addOption(idx + 1);
+    
+    // Preserve selection if it's still in the newly generated list
+    if (Array.from(league2Select.options).some(o => o.value === currentVal2)) {
+        league2Select.value = currentVal2;
+    } else {
+        league2Select.value = LEAGUES_ORDER[idx];
+    }
+}
+
+// ==========================================
+// 3. MAIN UPDATE LOGIC
 // ==========================================
 function updateWeekly() {
     const getStrVal = (id, defaultVal = "") => document.getElementById(id)?.value || defaultVal;
     
-    const league = getStrVal('weekly-league', 'Unranked');
-    const rank = getStrVal('weekly-rank', '1st');
+    const leagueMode = getStrVal('weekly-league-mode', 'Constant');
+    const league1 = getStrVal('weekly-league', 'Unranked');
+    const rank1 = getStrVal('weekly-rank', '1st');
+    const league2 = getStrVal('weekly-league-2', 'Unranked');
+    const rank2 = getStrVal('weekly-rank-2', '1st');
+    
     const clanTier = getStrVal('weekly-war-tier', 'None');
-    const clanWin = getStrVal('weekly-war-win', 'Lose');
     const indivTier = getStrVal('weekly-indiv', 'None');
     const raceRank = getStrVal('weekly-race', 'None');
+    
+    const winRateRaw = parseFloat(document.getElementById('weekly-war-win-rate')?.value);
+    const winRate = isNaN(winRateRaw) ? 0 : Math.max(0, Math.min(100, winRateRaw));
+    const winPct = winRate / 100;
+    const losePct = 1 - winPct;
 
     const getCtVal = (id, memKey) => {
         const el = document.getElementById(id);
@@ -77,31 +132,44 @@ function updateWeekly() {
     const indivMult = 1 + (ctWarPersonal / 100);
     const indivGpTechMult = 1 + (ctWarPersonal / 100) + (ctPotPersonal * 5 / 100);
     
-    let warMult = 1;
-    let warGpTechMult = 1;
-    if (clanWin === 'Win') {
-        warMult = 1 + (ctWarWin / 100);
-        warGpTechMult = 1 + (ctWarWin / 100) + (ctPotWin * 5 / 100);
-    } else {
-        warMult = 1 + (ctWarLose / 100);
-        warGpTechMult = 1 + (ctWarLose / 100) + (ctPotLose * 5 / 100);
+    // War Multipliers (Win vs Lose)
+    const warMultWin = 1 + (ctWarWin / 100);
+    const warGpTechMultWin = 1 + (ctWarWin / 100) + (ctPotWin * 5 / 100);
+    const warMultLose = 1 + (ctWarLose / 100);
+    const warGpTechMultLose = 1 + (ctWarLose / 100) + (ctPotLose * 5 / 100);
+
+    const baseL1 = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league1] && LEAGUE_REWARDS[league1][rank1]) ? LEAGUE_REWARDS[league1][rank1] : [0,0,0,0,0,0,0];
+    let baseL2 = baseL1;
+    if (leagueMode === 'Alternating') {
+        baseL2 = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league2] && LEAGUE_REWARDS[league2][rank2]) ? LEAGUE_REWARDS[league2][rank2] : [0,0,0,0,0,0,0];
     }
 
-    const baseLRewards = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league] && LEAGUE_REWARDS[league][rank]) ? LEAGUE_REWARDS[league][rank] : [0,0,0,0,0,0,0];
-    const baseCRewards = (typeof CLAN_WAR_REWARDS !== 'undefined' && CLAN_WAR_REWARDS[clanTier] && CLAN_WAR_REWARDS[clanTier][clanWin]) ? CLAN_WAR_REWARDS[clanTier][clanWin] : [0,0,0,0,0,0,0];
+    const baseWinRewards = (typeof CLAN_WAR_REWARDS !== 'undefined' && CLAN_WAR_REWARDS[clanTier] && CLAN_WAR_REWARDS[clanTier]['Win']) ? CLAN_WAR_REWARDS[clanTier]['Win'] : [0,0,0,0,0,0,0];
+    const baseLoseRewards = (typeof CLAN_WAR_REWARDS !== 'undefined' && CLAN_WAR_REWARDS[clanTier] && CLAN_WAR_REWARDS[clanTier]['Lose']) ? CLAN_WAR_REWARDS[clanTier]['Lose'] : [0,0,0,0,0,0,0];
 
     const lRewards = [0,0,0,0,0,0,0];
     const cRewards = [0,0,0,0,0,0,0];
     const iRewards = [0,0,0,0,0,0,0];
 
     for (let i = 0; i < 7; i++) {
+        // League (Average of Wk 1 and Wk 2)
+        let avgBaseL = (baseL1[i] + baseL2[i]) / 2;
+        
+        // Clan War (Win % vs Lose %)
+        let wReward = 0;
+        let lReward = 0;
+
         if (i === 6) {
-            lRewards[i] = Math.round(baseLRewards[i] * gpAscMult);
-            cRewards[i] = Math.round(baseCRewards[i] * warGpTechMult * gpAscMult);
+            lRewards[i] = Math.round(avgBaseL * gpAscMult);
+            wReward = baseWinRewards[i] * warGpTechMultWin * gpAscMult;
+            lReward = baseLoseRewards[i] * warGpTechMultLose * gpAscMult;
         } else {
-            lRewards[i] = baseLRewards[i]; 
-            cRewards[i] = Math.round(baseCRewards[i] * warMult);
+            lRewards[i] = Math.round(avgBaseL); 
+            wReward = baseWinRewards[i] * warMultWin;
+            lReward = baseLoseRewards[i] * warMultLose;
         }
+        
+        cRewards[i] = Math.round((wReward * winPct) + (lReward * losePct));
     }
 
     if (typeof INDIV_REWARDS !== 'undefined') {
@@ -439,6 +507,8 @@ function updateWeekly() {
 // Initialize & Sync Listeners
 // ------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
+    updateSecondaryLeagueOptions();
+    toggleLeagueMode();
     updateAscensionCaps('skill');
     updateAscensionCaps('pet');
     updateAscensionCaps('mount');

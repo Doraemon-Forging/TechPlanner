@@ -320,7 +320,8 @@ function captureFullState() {
         },
         weeklyData: { 
             league: getVal('weekly-league'), rank: getVal('weekly-rank'),
-            warTier: getVal('weekly-war-tier'), warWin: getVal('weekly-war-win'),
+            leagueMode: getVal('weekly-league-mode'), league2: getVal('weekly-league-2'), rank2: getVal('weekly-rank-2'),
+            warTier: getVal('weekly-war-tier'), warWinRate: getVal('weekly-war-win-rate'),
             indiv: getVal('weekly-indiv'),
             race: getVal('weekly-race'),
             potionAsc: getVal('weekly-potion-asc'), 
@@ -399,91 +400,102 @@ function captureFullState() {
 }
 
 function loadState(d) {
-    if (d.setupLevels && typeof setupLevels !== 'undefined') { Object.keys(setupLevels).forEach(k => delete setupLevels[k]); Object.assign(setupLevels, d.setupLevels); }
-    if (d.planQueue && typeof planQueue !== 'undefined') { planQueue.length = 0; planQueue.push(...d.planQueue); }
-    const sDate = d.startDate || d.start; 
-    if (sDate) { 
-        safeSetVal('start-date', sDate); 
-        safeSyncDropdowns(sDate, 'dm'); 
-        if (d.exactStartDate) {
-            const dateInput = document.getElementById('start-date');
-            if (dateInput) dateInput.setAttribute('data-exact-time', d.exactStartDate);
-        }
-    }
-    if (d.warConfig && typeof warConfig !== 'undefined') { 
-        warConfig = d.warConfig; 
-        if (warConfig.min === undefined) warConfig.min = 0; 
-        safeSetVal('war-day', warConfig.day); safeSetVal('war-hour', warConfig.hour); safeSetVal('war-min', warConfig.min); safeSetVal('war-ampm', warConfig.ampm); 
-    }
-    
-    if (d.ongoingForgeSnapshot) window.ongoingForgeSnapshot = d.ongoingForgeSnapshot;
-    
-    if (d.forgeGemsMemory) window.forgeGemsMemory = d.forgeGemsMemory;
-    else window.forgeGemsMemory = {};
-    
-    try { 
-        if (d.calcData) { 
-            safeSetVal('calc-world', d.calcData.world); 
-            safeSetVal('calc-stage', d.calcData.stage); 
+    if (d.setupLevels && typeof setupLevels !== 'undefined') { Object.keys(setupLevels).forEach(k => delete setupLevels[k]); Object.assign(setupLevels, d.setupLevels); }
+    if (d.planQueue && typeof planQueue !== 'undefined') { planQueue.length = 0; planQueue.push(...d.planQueue); }
+    const sDate = d.startDate || d.start; 
+    if (sDate) { 
+        safeSetVal('start-date', sDate); 
+        safeSyncDropdowns(sDate, 'dm'); 
+        if (d.exactStartDate) {
+            const dateInput = document.getElementById('start-date');
+            if (dateInput) dateInput.setAttribute('data-exact-time', d.exactStartDate);
+        }
+    }
+    if (d.warConfig && typeof warConfig !== 'undefined') { 
+        warConfig = d.warConfig; 
+        if (warConfig.min === undefined) warConfig.min = 0; 
+        safeSetVal('war-day', warConfig.day); safeSetVal('war-hour', warConfig.hour); safeSetVal('war-min', warConfig.min); safeSetVal('war-ampm', warConfig.ampm); 
+    }
+    
+    if (d.ongoingForgeSnapshot) window.ongoingForgeSnapshot = d.ongoingForgeSnapshot;
+    
+    if (d.forgeGemsMemory) window.forgeGemsMemory = d.forgeGemsMemory;
+    else window.forgeGemsMemory = {};
+    
+    try { 
+        if (d.calcData) { 
+            safeSetVal('calc-world', d.calcData.world); 
+            safeSetVal('calc-stage', d.calcData.stage); 
 
-            if (d.calcData.forgeAsc !== undefined) safeSetVal('calc-forge-asc', d.calcData.forgeAsc);
-            safeSetVal('calc-forge-lv', d.calcData.forgeLv); 
+            if (d.calcData.forgeAsc !== undefined) safeSetVal('calc-forge-asc', d.calcData.forgeAsc);
+            safeSetVal('calc-forge-lv', d.calcData.forgeLv); 
 
-            if (d.calcData.targetForgeAsc !== undefined) safeSetVal('calc-target-forge-asc', d.calcData.targetForgeAsc);
-            safeSetVal('calc-target-forge-lv', d.calcData.targetForgeLv);
+            if (d.calcData.targetForgeAsc !== undefined) safeSetVal('calc-target-forge-asc', d.calcData.targetForgeAsc);
+            safeSetVal('calc-target-forge-lv', d.calcData.targetForgeLv);
 
-            if (typeof syncTargetForgeDropdown === 'function') syncTargetForgeDropdown();
+            if (typeof syncTargetForgeDropdown === 'function') syncTargetForgeDropdown();
 
-            if (d.calcData.targetForgeAsc !== undefined) safeSetVal('calc-target-forge-asc', d.calcData.targetForgeAsc);
-            safeSetVal('calc-target-forge-lv', d.calcData.targetForgeLv);
-            
-            safeSetVal('calc-hammers', d.calcData.hammers); 
-            safeSetVal('calc-target', d.calcData.target); 
-            if (d.calcData.calcStart) { 
-                safeSetVal('calc-start-date', d.calcData.calcStart); 
-                safeSyncDropdowns(d.calcData.calcStart, 'cm'); 
-            } 
-        } 
-    } catch (e) {}
-    
-    try { if (typeof eggPlanQueue !== 'undefined' && d.eggData) { eggPlanQueue.length = 0; eggPlanQueue.push(...(d.eggData.queue ||[])); if (d.eggData.start) { safeSetVal('egg-date-desktop', d.eggData.start); safeSyncDropdowns(d.eggData.start, 'em'); } } } catch (e) {}
-    
-    try {
-        if (d.dailyData) {
-            safeSetVal('thief-lvl', d.dailyData.thiefLvl); safeSetVal('thief-sub', d.dailyData.thiefSub);
-            safeSetVal('ghost-lvl', d.dailyData.ghostLvl); safeSetVal('ghost-sub', d.dailyData.ghostSub);
-            safeSetVal('inv-lvl', d.dailyData.invLvl); safeSetVal('inv-sub', d.dailyData.invSub);
-            safeSetVal('zombie-lvl', d.dailyData.zombieLvl); safeSetVal('zombie-sub', d.dailyData.zombieSub);
-        }
-    } catch (e) {}
+            if (d.calcData.targetForgeAsc !== undefined) safeSetVal('calc-target-forge-asc', d.calcData.targetForgeAsc);
+            safeSetVal('calc-target-forge-lv', d.calcData.targetForgeLv);
+            
+            safeSetVal('calc-hammers', d.calcData.hammers); 
+            safeSetVal('calc-target', d.calcData.target); 
+            if (d.calcData.calcStart) { 
+                safeSetVal('calc-start-date', d.calcData.calcStart); 
+                safeSyncDropdowns(d.calcData.calcStart, 'cm'); 
+            } 
+        } 
+    } catch (e) {}
+    
+    try { if (typeof eggPlanQueue !== 'undefined' && d.eggData) { eggPlanQueue.length = 0; eggPlanQueue.push(...(d.eggData.queue ||[])); if (d.eggData.start) { safeSetVal('egg-date-desktop', d.eggData.start); safeSyncDropdowns(d.eggData.start, 'em'); } } } catch (e) {}
+    
+    try {
+        if (d.dailyData) {
+            safeSetVal('thief-lvl', d.dailyData.thiefLvl); safeSetVal('thief-sub', d.dailyData.thiefSub);
+            safeSetVal('ghost-lvl', d.dailyData.ghostLvl); safeSetVal('ghost-sub', d.dailyData.ghostSub);
+            safeSetVal('inv-lvl', d.dailyData.invLvl); safeSetVal('inv-sub', d.dailyData.invSub);
+            safeSetVal('zombie-lvl', d.dailyData.zombieLvl); safeSetVal('zombie-sub', d.dailyData.zombieSub);
+        }
+    } catch (e) {}
 
-    try {
-        if (d.weeklyData) {
-            safeSetVal('weekly-league', d.weeklyData.league); safeSetVal('weekly-rank', d.weeklyData.rank);
-            safeSetVal('weekly-war-tier', d.weeklyData.warTier); safeSetVal('weekly-war-win', d.weeklyData.warWin);
-            safeSetVal('weekly-indiv', d.weeklyData.indiv);
-            
+    try {
+        if (d.weeklyData) {
+            safeSetVal('weekly-league', d.weeklyData.league); safeSetVal('weekly-rank', d.weeklyData.rank);
+            
+            if (d.weeklyData.leagueMode !== undefined) safeSetVal('weekly-league-mode', d.weeklyData.leagueMode);
+            if (d.weeklyData.league2 !== undefined) safeSetVal('weekly-league-2', d.weeklyData.league2);
+            if (d.weeklyData.rank2 !== undefined) safeSetVal('weekly-rank-2', d.weeklyData.rank2);
+
+            safeSetVal('weekly-war-tier', d.weeklyData.warTier);
+            let savedWinRate = d.weeklyData.warWinRate;
+            if (savedWinRate === undefined) savedWinRate = 100; 
+            safeSetVal('weekly-war-win-rate', savedWinRate);
+            safeSetVal('weekly-indiv', d.weeklyData.indiv);
+            
             if (d.weeklyData.race !== undefined) safeSetVal('weekly-race', d.weeklyData.race);
-            if (d.weeklyData.potionAsc !== undefined) safeSetVal('weekly-potion-asc', d.weeklyData.potionAsc); 
+            if (d.weeklyData.potionAsc !== undefined) safeSetVal('weekly-potion-asc', d.weeklyData.potionAsc); 
 
-            if (d.weeklyData.ascSkillAsc !== undefined) safeSetVal('asc-skill-asc', d.weeklyData.ascSkillAsc);
-            safeSetVal('asc-skill-lv', d.weeklyData.ascSkillLv); safeSetVal('asc-skill-exp', d.weeklyData.ascSkillExp); safeSetVal('asc-skill-inv', d.weeklyData.ascSkillInv);
-            if (d.weeklyData.ascSkillTargetAsc !== undefined) safeSetVal('asc-skill-target-asc', d.weeklyData.ascSkillTargetAsc);
-            safeSetVal('asc-skill-target-lv', d.weeklyData.ascSkillTargetLv);
+            if (d.weeklyData.ascSkillAsc !== undefined) safeSetVal('asc-skill-asc', d.weeklyData.ascSkillAsc);
+            safeSetVal('asc-skill-lv', d.weeklyData.ascSkillLv); safeSetVal('asc-skill-exp', d.weeklyData.ascSkillExp); safeSetVal('asc-skill-inv', d.weeklyData.ascSkillInv);
+            if (d.weeklyData.ascSkillTargetAsc !== undefined) safeSetVal('asc-skill-target-asc', d.weeklyData.ascSkillTargetAsc);
+            safeSetVal('asc-skill-target-lv', d.weeklyData.ascSkillTargetLv);
 
-            if (d.weeklyData.ascPetAsc !== undefined) safeSetVal('asc-pet-asc', d.weeklyData.ascPetAsc);
-            safeSetVal('asc-pet-lv', d.weeklyData.ascPetLv); safeSetVal('asc-pet-exp', d.weeklyData.ascPetExp); safeSetVal('asc-pet-inv', d.weeklyData.ascPetInv);
-            if (d.weeklyData.ascPetTargetAsc !== undefined) safeSetVal('asc-pet-target-asc', d.weeklyData.ascPetTargetAsc);
-            safeSetVal('asc-pet-target-lv', d.weeklyData.ascPetTargetLv);
+            if (d.weeklyData.ascPetAsc !== undefined) safeSetVal('asc-pet-asc', d.weeklyData.ascPetAsc);
+            safeSetVal('asc-pet-lv', d.weeklyData.ascPetLv); safeSetVal('asc-pet-exp', d.weeklyData.ascPetExp); safeSetVal('asc-pet-inv', d.weeklyData.ascPetInv);
+            if (d.weeklyData.ascPetTargetAsc !== undefined) safeSetVal('asc-pet-target-asc', d.weeklyData.ascPetTargetAsc);
+            safeSetVal('asc-pet-target-lv', d.weeklyData.ascPetTargetLv);
 
-            if (d.weeklyData.ascMountAsc !== undefined) safeSetVal('asc-mount-asc', d.weeklyData.ascMountAsc);
-            safeSetVal('asc-mount-lv', d.weeklyData.ascMountLv); safeSetVal('asc-mount-exp', d.weeklyData.ascMountExp); safeSetVal('asc-mount-inv', d.weeklyData.ascMountInv);
-            if (d.weeklyData.ascMountTargetAsc !== undefined) safeSetVal('asc-mount-target-asc', d.weeklyData.ascMountTargetAsc);
-            safeSetVal('asc-mount-target-lv', d.weeklyData.ascMountTargetLv);
-        }
-    } catch (e) {}
+            if (d.weeklyData.ascMountAsc !== undefined) safeSetVal('asc-mount-asc', d.weeklyData.ascMountAsc);
+            safeSetVal('asc-mount-lv', d.weeklyData.ascMountLv); safeSetVal('asc-mount-exp', d.weeklyData.ascMountExp); safeSetVal('asc-mount-inv', d.weeklyData.ascMountInv);
+            if (d.weeklyData.ascMountTargetAsc !== undefined) safeSetVal('asc-mount-target-asc', d.weeklyData.ascMountTargetAsc);
+            safeSetVal('asc-mount-target-lv', d.weeklyData.ascMountTargetLv);
+            
+            // Re-toggle UI visibility for league mode
+            if (typeof toggleLeagueMode === 'function') toggleLeagueMode();
+        }
+    } catch (e) {}
 
-    try {
+    try {
         if (d.clanTechData) {
             window.clanTechMemory = { ...d.clanTechData };
             safeSetVal('ct-war-personal', d.clanTechData.warPersonal);
@@ -498,169 +510,169 @@ function loadState(d) {
         }
     } catch (e) {}
 
-    try {
-        if (d.missionSlotsData) {
-            window.missionSlotsMemory = { ...window.missionSlotsMemory, ...d.missionSlotsData };
-            ['gold', 'ticket', 'egg', 'pot', 'key', 'gp', 'rally'].forEach(id => {
-                safeSetVal(`ms-slot-${id}`, d.missionSlotsData[id]);
-            });
-        }
-    } catch (e) {}
+    try {
+        if (d.missionSlotsData) {
+            window.missionSlotsMemory = { ...window.missionSlotsMemory, ...d.missionSlotsData };
+            ['gold', 'ticket', 'egg', 'pot', 'key', 'gp', 'rally'].forEach(id => {
+                safeSetVal(`ms-slot-${id}`, d.missionSlotsData[id]);
+            });
+        }
+    } catch (e) {}
 
-    try {
-        if (d.warCalcData) {
-            // Day 1
-            safeSetVal('wc-d1-forge-lv', d.warCalcData.d1ForgeLv || d.warCalcData.forgeLv || 20);
-            safeSetVal('wc-hammer', d.warCalcData.hammer);
-            safeSetVal('wc-dungeon-key', d.warCalcData.dungeonKey);
-            if (d.warCalcData.skillAsc !== undefined) safeSetVal('wc-skill-asc', d.warCalcData.skillAsc);
-            safeSetVal('wc-skill-lv', d.warCalcData.skillLv); 
-            safeSetVal('wc-skill-exp', d.warCalcData.skillExp);
-            safeSetVal('wc-ticket', d.warCalcData.ticket);
-            
-            // Day 2
-            safeSetVal('wc-d2-forge-lv', d.warCalcData.d2ForgeLv || d.warCalcData.forgeLv || 20);
-            safeSetVal('wc-forge-nodes', d.warCalcData.forgeNodes || 0);
-            safeSetVal('wc-forge-gem', d.warCalcData.forgeGem);
-            safeSetVal('wc-tech-I', d.warCalcData.techI); safeSetVal('wc-tech-II', d.warCalcData.techII); safeSetVal('wc-tech-III', d.warCalcData.techIII); safeSetVal('wc-tech-IV', d.warCalcData.techIV); safeSetVal('wc-tech-V', d.warCalcData.techV);
-            safeSetVal('wc-mount-key', d.warCalcData.mountKey);
-            safeSetVal('wc-merge-mount-total', d.warCalcData.mergeMountTotal);
+    try {
+        if (d.warCalcData) {
+            // Day 1
+            safeSetVal('wc-d1-forge-lv', d.warCalcData.d1ForgeLv || d.warCalcData.forgeLv || 20);
+            safeSetVal('wc-hammer', d.warCalcData.hammer);
+            safeSetVal('wc-dungeon-key', d.warCalcData.dungeonKey);
+            if (d.warCalcData.skillAsc !== undefined) safeSetVal('wc-skill-asc', d.warCalcData.skillAsc);
+            safeSetVal('wc-skill-lv', d.warCalcData.skillLv); 
+            safeSetVal('wc-skill-exp', d.warCalcData.skillExp);
+            safeSetVal('wc-ticket', d.warCalcData.ticket);
+            
+            // Day 2
+            safeSetVal('wc-d2-forge-lv', d.warCalcData.d2ForgeLv || d.warCalcData.forgeLv || 20);
+            safeSetVal('wc-forge-nodes', d.warCalcData.forgeNodes || 0);
+            safeSetVal('wc-forge-gem', d.warCalcData.forgeGem);
+            safeSetVal('wc-tech-I', d.warCalcData.techI); safeSetVal('wc-tech-II', d.warCalcData.techII); safeSetVal('wc-tech-III', d.warCalcData.techIII); safeSetVal('wc-tech-IV', d.warCalcData.techIV); safeSetVal('wc-tech-V', d.warCalcData.techV);
+            safeSetVal('wc-mount-key', d.warCalcData.mountKey);
+            safeSetVal('wc-merge-mount-total', d.warCalcData.mergeMountTotal);
 
-            // Day 3
-            safeSetVal('wc-d3-forge-lv', d.warCalcData.d3ForgeLv || d.warCalcData.forgeLv || 20);
-            safeSetVal('wc-d3-hammer', d.warCalcData.d3Hammer);
-            if (d.warCalcData.d3SkillAsc !== undefined) safeSetVal('wc-d3-skill-asc', d.warCalcData.d3SkillAsc);
-            safeSetVal('wc-d3-skill-lv', d.warCalcData.d3SkillLv);
-            safeSetVal('wc-d3-skill-exp', d.warCalcData.d3SkillExp);
-            safeSetVal('wc-d3-ticket', d.warCalcData.d3Ticket);
-            const colors = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
-            if (d.warCalcData.hatch) colors.forEach((c, i) => safeSetVal(`wc-hatch-${c}`, d.warCalcData.hatch[i]));
-            safeSetVal('wc-merge-pet-total', d.warCalcData.mergePetTotal);
+            // Day 3
+            safeSetVal('wc-d3-forge-lv', d.warCalcData.d3ForgeLv || d.warCalcData.forgeLv || 20);
+            safeSetVal('wc-d3-hammer', d.warCalcData.d3Hammer);
+            if (d.warCalcData.d3SkillAsc !== undefined) safeSetVal('wc-d3-skill-asc', d.warCalcData.d3SkillAsc);
+            safeSetVal('wc-d3-skill-lv', d.warCalcData.d3SkillLv);
+            safeSetVal('wc-d3-skill-exp', d.warCalcData.d3SkillExp);
+            safeSetVal('wc-d3-ticket', d.warCalcData.d3Ticket);
+            const colors = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+            if (d.warCalcData.hatch) colors.forEach((c, i) => safeSetVal(`wc-hatch-${c}`, d.warCalcData.hatch[i]));
+            safeSetVal('wc-merge-pet-total', d.warCalcData.mergePetTotal);
 
-            // Day 4
-            safeSetVal('wc-d4-forge-lv', d.warCalcData.d4ForgeLv || d.warCalcData.forgeLv || 20);
-            safeSetVal('wc-d4-forge-nodes', d.warCalcData.d4ForgeNodes || 0);
-            safeSetVal('wc-d4-forge-gem', d.warCalcData.d4ForgeGem);
-            safeSetVal('wc-d4-dungeon-key', d.warCalcData.d4DungeonKey);
-            safeSetVal('wc-d4-mount-key', d.warCalcData.d4MountKey);
-            safeSetVal('wc-d4-merge-mount-total', d.warCalcData.d4MergeMountTotal);
+            // Day 4
+            safeSetVal('wc-d4-forge-lv', d.warCalcData.d4ForgeLv || d.warCalcData.forgeLv || 20);
+            safeSetVal('wc-d4-forge-nodes', d.warCalcData.d4ForgeNodes || 0);
+            safeSetVal('wc-d4-forge-gem', d.warCalcData.d4ForgeGem);
+            safeSetVal('wc-d4-dungeon-key', d.warCalcData.d4DungeonKey);
+            safeSetVal('wc-d4-mount-key', d.warCalcData.d4MountKey);
+            safeSetVal('wc-d4-merge-mount-total', d.warCalcData.d4MergeMountTotal);
 
-            // Day 5
-            safeSetVal('wc-d5-forge-lv', d.warCalcData.d5ForgeLv || d.warCalcData.forgeLv || 20);
-            safeSetVal('wc-d5-hammer', d.warCalcData.d5Hammer);
-            safeSetVal('wc-d5-tech-I', d.warCalcData.d5TechI); safeSetVal('wc-d5-tech-II', d.warCalcData.d5TechII); safeSetVal('wc-d5-tech-III', d.warCalcData.d5TechIII); safeSetVal('wc-d5-tech-IV', d.warCalcData.d5TechIV); safeSetVal('wc-d5-tech-V', d.warCalcData.d5TechV);
-            if (d.warCalcData.d5Hatch) colors.forEach((c, i) => safeSetVal(`wc-d5-hatch-${c}`, d.warCalcData.d5Hatch[i]));
-            safeSetVal('wc-d5-merge-pet-total', d.warCalcData.d5MergePetTotal);
-        }
-    } catch (e) {}
+            // Day 5
+            safeSetVal('wc-d5-forge-lv', d.warCalcData.d5ForgeLv || d.warCalcData.forgeLv || 20);
+            safeSetVal('wc-d5-hammer', d.warCalcData.d5Hammer);
+            safeSetVal('wc-d5-tech-I', d.warCalcData.d5TechI); safeSetVal('wc-d5-tech-II', d.warCalcData.d5TechII); safeSetVal('wc-d5-tech-III', d.warCalcData.d5TechIII); safeSetVal('wc-d5-tech-IV', d.warCalcData.d5TechIV); safeSetVal('wc-d5-tech-V', d.warCalcData.d5TechV);
+            if (d.warCalcData.d5Hatch) colors.forEach((c, i) => safeSetVal(`wc-d5-hatch-${c}`, d.warCalcData.d5Hatch[i]));
+            safeSetVal('wc-d5-merge-pet-total', d.warCalcData.d5MergePetTotal);
+        }
+    } catch (e) {}
 
-    try {
-        if (d.petData) {
-            safeSetVal('pet-ascension', d.petData.petAscension !== undefined ? d.petData.petAscension : 0);
-            safeSetVal('mount-ascension', d.petData.mountAscension !== undefined ? d.petData.mountAscension : 0);
-            const loadPet = (idx, pData) => {
-                if (!pData) return;
-                safeSetVal(`pet-${idx}-rarity`, pData.rarity);
-                if (typeof updatePetNameOptions === 'function') updatePetNameOptions(idx);
-                safeSetVal(`pet-${idx}-id`, pData.id); safeSetVal(`pet-${idx}-lvl`, pData.lvl); safeSetVal(`pet-${idx}-exp`, pData.exp);
-            };
-            loadPet(1, d.petData.p1); loadPet(2, d.petData.p2); loadPet(3, d.petData.p3);
+    try {
+        if (d.petData) {
+            safeSetVal('pet-ascension', d.petData.petAscension !== undefined ? d.petData.petAscension : 0);
+            safeSetVal('mount-ascension', d.petData.mountAscension !== undefined ? d.petData.mountAscension : 0);
+            const loadPet = (idx, pData) => {
+                if (!pData) return;
+                safeSetVal(`pet-${idx}-rarity`, pData.rarity);
+                if (typeof updatePetNameOptions === 'function') updatePetNameOptions(idx);
+                safeSetVal(`pet-${idx}-id`, pData.id); safeSetVal(`pet-${idx}-lvl`, pData.lvl); safeSetVal(`pet-${idx}-exp`, pData.exp);
+            };
+            loadPet(1, d.petData.p1); loadPet(2, d.petData.p2); loadPet(3, d.petData.p3);
 
-            if (d.petData.mergePet) {
-                safeSetVal('merge-target-rarity', d.petData.mergePet.tRarity);
-                if (typeof updateMergeNameOptions === 'function') updateMergeNameOptions('target');
-                safeSetVal('merge-target-id', d.petData.mergePet.tId); safeSetVal('merge-target-lvl', d.petData.mergePet.tLvl); safeSetVal('merge-target-exp', d.petData.mergePet.tExp);
+            if (d.petData.mergePet) {
+                safeSetVal('merge-target-rarity', d.petData.mergePet.tRarity);
+                if (typeof updateMergeNameOptions === 'function') updateMergeNameOptions('target');
+                safeSetVal('merge-target-id', d.petData.mergePet.tId); safeSetVal('merge-target-lvl', d.petData.mergePet.tLvl); safeSetVal('merge-target-exp', d.petData.mergePet.tExp);
 
-                safeSetVal('merge-fodder-rarity', d.petData.mergePet.fRarity);
-                if (typeof updateMergeNameOptions === 'function') updateMergeNameOptions('fodder');
-                safeSetVal('merge-fodder-id', d.petData.mergePet.fId); safeSetVal('merge-fodder-lvl', d.petData.mergePet.fLvl); safeSetVal('merge-fodder-exp', d.petData.mergePet.fExp);
+                safeSetVal('merge-fodder-rarity', d.petData.mergePet.fRarity);
+                if (typeof updateMergeNameOptions === 'function') updateMergeNameOptions('fodder');
+                safeSetVal('merge-fodder-id', d.petData.mergePet.fId); safeSetVal('merge-fodder-lvl', d.petData.mergePet.fLvl); safeSetVal('merge-fodder-exp', d.petData.mergePet.fExp);
 
-                const colors =['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
-                if (d.petData.mergePet.bulk) colors.forEach((c, i) => safeSetVal(`bulk-${c}`, d.petData.mergePet.bulk[i]));
-            }
+                const colors =['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+                if (d.petData.mergePet.bulk) colors.forEach((c, i) => safeSetVal(`bulk-${c}`, d.petData.mergePet.bulk[i]));
+            }
 
-            if (d.petData.mergeMount) {
-                safeSetVal('mount-target-rarity', d.petData.mergeMount.tRarity); safeSetVal('mount-target-lvl', d.petData.mergeMount.tLvl); safeSetVal('mount-target-exp', d.petData.mergeMount.tExp);
-                safeSetVal('mount-fodder-rarity', d.petData.mergeMount.fRarity); safeSetVal('mount-fodder-lvl', d.petData.mergeMount.fLvl); safeSetVal('mount-fodder-exp', d.petData.mergeMount.fExp);
-                const colors =['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
-                if (d.petData.mergeMount.bulk) colors.forEach((c, i) => safeSetVal(`bulk-mount-${c}`, d.petData.mergeMount.bulk[i]));
-            }
-        }
-    } catch (e) {}
+            if (d.petData.mergeMount) {
+                safeSetVal('mount-target-rarity', d.petData.mergeMount.tRarity); safeSetVal('mount-target-lvl', d.petData.mergeMount.tLvl); safeSetVal('mount-target-exp', d.petData.mergeMount.tExp);
+                safeSetVal('mount-fodder-rarity', d.petData.mergeMount.fRarity); safeSetVal('mount-fodder-lvl', d.petData.mergeMount.fLvl); safeSetVal('mount-fodder-exp', d.petData.mergeMount.fExp);
+                const colors =['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+                if (d.petData.mergeMount.bulk) colors.forEach((c, i) => safeSetVal(`bulk-mount-${c}`, d.petData.mergeMount.bulk[i]));
+            }
+        }
+    } catch (e) {}
 
-    try {
-        if (d.summonData) {
-            if(d.summonData.skill) { 
-                if(d.summonData.skill.asc !== undefined) safeSetVal('sum-skill-asc', d.summonData.skill.asc);
-                safeSetVal('sum-skill-lvl', d.summonData.skill.lvl); 
-                safeSetVal('sum-skill-exp', d.summonData.skill.exp); 
-                safeSetVal('sum-skill-res', d.summonData.skill.res); 
-                if(d.summonData.skill.prob !== undefined) safeSetVal('sum-skill-prob', d.summonData.skill.prob); 
-                if(d.summonData.skill.targetAsc !== undefined) safeSetVal('sum-skill-target-asc', d.summonData.skill.targetAsc);
-                safeSetVal('sum-skill-target-lv', d.summonData.skill.targetLv); 
-            }
-            if(d.summonData.pet) { 
-                if(d.summonData.pet.asc !== undefined) safeSetVal('sum-pet-asc', d.summonData.pet.asc);
-                safeSetVal('sum-pet-lvl', d.summonData.pet.lvl); 
-                safeSetVal('sum-pet-exp', d.summonData.pet.exp); 
-                safeSetVal('sum-pet-res', d.summonData.pet.res); 
-                if(d.summonData.pet.prob !== undefined) safeSetVal('sum-pet-prob', d.summonData.pet.prob); 
-                if(d.summonData.pet.targetAsc !== undefined) safeSetVal('sum-pet-target-asc', d.summonData.pet.targetAsc);
-                safeSetVal('sum-pet-target-lv', d.summonData.pet.targetLv); 
-            }
-            if(d.summonData.mount) { 
-                if(d.summonData.mount.asc !== undefined) safeSetVal('sum-mount-asc', d.summonData.mount.asc);
-                safeSetVal('sum-mount-lvl', d.summonData.mount.lvl); 
-                safeSetVal('sum-mount-exp', d.summonData.mount.exp); 
-                safeSetVal('sum-mount-res', d.summonData.mount.res); 
-                if(d.summonData.mount.prob !== undefined) safeSetVal('sum-mount-prob', d.summonData.mount.prob); 
-                if(d.summonData.mount.targetAsc !== undefined) safeSetVal('sum-mount-target-asc', d.summonData.mount.targetAsc);
-                safeSetVal('sum-mount-target-lv', d.summonData.mount.targetLv); 
-            }
-        }
-    } catch(e) {}
+    try {
+        if (d.summonData) {
+            if(d.summonData.skill) { 
+                if(d.summonData.skill.asc !== undefined) safeSetVal('sum-skill-asc', d.summonData.skill.asc);
+                safeSetVal('sum-skill-lvl', d.summonData.skill.lvl); 
+                safeSetVal('sum-skill-exp', d.summonData.skill.exp); 
+                safeSetVal('sum-skill-res', d.summonData.skill.res); 
+                if(d.summonData.skill.prob !== undefined) safeSetVal('sum-skill-prob', d.summonData.skill.prob); 
+                if(d.summonData.skill.targetAsc !== undefined) safeSetVal('sum-skill-target-asc', d.summonData.skill.targetAsc);
+                safeSetVal('sum-skill-target-lv', d.summonData.skill.targetLv); 
+            }
+            if(d.summonData.pet) { 
+                if(d.summonData.pet.asc !== undefined) safeSetVal('sum-pet-asc', d.summonData.pet.asc);
+                safeSetVal('sum-pet-lvl', d.summonData.pet.lvl); 
+                safeSetVal('sum-pet-exp', d.summonData.pet.exp); 
+                safeSetVal('sum-pet-res', d.summonData.pet.res); 
+                if(d.summonData.pet.prob !== undefined) safeSetVal('sum-pet-prob', d.summonData.pet.prob); 
+                if(d.summonData.pet.targetAsc !== undefined) safeSetVal('sum-pet-target-asc', d.summonData.pet.targetAsc);
+                safeSetVal('sum-pet-target-lv', d.summonData.pet.targetLv); 
+            }
+            if(d.summonData.mount) { 
+                if(d.summonData.mount.asc !== undefined) safeSetVal('sum-mount-asc', d.summonData.mount.asc);
+                safeSetVal('sum-mount-lvl', d.summonData.mount.lvl); 
+                safeSetVal('sum-mount-exp', d.summonData.mount.exp); 
+                safeSetVal('sum-mount-res', d.summonData.mount.res); 
+                if(d.summonData.mount.prob !== undefined) safeSetVal('sum-mount-prob', d.summonData.mount.prob); 
+                if(d.summonData.mount.targetAsc !== undefined) safeSetVal('sum-mount-target-asc', d.summonData.mount.targetAsc);
+                safeSetVal('sum-mount-target-lv', d.summonData.mount.targetLv); 
+            }
+        }
+    } catch(e) {}
 
-    try {
-        if (d.equipmentData) {
-            safeSetVal('eq-ascension', d.equipmentData.ascension !== undefined ? d.equipmentData.ascension : 0);
-            safeSetVal('eq-helmet-tier', d.equipmentData.helmet?.tier); safeSetVal('eq-helmet-lvl', d.equipmentData.helmet?.lvl);
-            safeSetVal('eq-armor-tier', d.equipmentData.armor?.tier); safeSetVal('eq-armor-lvl', d.equipmentData.armor?.lvl);
-            safeSetVal('eq-boots-tier', d.equipmentData.boots?.tier); safeSetVal('eq-boots-lvl', d.equipmentData.boots?.lvl);
-            safeSetVal('eq-belt-tier', d.equipmentData.belt?.tier); safeSetVal('eq-belt-lvl', d.equipmentData.belt?.lvl);
-            safeSetVal('eq-weapon-type', d.equipmentData.weapon?.type); safeSetVal('eq-weapon-tier', d.equipmentData.weapon?.tier); safeSetVal('eq-weapon-lvl', d.equipmentData.weapon?.lvl);
-            safeSetVal('eq-gloves-tier', d.equipmentData.gloves?.tier); safeSetVal('eq-gloves-lvl', d.equipmentData.gloves?.lvl);
-            safeSetVal('eq-neck-tier', d.equipmentData.neck?.tier); safeSetVal('eq-neck-lvl', d.equipmentData.neck?.lvl);
-            safeSetVal('eq-ring-tier', d.equipmentData.ring?.tier); safeSetVal('eq-ring-lvl', d.equipmentData.ring?.lvl);
-            safeSetVal('eq-avg-tier', d.equipmentData.avgTier || 'Quantum'); 
-            safeSetVal('eq-avg-weapon-type', d.equipmentData.avgWeapon || 'Ranged');
-        }
-    } catch (e) {}
+    try {
+        if (d.equipmentData) {
+            safeSetVal('eq-ascension', d.equipmentData.ascension !== undefined ? d.equipmentData.ascension : 0);
+            safeSetVal('eq-helmet-tier', d.equipmentData.helmet?.tier); safeSetVal('eq-helmet-lvl', d.equipmentData.helmet?.lvl);
+            safeSetVal('eq-armor-tier', d.equipmentData.armor?.tier); safeSetVal('eq-armor-lvl', d.equipmentData.armor?.lvl);
+            safeSetVal('eq-boots-tier', d.equipmentData.boots?.tier); safeSetVal('eq-boots-lvl', d.equipmentData.boots?.lvl);
+            safeSetVal('eq-belt-tier', d.equipmentData.belt?.tier); safeSetVal('eq-belt-lvl', d.equipmentData.belt?.lvl);
+            safeSetVal('eq-weapon-type', d.equipmentData.weapon?.type); safeSetVal('eq-weapon-tier', d.equipmentData.weapon?.tier); safeSetVal('eq-weapon-lvl', d.equipmentData.weapon?.lvl);
+            safeSetVal('eq-gloves-tier', d.equipmentData.gloves?.tier); safeSetVal('eq-gloves-lvl', d.equipmentData.gloves?.lvl);
+            safeSetVal('eq-neck-tier', d.equipmentData.neck?.tier); safeSetVal('eq-neck-lvl', d.equipmentData.neck?.lvl);
+            safeSetVal('eq-ring-tier', d.equipmentData.ring?.tier); safeSetVal('eq-ring-lvl', d.equipmentData.ring?.lvl);
+            safeSetVal('eq-avg-tier', d.equipmentData.avgTier || 'Quantum'); 
+            safeSetVal('eq-avg-weapon-type', d.equipmentData.avgWeapon || 'Ranged');
+        }
+    } catch (e) {}
 
-    if (d.refTableData) window.refTablePrefs = d.refTableData;
+    if (d.refTableData) window.refTablePrefs = d.refTableData;
 
-    const nowIso = new Date().toISOString().slice(0, 16);
-    if (!document.getElementById('start-date').value) safeSetVal('start-date', nowIso);
-    if (document.getElementById('calc-start-date') && !document.getElementById('calc-start-date').value) safeSetVal('calc-start-date', nowIso);
-    if (document.getElementById('egg-date-desktop') && !document.getElementById('egg-date-desktop').value) safeSetVal('egg-date-desktop', nowIso);
-    
-    try { const treeToLoad = d.activeTree || 'forge'; if (typeof switchTree === 'function') switchTree(treeToLoad); } catch(e) {}
+    const nowIso = new Date().toISOString().slice(0, 16);
+    if (!document.getElementById('start-date').value) safeSetVal('start-date', nowIso);
+    if (document.getElementById('calc-start-date') && !document.getElementById('calc-start-date').value) safeSetVal('calc-start-date', nowIso);
+    if (document.getElementById('egg-date-desktop') && !document.getElementById('egg-date-desktop').value) safeSetVal('egg-date-desktop', nowIso);
+    
+    try { const treeToLoad = d.activeTree || 'forge'; if (typeof switchTree === 'function') switchTree(treeToLoad); } catch(e) {}
 
-    try { if (typeof updateCalculations === 'function') updateCalculations(); } catch(e) {}
-    try { if (typeof updateCalculator === 'function') updateCalculator(); } catch(e) {}
-    try { if (typeof renderEggLog === 'function') renderEggLog(); } catch(e) {}
-    try { if (typeof updateDaily === 'function') updateDaily(); } catch(e) {} 
-    try { if (typeof updateWeekly === 'function') updateWeekly(); } catch(e) {}
-    try { if (typeof updateWarCalc === 'function') updateWarCalc(); } catch(e) {}
-    try { if (typeof updatePetMount === 'function') updatePetMount(); } catch(e) {}
-    try { if (typeof updateMergeResult === 'function') updateMergeResult(); } catch(e) {}
-    try { if (typeof updateMountMergeResult === 'function') updateMountMergeResult(); } catch(e) {}
-    try { if (typeof updateEquipment === 'function') updateEquipment(); } catch(e) {}
-    
-    try { 
-        if (typeof updateAscensionCaps === 'function') { updateAscensionCaps('skill'); updateAscensionCaps('pet'); updateAscensionCaps('mount'); }
-        if (typeof updateSummonCap === 'function') { updateSummonCap('skill'); updateSummonCap('pet'); updateSummonCap('mount'); }
-        if (typeof updateSummonCalc === 'function') { updateSummonCalc('skill'); updateSummonCalc('pet'); updateSummonCalc('mount'); }
-    } catch(e) {}
+    try { if (typeof updateCalculations === 'function') updateCalculations(); } catch(e) {}
+    try { if (typeof updateCalculator === 'function') updateCalculator(); } catch(e) {}
+    try { if (typeof renderEggLog === 'function') renderEggLog(); } catch(e) {}
+    try { if (typeof updateDaily === 'function') updateDaily(); } catch(e) {} 
+    try { if (typeof updateWeekly === 'function') updateWeekly(); } catch(e) {}
+    try { if (typeof updateWarCalc === 'function') updateWarCalc(); } catch(e) {}
+    try { if (typeof updatePetMount === 'function') updatePetMount(); } catch(e) {}
+    try { if (typeof updateMergeResult === 'function') updateMergeResult(); } catch(e) {}
+    try { if (typeof updateMountMergeResult === 'function') updateMountMergeResult(); } catch(e) {}
+    try { if (typeof updateEquipment === 'function') updateEquipment(); } catch(e) {}
+    
+    try { 
+        if (typeof updateAscensionCaps === 'function') { updateAscensionCaps('skill'); updateAscensionCaps('pet'); updateAscensionCaps('mount'); }
+        if (typeof updateSummonCap === 'function') { updateSummonCap('skill'); updateSummonCap('pet'); updateSummonCap('mount'); }
+        if (typeof updateSummonCalc === 'function') { updateSummonCalc('skill'); updateSummonCalc('pet'); updateSummonCalc('mount'); }
+    } catch(e) {}
 }
 
 function safeSetVal(id, val) { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; }

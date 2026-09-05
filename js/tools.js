@@ -41,15 +41,76 @@ function renderStats() {
     const globProj_SellIso = slots.length > 0 ? totalAvgSellIso / slots.length : 0;
     const globProj_SellCombined = slots.length > 0 ? totalAvgSellCombined / slots.length : 0;
     
+    let techTimerLevels = 0;
+    for (let t = 1; t <= 5; t++) {
+        techTimerLevels += (setupLevels[`spt_T${t}_timer`] || 0);
+    }
+    const speedDivisor = 1 + (techTimerLevels * 4) / 100;
+    
     ['forge', 'spt', 'power'].forEach(key => {
         const treeData = TREES[key];
+        
         let currentCount = 0;
         Object.keys(setupLevels).forEach(id => { if (id.startsWith(key + '_')) currentCount += setupLevels[id]; });
+        
+        let totalTreeTime = 0;
+        let spentTreeTime = 0;
+        
+        treeData.structure.forEach(ns => {
+            const meta = treeData.meta[ns.id];
+            if (!meta) return;
+            const maxLevel = meta.m || 5;
+            for (let t = 1; t <= 5; t++) {
+                const id = `${key}_T${t}_${ns.id}`;
+                const cLvl = (setupLevels[id] || 0);
+                
+                for (let l = 0; l < maxLevel; l++) {
+                    const timeCost = tierTimes[t][l] || 0;
+                    totalTreeTime += timeCost;
+                    if (l < cLvl) spentTreeTime += timeCost;
+                }
+            }
+        });
+
+        totalTreeTime = totalTreeTime / speedDivisor;
+        spentTreeTime = spentTreeTime / speedDivisor;
+
+        const remainingTime = totalTreeTime - spentTreeTime;
+        const timePct = totalTreeTime > 0 ? ((spentTreeTime / totalTreeTime) * 100).toFixed(1) : 0;
+        
+        let timeLeftStr = '0m';
+        if (remainingTime > 0) {
+            const d = Math.floor(remainingTime / 1440);
+            const h = Math.floor((remainingTime % 1440) / 60);
+            const m = Math.floor(remainingTime % 60);
+            if (d > 0) timeLeftStr = `${d}d ${h}h`;
+            else if (h > 0) timeLeftStr = `${h}h ${m}m`;
+            else timeLeftStr = `${m}m`;
+        }
+        
         const max = treeData.maxLevels;
         const pct = ((currentCount / max) * 100).toFixed(1);
+        
         const group = document.createElement('div'); group.className = 'stats-group';
         const header = document.createElement('div'); header.className = `stats-header ${key}`;
-        header.innerHTML = `<div class="header-left"><div class="header-icon-circle"><img src="icons/tree_${key === 'spt' ? 'SPT' : key}.png" class="nav-icon"></div><span class="header-title-text">${treeData.name.toUpperCase()}</span></div><div class="header-right"><span class="stat-count-text">${currentCount}/${max}</span><span class="stat-pct-text">${pct}%</span></div>`;
+        
+        header.innerHTML = `
+            <div class="header-left" style="display: flex; align-items: center; width: 100%;">
+                <div class="header-icon-circle">
+                    <img src="icons/tree_${key === 'spt' ? 'SPT' : key}.png" class="nav-icon">
+                </div>
+                <div style="display: flex; flex-direction: column; justify-content: center; margin-left: 12px; gap: 6px;">
+                    <div style="line-height: 1;">
+                        <span class="stat-count-text">${currentCount}/${max}</span>
+                        <span class="stat-pct-text" style="margin-left: 4px;">(${pct}%)</span>
+                    </div>
+                    <div style="line-height: 1; font-size: 0.9em; opacity: 0.95;">
+                        <span class="stat-count-text">${timeLeftStr} left</span>
+                        <span class="stat-pct-text" style="margin-left: 4px;">(${timePct}%)</span>
+                    </div>
+                </div>
+            </div>`;
+            
         group.appendChild(header);
 
         let hasStats = false;
