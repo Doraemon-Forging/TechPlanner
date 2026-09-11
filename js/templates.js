@@ -1004,6 +1004,9 @@ const HTML_WEEKLY = `
                             <option value="2nd">2nd</option>
                             <option value="3rd">3rd</option>
                             <option value="4th">4th</option>
+                            <option value="5th">5th</option>
+                            <option value="6th">6th</option>
+                            <option value="7th">7th</option>
                             <option value="None">None</option>
                         </select>
                     </div>
@@ -1014,18 +1017,18 @@ const HTML_WEEKLY = `
                     <div class="war-select-group flex-center">
                         <select id="weekly-potion-asc" class="war-select" style="width: 95px;" onchange="updateWeekly()">
                             <option value="0" selected>0%</option>
+                            <option value="5">5%</option>
                             <option value="10">10%</option>
+                            <option value="15">15%</option>
                             <option value="20">20%</option>
+                            <option value="25">25%</option>
                             <option value="30">30%</option>
+                            <option value="35">35%</option>
                             <option value="40">40%</option>
+                            <option value="45">45%</option>
                             <option value="50">50%</option>
+                            <option value="55">55%</option>
                             <option value="60">60%</option>
-                            <option value="70">70%</option>
-                            <option value="80">80%</option>
-                            <option value="90">90%</option>
-                            <option value="100">100%</option>
-                            <option value="110">110%</option>
-                            <option value="120">120%</option>
                         </select>
                     </div>
                 </div>

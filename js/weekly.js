@@ -84,7 +84,6 @@ function updateSecondaryLeagueOptions() {
     addOption(idx);
     addOption(idx + 1);
     
-    // Preserve selection if it's still in the newly generated list
     if (Array.from(league2Select.options).some(o => o.value === currentVal2)) {
         league2Select.value = currentVal2;
     } else {
@@ -128,15 +127,19 @@ function updateWeekly() {
     const ctPotRace     = getCtVal('ct-pot-race', 'potRace');
     const potAsc = parseInt(document.getElementById('weekly-potion-asc')?.value) || 0; 
     
-    const gpAscMult = 1 + (potAsc / 100);
+    const ascPct = potAsc / 100;
+    const gpAscMult = 1 + ascPct;
     const indivMult = 1 + (ctWarPersonal / 100);
-    const indivGpTechMult = 1 + (ctWarPersonal / 100) + (ctPotPersonal * 5 / 100);
     
     // War Multipliers (Win vs Lose)
     const warMultWin = 1 + (ctWarWin / 100);
-    const warGpTechMultWin = 1 + (ctWarWin / 100) + (ctPotWin * 5 / 100);
     const warMultLose = 1 + (ctWarLose / 100);
-    const warGpTechMultLose = 1 + (ctWarLose / 100) + (ctPotLose * 5 / 100);
+
+    // Green Potion Formulas
+    const getGpWarWinMult = () => (1 + ascPct + (ctWarWin / 100)) * (1 + (ctPotWin * 5 / 100));
+    const getGpWarLoseMult = () => (1 + ascPct + (ctWarLose / 100)) * (1 + (ctPotLose * 5 / 100));
+    const getGpIndivMult = () => (1 + ascPct + (ctWarPersonal / 100)) * (1 + (ctPotPersonal * 5 / 100));
+    const getGpRaceMult = () => 1 + ascPct + (ctPotRace * 5 / 100);
 
     const baseL1 = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league1] && LEAGUE_REWARDS[league1][rank1]) ? LEAGUE_REWARDS[league1][rank1] : [0,0,0,0,0,0,0];
     let baseL2 = baseL1;
@@ -161,8 +164,8 @@ function updateWeekly() {
 
         if (i === 6) {
             lRewards[i] = Math.round(avgBaseL * gpAscMult);
-            wReward = baseWinRewards[i] * warGpTechMultWin * gpAscMult;
-            lReward = baseLoseRewards[i] * warGpTechMultLose * gpAscMult;
+            wReward = baseWinRewards[i] * getGpWarWinMult();
+            lReward = baseLoseRewards[i] * getGpWarLoseMult();
         } else {
             lRewards[i] = Math.round(avgBaseL); 
             wReward = baseWinRewards[i] * warMultWin;
@@ -179,7 +182,7 @@ function updateWeekly() {
                 const tierRew = INDIV_REWARDS[key].rewards || [0,0,0,0,0,0,0];
                 for (let i = 0; i < 7; i++) {
                     if (i === 6) { 
-                        iRewards[i] += Math.round(tierRew[i] * indivGpTechMult * gpAscMult);
+                        iRewards[i] += Math.round(tierRew[i] * getGpIndivMult());
                     } else { 
                         iRewards[i] += Math.round(tierRew[i] * indivMult);
                     }
@@ -189,13 +192,15 @@ function updateWeekly() {
     }
 
     let baseRaceGp = 0;
-    if (raceRank === '1st') baseRaceGp = 400;
-    else if (raceRank === '2nd') baseRaceGp = 150;
-    else if (raceRank === '3rd') baseRaceGp = 50;
-    else if (raceRank === '4th') baseRaceGp = 30;
+    if (raceRank === '1st') baseRaceGp = 800;
+    else if (raceRank === '2nd') baseRaceGp = 300;
+    else if (raceRank === '3rd') baseRaceGp = 150;
+    else if (raceRank === '4th') baseRaceGp = 80;
+    else if (raceRank === '5th') baseRaceGp = 40;
+    else if (raceRank === '6th') baseRaceGp = 20;
+    else if (raceRank === '7th') baseRaceGp = 10;
 
-    const raceGpMult = 1 + (ctPotRace * 5 / 100) + (potAsc / 100);
-    const raceGpReward = Math.round(baseRaceGp * raceGpMult);
+    const raceGpReward = Math.round(baseRaceGp * getGpRaceMult());
 
     const finalRewards = {
         hammer:   lRewards[0] + cRewards[0] + iRewards[0],

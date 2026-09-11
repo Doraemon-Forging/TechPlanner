@@ -158,8 +158,8 @@ function calculateMissionYields(lvl, sub, slots) {
     const potAsc = parseInt(document.getElementById('weekly-potion-asc')?.value) || 0; 
 
     const generalTechMult = 1 + (missionLvl / 100);
-    const gpTechMult = 1 + (missionLvl / 100) + ((potMissionLvl * 5) / 100);
-    const gpAscMult = 1 + (potAsc / 100);
+    
+    const gpCombinedMult = (1 + (potAsc / 100) + (missionLvl / 100)) * (1 + (potMissionLvl * 5) / 100);
 
     const getYield = (base, techMult) => {
         let sum = 0;
@@ -183,7 +183,7 @@ function calculateMissionYields(lvl, sub, slots) {
             else if (L <= 43) base = 9;
             else base = 10;
             
-            sum += Math.round(base * gpAscMult * gpTechMult);
+            sum += Math.round(base * gpCombinedMult);
         }
         return sum / (maxLv - minLv + 1);
     };
