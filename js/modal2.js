@@ -812,6 +812,472 @@ window.openWeeklyBreakdownModal = function() {
     }
 };
 
+window.openMissionLevelInfoModal = function(levelOverride = null, slotsOverride = null) {
+    if (typeof MODAL_SETTINGS !== 'undefined') {
+        MODAL_SETTINGS.missionLevelInfo = { 
+            title: "MISSION REWARDS", 
+            headerColor: "#ebf8fa", 
+            titleColor: "#000000", 
+            disclaimer: "Per X slot rewards at the specified mission level." 
+        };
+    }
+
+    let currentLv = levelOverride;
+    if (currentLv === null || currentLv === undefined) {
+        let lvl = parseInt(document.getElementById('thief-lvl')?.value) || 1;
+        let sub = parseInt(document.getElementById('thief-sub')?.value) || 1;
+        const slots = typeof getMissionSlots === 'function' ? getMissionSlots() : {};
+        if (typeof calculateMissionYields === 'function') {
+            let calc = calculateMissionYields(lvl, sub, slots);
+            currentLv = calc.minLv;
+        } else {
+            currentLv = 1;
+        }
+    }
+    
+    if (currentLv < 1) currentLv = 1;
+    if (currentLv > 60) currentLv = 60;
+
+    let currentSlots = slotsOverride || 1;
+    if (currentSlots < 1) currentSlots = 1;
+    if (currentSlots > 4) currentSlots = 4;
+
+    const missionLvl = parseInt(window.clanTechMemory?.mission) || 0;
+    const potMissionLvl = parseInt(window.clanTechMemory?.potMission) || 0;
+    const potAsc = parseInt(document.getElementById('weekly-potion-asc')?.value) || 0; 
+    
+    const generalTechMult = 1 + (missionLvl / 100);
+    const gpCombinedMult = (1 + (potAsc / 100) + (missionLvl / 100)) * (1 + (potMissionLvl * 5) / 100);
+
+    let gpBase = 0;
+    if (currentLv <= 2) gpBase = 3;
+    else if (currentLv <= 4) gpBase = 4;
+    else if (currentLv <= 6) gpBase = 5;
+    else if (currentLv <= 16) gpBase = 6;
+    else if (currentLv <= 19) gpBase = 7;
+    else if (currentLv <= 41) gpBase = 8;
+    else if (currentLv <= 43) gpBase = 9;
+    else gpBase = 10;
+
+    const gpVal = Math.round(gpBase * currentSlots * gpCombinedMult);
+
+    const fmt = (num, isGold) => {
+        if (isGold) {
+            if (num < 10000) return Math.round(num).toLocaleString('en-US');
+            else if (num < 1000000) return parseFloat((num/1000).toFixed(1)) + 'k';
+            else return parseFloat((num/1000000).toFixed(2)) + 'm';
+        }
+        return Math.round(num).toLocaleString('en-US');
+    };
+
+    const getLvlBase = (baseVal, lv) => {
+        let rawLvBase = Math.round(baseVal * Math.pow(1.01, lv - 1));
+        return Math.round(rawLvBase * currentSlots * generalTechMult);
+    };
+
+    const resData = [
+        { id: 'gold', icon: 'fm_gold.png', name: 'Gold', val: getLvlBase(typeof MISSION_BASE_YIELDS !== 'undefined' ? MISSION_BASE_YIELDS.gold : 1500, currentLv), isGold: true },
+        { id: 'ticket', icon: 'green_ticket.png', name: 'Green Ticket', val: getLvlBase(typeof MISSION_BASE_YIELDS !== 'undefined' ? MISSION_BASE_YIELDS.ticket : 15, currentLv), isGold: false },
+        { id: 'egg', icon: 'eggshell.png', name: 'Eggshell', val: getLvlBase(typeof MISSION_BASE_YIELDS !== 'undefined' ? MISSION_BASE_YIELDS.egg : 250, currentLv), isGold: false },
+        { id: 'pot', icon: 'red_potion.png', name: 'Red Potion', val: getLvlBase(typeof MISSION_BASE_YIELDS !== 'undefined' ? MISSION_BASE_YIELDS.pot : 40, currentLv), isGold: false },
+        { id: 'key', icon: 'mount_key.png', name: 'Mount Key', val: getLvlBase(typeof MISSION_BASE_YIELDS !== 'undefined' ? MISSION_BASE_YIELDS.key : 1, currentLv), isGold: false },
+        { id: 'gp', icon: 'green_potion.png', name: 'Green Potion', val: gpVal, isGold: false }
+    ];
+
+    let tabsHtml = `
+        <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+            <div class="segmented-control" style="width: 100%; height: 32px; display: flex;">
+                <button class="seg-btn ${currentSlots === 1 ? 'active' : ''}" onclick="window.openMissionLevelInfoModal(${currentLv}, 1)" style="flex: 1; padding: 0; font-size: 0.85rem;">1 Slot</button>
+                <button class="seg-btn ${currentSlots === 2 ? 'active' : ''}" onclick="window.openMissionLevelInfoModal(${currentLv}, 2)" style="flex: 1; padding: 0; font-size: 0.85rem;">2 Slots</button>
+                <button class="seg-btn ${currentSlots === 3 ? 'active' : ''}" onclick="window.openMissionLevelInfoModal(${currentLv}, 3)" style="flex: 1; padding: 0; font-size: 0.85rem;">3 Slots</button>
+                <button class="seg-btn ${currentSlots === 4 ? 'active' : ''}" onclick="window.openMissionLevelInfoModal(${currentLv}, 4)" style="flex: 1; padding: 0; font-size: 0.85rem;">4 Slots</button>
+            </div>
+        </div>
+    `;
+
+    let listHtml = `<div style="display: flex; flex-direction: column; gap: 6px;">`;
+    resData.forEach(r => {
+        listHtml += `
+        <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; padding: 10px 15px; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <img src="icons/${r.icon}" style="width: 24px; height: 24px; object-fit: contain;">
+                <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px;">${r.name}</span>
+            </div>
+            <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1rem; color: #000; -webkit-text-stroke: 0px;">${fmt(r.val, r.isGold)}</span>
+        </div>`;
+    });
+    listHtml += `</div>`;
+
+    const leftArrowSvg = `
+    <svg width="32" height="32" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 0px #000);">
+        <polygon points="18,4 4.14,12 18,20" fill="#00a3ff" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></polygon>
+    </svg>`;
+
+    const rightArrowSvg = `
+    <svg width="32" height="32" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 0px #000);">
+        <polygon points="6,4 19.86,12 6,20" fill="#00a3ff" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></polygon>
+    </svg>`;
+
+    const navHtml = `
+    <style>
+        .modal-header-fixed { display: none !important; }
+        .modal-body-scroll { padding-top: 25px !important; padding-bottom: 25px !important; border-radius: 16px !important; }
+        #tableModal .modal-content { overflow: visible !important; margin-bottom: 30px !important; }
+        .btn-close-floating { 
+            position: absolute !important;
+            top: auto !important; 
+            bottom: -24px !important; 
+            left: 50% !important; 
+            right: auto !important; 
+            transform: translateX(-50%) !important; 
+        }
+    </style>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
+        <button onclick="window.openMissionLevelInfoModal(${currentLv - 1}, ${currentSlots})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center; visibility: ${currentLv > 1 ? 'visible' : 'hidden'};">
+            ${leftArrowSvg}
+        </button>
+        
+        <div style="text-align: center;">
+            <div style="font-family: 'Fredoka', sans-serif; font-size: 1.2rem; font-weight: 700; color: #ffffff; -webkit-text-stroke: 3px #000000; paint-order: stroke fill; line-height: 1; letter-spacing: 1px;">Level ${currentLv}</div>
+        </div>
+        
+        <button onclick="window.openMissionLevelInfoModal(${currentLv + 1}, ${currentSlots})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center; visibility: ${currentLv < 60 ? 'visible' : 'hidden'};">
+            ${rightArrowSvg}
+        </button>
+    </div>
+    `;
+
+    const closeBehaviorHtml = `
+        <img src="x" style="display:none;" onerror="
+            setTimeout(() => {
+                const closeBtns = document.querySelectorAll('.btn-close-floating');
+                const activeCloseBtn = closeBtns[closeBtns.length - 1];
+                if (activeCloseBtn) {
+                    activeCloseBtn.onclick = function(e) {
+                        e.preventDefault();
+                        if (typeof window.openWeeklyBreakdownModal === 'function') {
+                            window.openWeeklyBreakdownModal();
+                            setTimeout(() => {
+                                if (typeof window.switchWeeklyTab === 'function') {
+                                    window.switchWeeklyTab('mission');
+                                }
+                            }, 50);
+                        }
+                    };
+                }
+            }, 50);
+        ">
+    `;
+
+    if (typeof renderMasterModal === 'function') {
+        renderMasterModal('missionLevelInfo', navHtml + tabsHtml + listHtml + closeBehaviorHtml);
+    }
+};
+
+window.openWeeklyBreakdownModal = function() {
+    if (typeof MODAL_SETTINGS !== 'undefined' && !MODAL_SETTINGS.weeklyBreakdown) {
+        MODAL_SETTINGS.weeklyBreakdown = { 
+            title: "WEEKLY REWARDS OVERVIEW", 
+            headerColor: "#ebf8fa", 
+            titleColor: "#000000", 
+            disclaimer: "Detailed breakdown of weekly income sources." 
+        };
+    }
+    
+    const bd = window.latestWeeklyBreakdown || {};
+    
+    const resources = [
+        { key: 'hammer', name: 'Hammer', icon: 'fm_hammer.png' },
+        { key: 'gold', name: 'Gold', icon: 'fm_gold.png' },
+        { key: 'ticket', name: 'Green Ticket', icon: 'green_ticket.png' },
+        { key: 'eggshell', name: 'Eggshell', icon: 'eggshell.png' },
+        { key: 'potion', name: 'Red Potion', icon: 'red_potion.png' },
+        { key: 'mountKey', name: 'Mount Key', icon: 'mount_key.png' },
+        { key: 'greenPotion', name: 'Green Potion', icon: 'green_potion.png' }
+    ];
+
+    // --- REUSABLE RENDER FUNCTION ---
+    const renderBA = (vB, vA, isPct, key, isTitle = false) => {
+        const fmt = (v) => {
+            if (isPct) return v.toFixed(1) + '%';
+            if (!v || v === 0) return isPct ? "0.0%" : "-";
+            if (key === 'gold') {
+                if (v < 10000) return Math.round(v).toLocaleString('en-US');
+                if (v < 1000000) return parseFloat((v/1000).toFixed(1)) + 'k';
+                return parseFloat((v/1000000).toFixed(2)) + 'm';
+            }
+            return Math.round(v).toLocaleString('en-US');
+        };
+
+        const strB = fmt(vB);
+        const strA = fmt(vA);
+        const fontSize = isTitle ? '1rem' : '0.9rem';
+
+        if (Math.abs(vB - vA) < (isPct ? 0.1 : 0.001) || strB === strA) {
+            return `
+            <div style="width: 100%; display: flex; justify-content: flex-end;">
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #000; white-space: nowrap;">${strB}</div>
+            </div>`;
+        } else {
+            return `
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;">
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #000; white-space: nowrap; margin-bottom: 2px;">${strB}</div>
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #27ae60; white-space: nowrap; display: flex; align-items: center;">
+                    <span class="calc-arrow" style="margin-right: 4px; font-size: 0.85em;">➜</span>${strA}
+                </div>
+            </div>`;
+        }
+    };
+
+    // ==========================================
+    // TAB 1: BY SOURCE
+    // ==========================================
+    let sourceHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+    
+    const sourceGroups = [
+        { id: 'Dungeon', name: 'Dungeon', divider: 14, suffix: ' / Key' },
+        { id: 'Idle', name: 'Idle', divider: 7, suffix: ' / Day' },
+        { id: 'League', name: 'League', divider: 1, suffix: '' },
+        { id: 'War', name: 'Clan War', divider: 1, suffix: '' },
+        { id: 'Indiv Rewards', name: 'Indiv. Rewards', divider: 1, suffix: '' },
+        { id: 'Mission', name: 'Mission', divider: 1, suffix: '' },
+        { id: 'Rally Bonus', name: 'Rally Bonus', divider: 7, suffix: ' / Day' },
+        { id: 'Clan Race', name: 'Clan Tech Race', divider: 1, suffix: '' } 
+    ];
+
+    sourceGroups.forEach(src => {
+        let rowsHtml = '';
+        
+        resources.forEach(res => {
+            const data = bd[res.key]?.[src.id];
+            if (data) {
+                let vB = data.b / src.divider;
+                let vA = data.a / src.divider;
+
+                if (vB > 0 || vA > 0) {
+                    rowsHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;">
+                        <div style="flex: 0 0 50%; display: flex; align-items: center; gap: 8px; box-sizing: border-box;">
+                            <img src="icons/${res.icon}" style="width: 20px; height: 20px; object-fit: contain;">
+                            <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000;">${res.name}</span>
+                        </div>
+                        <div style="flex: 0 0 50%; padding-right: 8px; box-sizing: border-box;">
+                            ${renderBA(vB, vA, false, res.key, false)}
+                        </div>
+                    </div>`;
+                }
+            }
+        });
+
+        if (rowsHtml !== '') {
+            sourceHtml += `
+            <div style="background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 2px solid #000; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
+                <div style="background-color: #ebf8fa; padding: 10px 12px; border-bottom: 2px solid #000; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 0px #000000; text-transform: uppercase; color: #000;">
+                        ${src.name}
+                    </span>
+                </div>
+                <div style="padding: 10px;">
+                    <div style="display: flex; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000; padding: 0 12px 6px 12px;">
+                        <div style="flex: 0 0 50%; box-sizing: border-box;">Resource</div>
+                        <div style="flex: 0 0 50%; text-align: right; padding-right: 8px; box-sizing: border-box;">Amount${src.suffix}</div>
+                    </div>
+                    ${rowsHtml}
+                </div>
+            </div>`;
+        }
+    });
+
+    sourceHtml += '</div>';
+
+    // ==========================================
+    // TAB 2: BY RESOURCE
+    // ==========================================
+    let resourceHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+    
+    resources.forEach(res => {
+        const data = bd[res.key] || {};
+        let totalB = 0, totalA = 0;
+        
+        const sources = ['Dungeon', 'Idle', 'League', 'War', 'Indiv Rewards', 'Mission', 'Rally Bonus', 'Hammer', 'Clan Race'];
+        sources.forEach(src => {
+            if (data[src]) {
+                totalB += (data[src].b || 0);
+                totalA += (data[src].a || 0);
+            }
+        });
+        
+        if (totalA === 0 && totalB === 0) return; 
+        
+        const getPctB = (val) => totalB > 0 ? (val / totalB) * 100 : 0;
+        const getPctA = (val) => totalA > 0 ? (val / totalA) * 100 : 0;
+
+        const generateRow = (label, srcData) => {
+            if (!srcData) return '';
+            const vB = srcData.b || 0;
+            const vA = srcData.a || 0;
+
+            if (vB === 0 && vA === 0 && (label === 'Idle' || label === 'Dungeon' || label === 'Clan Tech Race')) return ''; 
+            
+            return `
+            <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;">
+                <div style="flex: 0 0 28%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000; box-sizing: border-box;">${label}</div>
+                <div style="flex: 0 0 42%; padding-right: 8px; box-sizing: border-box;">
+                    ${renderBA(vB, vA, false, res.key, false)}
+                </div>
+                <div style="flex: 0 0 30%; box-sizing: border-box;">
+                    ${renderBA(getPctB(vB), getPctA(vA), true, res.key, false)}
+                </div>
+            </div>`;
+        };
+
+        let displayName = res.key === 'gold' ? 'Gold After Hammering' : res.name;
+
+        resourceHtml += `
+        <div style="background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 2px solid #000; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
+            <div style="background-color: #ebf8fa; padding: 10px 12px; border-bottom: 2px solid #000; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <img src="icons/${res.icon}" style="width: 24px; height: 24px; object-fit: contain;">
+                    <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 0px #000000; text-transform: uppercase; color: #000;">
+                        ${displayName}
+                    </span>
+                </div>
+                <div style="flex: 1; display: flex; justify-content: flex-end;">
+                    ${renderBA(totalB, totalA, false, res.key, true)}
+                </div>
+            </div>
+            <div style="padding: 10px;">
+                <div style="display: flex; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000; padding: 0 12px 6px 12px;">
+                    <div style="flex: 0 0 28%; box-sizing: border-box;">Source</div>
+                    <div style="flex: 0 0 42%; text-align: right; padding-right: 8px; box-sizing: border-box;">Amount</div>
+                    <div style="flex: 0 0 30%; text-align: right; box-sizing: border-box;">%</div>
+                </div>
+                ${generateRow('Dungeon', data.Dungeon)}
+                ${generateRow('Idle', data.Idle)}
+                ${generateRow('League', data.League)}
+                ${res.key === 'gold' ? '' : generateRow('War', data.War)}
+                ${generateRow('Indiv Rewards', data['Indiv Rewards'])}
+                ${res.key === 'hammer' ? generateRow('Rally Bonus', data['Rally Bonus']) : generateRow('Mission', data.Mission)}
+                ${res.key === 'greenPotion' ? generateRow('Clan Tech Race', data['Clan Race']) : ''}
+                ${res.key === 'gold' ? generateRow('Hammer', data.Hammer) : ''}
+            </div>
+        </div>`;
+    });
+    
+    resourceHtml += '</div>';
+
+    // ==========================================
+    // TAB 3: MISSION CALC HTML
+    // ==========================================
+    const missionHtml = `
+        <div class="daily-card config-card" style="margin-bottom: 15px; border-radius: 10px; border: 2px solid #000; overflow: hidden; background-color: #ffffff !important; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
+            <div style="padding: 12px; display: flex; flex-direction: column; gap: 8px;">
+                
+                <div style="display: flex; justify-content: center; align-items: center; padding-bottom: 4px;">
+                    <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000;">Input the amount of slots for each resources</span>
+                    <button class="btn-info" onclick="window.openMissionInfoModal()">i</button>
+                </div>
+
+                ${[
+                    {id: 'gold', icon: 'fm_gold.png'},
+                    {id: 'ticket', icon: 'green_ticket.png'},
+                    {id: 'egg', icon: 'eggshell.png'},
+                    {id: 'pot', icon: 'red_potion.png'},
+                    {id: 'key', icon: 'mount_key.png'},
+                    {id: 'gp', icon: 'green_potion.png'}
+                ].map(item => {
+                    let val = window.missionSlotsMemory?.[item.id] !== undefined ? window.missionSlotsMemory[item.id] : '0';
+                    return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; padding: 6px 12px; border-radius: 8px;">
+                        <img src="icons/${item.icon}" style="width: 24px; height: 24px; object-fit: contain;">
+                        <input type="number" id="ms-slot-${item.id}" value="${val}" min="0" max="12" step="0.01" oninput="if(this.value > 12) this.value = 12; window.updateMissionCalc(); window.updateWeekly();" style="width: 60px; flex-shrink: 0; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; -webkit-text-stroke: 0px transparent !important;">
+                    </div>
+                    `;
+                }).join('')}
+
+                <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; padding: 6px 12px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <img src="icons/fm_hammer.png" style="width: 24px; height: 24px; flex-shrink: 0; object-fit: contain;">
+                        <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000; line-height: 1.1;">Rally Bonus (max 300)</span>
+                    </div>
+                    <input type="number" id="ms-slot-rally" value="${window.missionSlotsMemory?.rally !== undefined ? window.missionSlotsMemory.rally : '300'}" min="0" max="300" step="1" oninput="if(this.value > 300) this.value = 300; window.updateMissionCalc(); window.updateWeekly();" style="width: 60px; flex-shrink: 0; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; -webkit-text-stroke: 0px transparent !important;">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="daily-card card-compact" style="border-radius: 10px; border: 2px solid #000; overflow: hidden; background-color: #ffffff; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
+            <div class="daily-card-header strip-blue" style="background-color: #ebf8fa; padding: 10px; border-bottom: 2px solid #000; display: flex; justify-content: center; align-items: center; gap: 6px;">
+                <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 0px; color: #000; text-transform: uppercase;">EXPECTED DAILY MISSION REWARDS</span>
+                <button class="btn-info" onclick="window.openMissionLevelInfoModal()" style="margin: 0;">i</button>
+            </div>
+            <div style="padding: 12px; display: flex; flex-direction: column; gap: 6px;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 12px 2px 12px;">
+                    <div id="ms-level-info" style="flex: 0 0 25%; font-family: 'Fredoka', sans-serif; font-size: 0.9rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000;">Mission Lv ?-?</div>
+                    <div style="flex: 0 0 35%; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000;">Avg / Slot</div>
+                    <div style="flex: 0 0 40%; text-align: right; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000;">Daily Avg</div>
+                </div>
+
+                ${[
+                    {id: 'gold', icon: 'fm_gold.png'},
+                    {id: 'ticket', icon: 'green_ticket.png'},
+                    {id: 'egg', icon: 'eggshell.png'},
+                    {id: 'pot', icon: 'red_potion.png'},
+                    {id: 'key', icon: 'mount_key.png'},
+                    {id: 'gp', icon: 'green_potion.png'}
+                ].map(item => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; padding: 6px 12px; border-radius: 8px;">
+                        <div style="flex: 0 0 25%; display: flex; align-items: center;">
+                            <img src="icons/${item.icon}" style="width: 24px; height: 24px; object-fit: contain;">
+                        </div>
+                        <div id="ms-base-${item.id}" style="flex: 0 0 35%; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 0.9rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px #000000;">0</div>
+                        <div id="ms-daily-${item.id}" style="flex: 0 0 40%; text-align: right; font-family: 'Fredoka', sans-serif; font-size: 0.9rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px #000000;">0</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    // ==========================================
+    // FINAL MODAL HTML ASSEMBLY
+    // ==========================================
+    const contentHtml = `
+        <style>
+            #modal-tabs-container .seg-btn {
+                transition: font-size 0.1s ease, transform 0.1s ease;
+            }
+        </style>
+        <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+            <div id="modal-tabs-container" class="segmented-control" style="width: 100%; max-width: 320px; height: 38px; display: flex;">
+                <button id="btn-tab-source" class="seg-btn active" onclick="window.switchWeeklyTab('source')" style="flex: 1;">Source</button>
+                <button id="btn-tab-resource" class="seg-btn" onclick="window.switchWeeklyTab('resource')" style="flex: 1;">Resource</button>
+                <button id="btn-tab-mission" class="seg-btn" onclick="window.switchWeeklyTab('mission')" style="flex: 1;">Mission</button>
+            </div>
+        </div>
+        
+        <div id="tab-source">
+            ${sourceHtml}
+        </div>
+        
+        <div id="tab-resource" style="display: none;">
+            ${resourceHtml}
+        </div>
+
+        <div id="tab-mission" style="display: none;">
+            ${missionHtml}
+        </div>
+    `;
+
+    if (typeof renderMasterModal === 'function') {
+        renderMasterModal('weeklyBreakdown', contentHtml);
+        setTimeout(() => {
+            if (typeof window.updateMissionCalc === 'function') window.updateMissionCalc();
+        }, 50);
+    }
+};
+
 // --- WAR CALC MODAL ---
 window.openWarOverviewModal = function() {
     if (typeof MODAL_SETTINGS !== 'undefined') {
