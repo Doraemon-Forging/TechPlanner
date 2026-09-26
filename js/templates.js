@@ -1935,8 +1935,8 @@ const HTML_HELP = `
     .help-body-text {
         font-family: 'Fredoka', sans-serif !important;
         font-size: 0.95rem !important;
-        color: #2c3e50 !important; /* Nice solid dark navy/gray */
-        -webkit-text-stroke: 0px transparent !important; /* Kills the fuzzy outline */
+        color: #2c3e50 !important; 
+        -webkit-text-stroke: 0px transparent !important; 
         text-shadow: none !important;
         font-weight: 500 !important;
         line-height: 1.4 !important;
@@ -1949,177 +1949,26 @@ const HTML_HELP = `
         margin-bottom: 15px !important;
         box-shadow: 0 4px 0 rgba(0,0,0,0.1) !important;
     }
-    .help-ul {
-        margin: 8px 0 0 0 !important;
-        padding-left: 20px !important;
-    }
-    .help-ul li {
-        margin-bottom: 6px !important;
-    }
-    .help-highlight {
-        color: #198754 !important; /* Game's green color */
-        font-weight: 700 !important;
-    }
 </style>
 
 <div id="panel-help" class="sidebar-panel" style="display:none;">
     <div class="log-container">
         
-        <div style="display: flex; justify-content: center; width: 100%; margin: 5px 0 15px 0;">
-            <div class="segmented-control" style="width: 260px; height: 36px; margin: 0 auto; z-index: 10;">
-                <button class="seg-btn active" id="btn-help-how" onclick="switchHelpTab('how')">HOW</button>
-                <button class="seg-btn" id="btn-help-what" onclick="switchHelpTab('what')">WHAT</button>
-                <button class="seg-btn" id="btn-help-who" onclick="switchHelpTab('who')">WHO</button>
+        <div class="config-card" style="padding: 15px; background-color: #EBF5FB !important;">
+            
+            <div class="help-card-inner">
+                <span class="help-header-text">Welcome</span>
+                <div class="help-body-text" style="margin-bottom: 12px;">
+                    I don't know why or how you are here, but welcome. This tool is basically the exact same as my normal tech planner except you can have <b>multiple accounts</b> here.
+                </div>
+                <div class="help-body-text" style="margin-bottom: 12px;">
+                    I'm trying my best to make sure it works fine but please be warned that it may have some issue. I recommend you to <b>save/load regularly</b> to make sure your schedule doesn't get wiped.
+                </div>
+                <div class="help-body-text">
+                    When it's stable enough, I'll update my main tech planner to this version. Thanks for your understanding.
+                </div>
             </div>
-        </div>
 
-        <div id="help-content-how" class="help-section">
-            <div class="config-card" style="padding: 15px; background-color: #EBF5FB !important;">
-                
-                <div class="help-card-inner">
-                    <span class="help-header-text">1. Setup Your Current Tech</span>
-                    <div class="help-body-text">Heads to Tech Tree tab and choose <b>SETUP</b> mode to match your current in-game tech levels.</div>
-                    <ul class="help-body-text help-ul">
-                        <li><b>Level Up:</b> Click a node.</li>
-                        <li><b>Level Down:</b> Right-click (PC) or <b>long-tap</b> (Mobile).</li>
-                        <li><b>Shortcut:</b> Hit the <b>MAX</b> button to instantly max an entire tier.</li>
-                        <li><b>PC Only:</b> Hold <b>Shift + Click</b> to max a single node.</li>
-                    </ul>
-                </div>
-
-                <div class="help-card-inner">
-                    <span class="help-header-text">2. Plan Your Upgrades</span>
-                    <div class="help-body-text">Toggle to <b>PLAN</b> mode to queue up your next upgrades.</div>
-                    <ul class="help-body-text help-ul">
-                    <li><b>Use Gems:</b> Set a Gem amount using the Gem toggle before clicking a node. The planner will automatically calculate and reduce the time required to research the tech.</li>
-                    <li><b>Add to Schedule:</b> Click the nodes you want to upgrade. They will automatically be added to your queue.</li>                        
-                    </ul>
-                </div>
-
-                <div class="help-card-inner">
-                    <span class="help-header-text">3. Organize the Schedule</span>
-                    <div class="help-body-text">Open the <b>Schedule</b> tab to manage your queue.</div>
-                    <ul class="help-body-text help-ul">
-                        <li><b>War Start:</b> Set the time when Day 1 of clan war starts. Tech upgrades finishing on Day 2 or Day 5 of war will be highlighted blue color. <p>Note: This tool isn't smart enough to automatically adjust the blue highlights for Daylight Saving Time. Since game servers don't observe DST, you will need to manually update your War Start time here twice a year when your local clocks shift.</P></i></li>
-                        <li><b>Mark Done:</b> Click an item in your schedule to reveal its controls, then hit "DONE" to clear it and update your start time and tech.</li>
-                        <li><b>Manage Upgrades:</b> Reorder tasks, insert new ones, or add custom delays (like when you are sleeping or working). To change the amount of gem on a tech, click the gem icon in the Schedule tab.</li>
-                    </ul>
-                </div>
-
-                <div class="help-card-inner" style="margin-bottom: 0;">
-                    <span class="help-header-text">4. Review Stats & Yields</span>
-                    <ul class="help-body-text help-ul">
-                        <li><b>Overall Bonuses:</b> Open the <b>Stats</b> tab for a complete summary of all the stat boosts your current tech setup provides.</li>
-                        <li><b>Calculate Yields:</b> Head to the <b>Weekly Gain</b> tabs and input your in-game progression (like Dungeon levels or League ranks). You can see the expected value of the resources that you get. </li>
-                    </ul>
-                </div>
-
-            </div>
-        </div>
-
-        <div id="help-content-what" class="help-section" style="display:none;">
-            <div class="config-card" style="padding: 15px; background-color: #EBF5FB !important;">
-                
-                <div class="help-card-inner">
-                    <span class="help-header-text" style="font-size: 1.3rem !important; text-align: center;">Tool Overview</span>
-                    <div class="help-body-text" style="text-align: center; margin-bottom: 12px;">
-                        This tool has two main purposes: <b>scheduling your tech upgrades</b> and <b>simulating how those upgrades affect your gameplay.</b>
-                    </div>
-                    <div class="help-body-text" style="font-size: 0.85rem !important; font-style: italic; background-color: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px dashed #bdc3c7;"><div style="margin-bottom: 6px;"><b>Note:</b> When you see <b>100 <span style="font-family: 'Fredoka One', sans-serif;">➔</span> <span class="help-highlight">120</span></b>: the first number is based on your <b>Setup</b>, and the green number is from your finished <b>Plan</b>.</div>
-                    <div>If the projected green values are distracting, you can temporarily clear your Schedule to hide the arrows and view only your current stats. You can just press "Undo" afterward to bring your entire schedule right back.</div> </div></div>
-
-                <div class="help-card-inner">
-                    <ul class="help-body-text help-ul" style="padding-left: 15px !important; margin-top: 0 !important;">
-                        <li><b>Stats:</b> A complete summary of the overall boosts provided by each of your tech.</li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Equipment:</b> View expected HP and damage. See exactly how increasing your max item level affects the item levels you pull, your overall power, and your economy.</li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Weekly Gain:</b> Calculates resources earned from the daily dungeons, weekly league and clan war, plus your total weekly haul (which includes 7x your Daily Gain).</li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Summon Calc:</b> Calculate how many resources you need to reach certain level of Skill / Egg / Pet summoning and theirs expected yield.</li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Forge Calc:</b> Calculate how much cost and time needed to reach target Forge Lv. See how much gold are your hammers worth or how many hammers are needed to reach your target gold. You can add the gem value inside the Forge Upgrade Schedule table by clicking the gem at the top or at each level one by one to see when your forge upgrade is ready after using the gem. </li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>War Calc:</b> Estimate your expected clan war points based on the resources you plan to spend.</li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Gem Calc:</b> Calculate how much time skipped with certain amount of gem and vice versa.</li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Egg Planner:</b> Schedule your egg hatching queue </li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Pet & Mount:</b> Calculate the amount of EXP and the resulting power for your pets and mounts.</li>
-                        <hr style="border: 0; border-top: 1px solid #ecf0f1; margin: 8px 0;">
-                        <li><b>Battle Sim:</b> Simulate PvP battle.</li>
-                    </ul>
-                </div>
-
-            </div>
-        </div>
-
-        <div id="help-content-who" class="help-section" style="display:none;">
-            <div class="config-card" style="padding: 15px; background-color: #EBF5FB !important;">
-                
-                <div class="help-card-inner" style="text-align: center;">
-                    <span class="help-header-text">Developed By</span>
-                    
-                    <div style="display: flex; justify-content: center; margin: 10px 0;">
-                        <img src="icons/AbyssDoraemon.png" alt="Profile" style="max-width: 150px; height: auto;">
-                    </div>
-                    
-<style>
-    .github-credit-link {
-        color: #ffffff; /* Current Text Color */
-        text-decoration: none;
-        font-weight: 800;
-        margin-top: 0px;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        font-family: 'Fredoka', sans-serif;
-    }
-
-    .github-credit-link svg {
-        fill: #466370; /* Current Icon Color */
-        transition: fill 0.1s ease-in-out;
-    }
-
-    .github-credit-link:hover {
-        color: #80bde5; 
-        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .github-credit-link:hover svg {
-        fill: #80bde5;
-        filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1));
-    }
-
-    .github-credit-link span {
-        font-size: 0.85rem; 
-    }
-</style>
-
-<div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-    
-    <a href="https://github.com/Doraemon-Forging/TechPlanner" target="_blank" class="github-credit-link">
-        <svg height="22" width="22" viewBox="0 0 16 16">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-        </svg>
-        <span>Source Code</span>
-    </a>
-
-                <div class="help-card-inner" style="text-align: center;">
-                    <span class="help-header-text">Special Thanks</span>
-                    <div class="help-body-text"><b>Nienna</b>, <b>Hibiscus</b>, and <b>LexAeterna </b></div>
-                    <div class="help-body-text" style="font-size: 0.85rem !important; margin-top: 4px;">For providing various in-game data.</div>
-                </div>
-
-                <div class="help-card-inner" style="text-align: center; background-color: transparent !important; border: 2px dashed #bdc3c7 !important; box-shadow: none !important; margin-bottom: 0;">
-                    <span class="help-header-text" style="color: #7f8c8d !important; -webkit-text-stroke: 0px transparent !important; font-size: 1rem !important;">Disclaimer</span>
-                    <div class="help-body-text" style="font-size: 0.8rem !important; color: #7f8c8d !important;">
-                        All original game icons, images, and character designs are the property of <b>Lessmore</b>. I do not claim ownership over these assets.
-                    </div>
-                </div>
-
-            </div>
         </div>
 
     </div>

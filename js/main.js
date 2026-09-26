@@ -400,17 +400,26 @@ function captureFullState() {
 }
 
 function loadState(d) {
+
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+        el.setAttribute('autocomplete', 'off');
+    });
+
     if (d.setupLevels && typeof setupLevels !== 'undefined') { Object.keys(setupLevels).forEach(k => delete setupLevels[k]); Object.assign(setupLevels, d.setupLevels); }
     if (d.planQueue && typeof planQueue !== 'undefined') { planQueue.length = 0; planQueue.push(...d.planQueue); }
+    
+    const dateInput = document.getElementById('start-date');
+    if (dateInput) dateInput.removeAttribute('data-exact-time');
+
     const sDate = d.startDate || d.start; 
     if (sDate) { 
         safeSetVal('start-date', sDate); 
         safeSyncDropdowns(sDate, 'dm'); 
-        if (d.exactStartDate) {
-            const dateInput = document.getElementById('start-date');
-            if (dateInput) dateInput.setAttribute('data-exact-time', d.exactStartDate);
+        if (d.exactStartDate && dateInput) {
+            dateInput.setAttribute('data-exact-time', d.exactStartDate);
         }
     }
+
     if (d.warConfig && typeof warConfig !== 'undefined') { 
         warConfig = d.warConfig; 
         if (warConfig.min === undefined) warConfig.min = 0; 
@@ -463,6 +472,9 @@ function loadState(d) {
             safeSetVal('weekly-league', d.weeklyData.league); safeSetVal('weekly-rank', d.weeklyData.rank);
             
             if (d.weeklyData.leagueMode !== undefined) safeSetVal('weekly-league-mode', d.weeklyData.leagueMode);
+            
+            if (typeof updateSecondaryLeagueOptions === 'function') updateSecondaryLeagueOptions();
+
             if (d.weeklyData.league2 !== undefined) safeSetVal('weekly-league-2', d.weeklyData.league2);
             if (d.weeklyData.rank2 !== undefined) safeSetVal('weekly-rank-2', d.weeklyData.rank2);
 
@@ -489,8 +501,7 @@ function loadState(d) {
             safeSetVal('asc-mount-lv', d.weeklyData.ascMountLv); safeSetVal('asc-mount-exp', d.weeklyData.ascMountExp); safeSetVal('asc-mount-inv', d.weeklyData.ascMountInv);
             if (d.weeklyData.ascMountTargetAsc !== undefined) safeSetVal('asc-mount-target-asc', d.weeklyData.ascMountTargetAsc);
             safeSetVal('asc-mount-target-lv', d.weeklyData.ascMountTargetLv);
-            
-            // Re-toggle UI visibility for league mode
+
             if (typeof toggleLeagueMode === 'function') toggleLeagueMode();
         }
     } catch (e) {}
@@ -675,6 +686,72 @@ function loadState(d) {
     } catch(e) {}
 }
 
+function wipeSlateClean() {
+    if (typeof setupLevels !== 'undefined') { Object.keys(setupLevels).forEach(k => delete setupLevels[k]); }
+    if (typeof planQueue !== 'undefined') planQueue.length = 0;
+    if (typeof eggPlanQueue !== 'undefined') eggPlanQueue.length = 0;
+    window.clanTechMemory = {};
+    window.missionSlotsMemory = {};
+    window.forgeGemsMemory = {};
+    window.ongoingForgeSnapshot = null;
+    window.refTablePrefs = {}; 
+    if (typeof warConfig !== 'undefined') { warConfig = { day: 2, hour: 12, min: 0, ampm: 'AM' }; }
+
+    const inputIds = [
+        'start-date', 'calc-start-date', 'egg-date-desktop',
+        'calc-world', 'calc-stage', 'calc-forge-asc', 'calc-forge-lv', 'calc-target-forge-asc', 'calc-target-forge-lv', 'calc-hammers', 'calc-target',
+        'thief-lvl', 'thief-sub', 'ghost-lvl', 'ghost-sub', 'inv-lvl', 'inv-sub', 'zombie-lvl', 'zombie-sub',
+        'weekly-league', 'weekly-rank', 'weekly-league-mode', 'weekly-league-2', 'weekly-rank-2', 'weekly-war-tier', 'weekly-war-win-rate', 'weekly-indiv', 'weekly-race', 'weekly-potion-asc',
+        'asc-skill-asc', 'asc-skill-lv', 'asc-skill-exp', 'asc-skill-inv', 'asc-skill-target-asc', 'asc-skill-target-lv',
+        'asc-pet-asc', 'asc-pet-lv', 'asc-pet-exp', 'asc-pet-inv', 'asc-pet-target-asc', 'asc-pet-target-lv',
+        'asc-mount-asc', 'asc-mount-lv', 'asc-mount-exp', 'asc-mount-inv', 'asc-mount-target-asc', 'asc-mount-target-lv',
+        'wc-d1-forge-lv', 'wc-hammer', 'wc-dungeon-key', 'wc-skill-asc', 'wc-skill-lv', 'wc-skill-exp', 'wc-ticket',
+        'wc-d2-forge-lv', 'wc-forge-nodes', 'wc-forge-gem', 'wc-tech-I', 'wc-tech-II', 'wc-tech-III', 'wc-tech-IV', 'wc-tech-V', 'wc-mount-key', 'wc-merge-mount-total',
+        'wc-d3-forge-lv', 'wc-d3-hammer', 'wc-d3-skill-asc', 'wc-d3-skill-lv', 'wc-d3-skill-exp', 'wc-d3-ticket', 'wc-merge-pet-total',
+        'wc-d4-forge-lv', 'wc-d4-forge-nodes', 'wc-d4-forge-gem', 'wc-d4-dungeon-key', 'wc-d4-mount-key', 'wc-d4-merge-mount-total',
+        'wc-d5-forge-lv', 'wc-d5-hammer', 'wc-d5-tech-I', 'wc-d5-tech-II', 'wc-d5-tech-III', 'wc-d5-tech-IV', 'wc-d5-tech-V', 'wc-d5-merge-pet-total',
+        'pet-ascension', 'mount-ascension',
+        'pet-1-rarity', 'pet-1-id', 'pet-1-lvl', 'pet-1-exp',
+        'pet-2-rarity', 'pet-2-id', 'pet-2-lvl', 'pet-2-exp',
+        'pet-3-rarity', 'pet-3-id', 'pet-3-lvl', 'pet-3-exp',
+        'merge-target-rarity', 'merge-target-id', 'merge-target-lvl', 'merge-target-exp',
+        'merge-fodder-rarity', 'merge-fodder-id', 'merge-fodder-lvl', 'merge-fodder-exp',
+        'mount-target-rarity', 'mount-target-lvl', 'mount-target-exp',
+        'mount-fodder-rarity', 'mount-fodder-lvl', 'mount-fodder-exp',
+        'sum-skill-asc', 'sum-skill-lvl', 'sum-skill-exp', 'sum-skill-res', 'sum-skill-prob', 'sum-skill-target-asc', 'sum-skill-target-lv',
+        'sum-pet-asc', 'sum-pet-lvl', 'sum-pet-exp', 'sum-pet-res', 'sum-pet-prob', 'sum-pet-target-asc', 'sum-pet-target-lv',
+        'sum-mount-asc', 'sum-mount-lvl', 'sum-mount-exp', 'sum-mount-res', 'sum-mount-prob', 'sum-mount-target-asc', 'sum-mount-target-lv',
+        'eq-ascension', 'eq-helmet-tier', 'eq-helmet-lvl', 'eq-armor-tier', 'eq-armor-lvl', 'eq-boots-tier', 'eq-boots-lvl',
+        'eq-belt-tier', 'eq-belt-lvl', 'eq-weapon-type', 'eq-weapon-tier', 'eq-weapon-lvl', 'eq-gloves-tier', 'eq-gloves-lvl',
+        'eq-neck-tier', 'eq-neck-lvl', 'eq-ring-tier', 'eq-ring-lvl', 'eq-avg-tier', 'eq-avg-weapon-type'
+    ];
+
+    ['war-personal', 'war-win', 'war-lose', 'mission', 'pot-mission', 'pot-personal', 'pot-win', 'pot-lose', 'pot-race'].forEach(k => inputIds.push(`ct-${k}`));
+    ['gold', 'ticket', 'egg', 'pot', 'key', 'gp', 'rally'].forEach(k => inputIds.push(`ms-slot-${k}`));
+    ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'].forEach(c => { inputIds.push(`wc-hatch-${c}`, `wc-d5-hatch-${c}`, `bulk-${c}`, `bulk-mount-${c}`); });
+
+    inputIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.setAttribute('autocomplete', 'off'); // Prevent browser auto-fill issues
+            if (el.tagName === 'SELECT' && el.options.length > 0) {
+                
+                let hasEmpty = Array.from(el.options).some(opt => opt.value === '');
+                el.value = hasEmpty ? '' : el.options[0].value;
+            } else {
+                el.value = '';
+            }
+        }
+    });
+
+    const dateInput = document.getElementById('start-date');
+    if (dateInput) dateInput.removeAttribute('data-exact-time'); // Stop exact time bleed
+
+    if (document.getElementById('eq-avg-tier')) document.getElementById('eq-avg-tier').value = 'Quantum';
+    if (document.getElementById('eq-avg-weapon-type')) document.getElementById('eq-avg-weapon-type').value = 'Ranged';
+    if (document.getElementById('weekly-war-win-rate')) document.getElementById('weekly-war-win-rate').value = '100';
+}
+
 function safeSetVal(id, val) { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; }
 function safeSyncDropdowns(isoDate, prefix) { 
     if (!isoDate) return; 
@@ -716,27 +793,64 @@ function safeSyncDropdowns(isoDate, prefix) {
 }
 
 function saveToLocalStorage() {
-    if (!isAppLoaded) return; 
-    try { 
-        const d = captureFullState(); 
-        localStorage.setItem('techPlannerData', JSON.stringify(d)); 
-    } catch (e) {} 
+    if (typeof isAppLoaded !== 'undefined' && !isAppLoaded) return; 
+    
+    if (window.isSwitchingProfile) return; 
+
+    if (window.isAppBooting) return; 
+    
+    try { 
+        const d = captureFullState(); 
+        ProfileManager.saveCurrent(d); 
+    } catch (e) {
+        console.error("Error saving state:", e);
+    } 
 }
 
 function uploadData(el) { 
-    const r = new FileReader(); 
-    r.onload = (e) => { 
-        try { const d = JSON.parse(e.target.result); loadState(d); saveToLocalStorage(); } 
-        catch (err) { alert("Error loading file. Invalid or corrupted data."); } 
-    }; 
-    r.readAsText(el.files[0]); el.value = ''; 
+    const r = new FileReader(); 
+    r.onload = (e) => { 
+        try { 
+            const d = JSON.parse(e.target.result); 
+            
+            if (d.profiles && d.active) {
+                ProfileManager.state = d;
+                ProfileManager.saveToStorage();
+                
+                if (typeof wipeSlateClean === 'function') wipeSlateClean();
+                
+                const newData = ProfileManager.getActiveData() || {};
+                if (typeof loadState === 'function') loadState(newData);
+                
+                ProfileManager.closeModal(); 
+            } else {
+
+                if (typeof wipeSlateClean === 'function') wipeSlateClean();
+                loadState(d); 
+                saveToLocalStorage(); 
+                
+                ProfileManager.closeModal(); 
+            }
+        } catch (err) { 
+            alert("Error loading file. Invalid or corrupted data."); 
+        } 
+    }; 
+    r.readAsText(el.files[0]); 
+    el.value = ''; 
 }
 
 function downloadData() { 
-    const d = captureFullState(); 
-    const a = document.createElement('a'); 
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(d)], { type: 'application/json' })); 
-    a.download = 'Tech_Planner.json'; a.click(); 
+    // 1. Capture current state and update the active profile in ProfileManager first
+    const currentData = captureFullState(); 
+    ProfileManager.saveCurrent(currentData);
+    
+    // 2. Export the entire ProfileManager state (all accounts)
+    const allProfilesData = ProfileManager.state;
+    
+    const a = document.createElement('a'); 
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(allProfilesData)], { type: 'application/json' })); 
+    a.download = 'Tech_Planner.json'; 
+    a.click(); 
 }
 
 // =========================================
@@ -758,17 +872,17 @@ function init() {
         safeSetVal('war-min', warConfig.min !== undefined ? warConfig.min : 0); safeSetVal('war-ampm', warConfig.ampm); 
     }
     
-    const saved = localStorage.getItem('techPlannerData');
-    if (saved) {
-        try { loadState(JSON.parse(saved)); } catch (e) {}
-    } else { 
-        const nowIso = new Date().toISOString().slice(0, 16); 
-        safeSetVal('start-date', nowIso); safeSetVal('calc-start-date', nowIso); safeSetVal('egg-date-desktop', nowIso); 
-        if (typeof updateCalculations === 'function') updateCalculations(); 
-        if (typeof updateDaily === 'function') updateDaily(); 
-        if (typeof updateWeekly === 'function') updateWeekly();
-        if (typeof updateWarCalc === 'function') updateWarCalc();
-    }
+    const savedData = ProfileManager.init();
+    if (savedData) {
+        try { loadState(savedData); } catch (e) { console.error("Load state error:", e); }
+    } else { 
+        const nowIso = new Date().toISOString().slice(0, 16); 
+        safeSetVal('start-date', nowIso); safeSetVal('calc-start-date', nowIso); safeSetVal('egg-date-desktop', nowIso); 
+        if (typeof updateCalculations === 'function') updateCalculations(); 
+        if (typeof updateDaily === 'function') updateDaily(); 
+        if (typeof updateWeekly === 'function') updateWeekly();
+        if (typeof updateWarCalc === 'function') updateWarCalc();
+    }
     
     if (typeof eggPlanQueue !== 'undefined' && eggPlanQueue.length > 0) {
         if(typeof renderEggLog === 'function') renderEggLog();

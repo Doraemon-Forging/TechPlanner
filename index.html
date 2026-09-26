@@ -63,8 +63,8 @@
                     <button class="sys-btn" onclick="document.getElementById('file-upload').click()" title="Load Data">
                         <img src="icons/icon_load.png" class="sys-icon">
                     </button>
-                    <button class="sys-btn" onclick="switchMobileView('help')" title="Help">
-                        <img src="icons/icon_help.png" class="sys-icon">
+                    <button class="sys-btn" onclick="ProfileManager.openModal()" title="Profiles">
+                        <img src="icons/icon_account.png" class="sys-icon" style="width: 40px !important; height: 40px !important; max-width: none !important;">
                     </button>
                 </div>
 
@@ -101,6 +101,9 @@
                     </button>
                     <button class="dash-btn" id="btn-battlesim" onclick="window.open('https://doraemon-forging.github.io/BattleSim/', '_blank')">
                         <img src="icons/battlesim.png" class="dash-icon">Battle Sim
+                    </button>
+                    <button class="dash-btn" id="btn-help" onclick="setSidebarPanel('help')">
+                        <img src="icons/icon_help.png" class="dash-icon">Help
                     </button>
                 </div>
             </div>
@@ -331,14 +334,19 @@
                 <img src="icons/banner.png" class="main-banner-img" alt="Tech Planner">
             </div>
             
-            <div class="sys-btn-row">
-                <button class="btn-sys" onclick="downloadData()">
+            <div class="sys-btn-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <!-- Row 1 -->
+                <button class="btn-sys" onclick="downloadData()" style="width: 100%; margin: 0;">
                     <img src="icons/icon_save.png"><span>Save</span>
                 </button>
-                <button class="btn-sys" onclick="document.getElementById('file-upload').click()">
+                <button class="btn-sys" onclick="document.getElementById('file-upload').click()" style="width: 100%; margin: 0;">
                     <img src="icons/icon_load.png"><span>Load</span>
                 </button>
-                <button class="btn-sys" onclick="switchMobileView('help')">
+                <!-- Row 2 -->
+                <button class="btn-sys" onclick="ProfileManager.openModal()" style="width: 100%; margin: 0;">
+                    <img src="icons/icon_account.png" onerror="this.src='icons/app-icon.png'"><span>Profiles</span>
+                </button>
+                <button class="btn-sys" onclick="switchMobileView('help')" style="width: 100%; margin: 0;">
                     <img src="icons/icon_help.png"><span>Help</span>
                 </button>
             </div>
@@ -452,6 +460,7 @@
 
     <script src="js/templates.js"></script> 
     <script src="js/summon.js"></script>
+    <script src="js/manager.js"></script>
     <script src="js/main.js"></script>
 
 </body>

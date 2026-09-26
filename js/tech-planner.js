@@ -20,6 +20,8 @@ let validDropTargets = [];
 let justMovedIndex = -1;
 let deleteModeActive = false;
 let currentGemMode = 0;
+let historyStacks = {};
+let redoStacks = {};
 
 // --- HELPERS (Logic) ---
 function getMeta(id) { const p = id.split('_'); return TREES[p[0]].meta[p.slice(2).join('_')]; }
@@ -856,6 +858,8 @@ function markDone(targetIdx, timestamp) {
         expandedLogIndex = -1; 
         
         if (typeof syncMainDate === 'function') syncMainDate(localIso);
+        
+        if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
 
         setTimeout(() => {
             const wrappers =[
@@ -1075,14 +1079,26 @@ function resetCurrentTree() {
 
 // --- UNDO / REDO ---
 function pushHistory() {
-    if (historyStack.length > 50) historyStack.shift();
-    if (typeof captureFullState === 'function') { historyStack.push(JSON.stringify(captureFullState())); redoStack = []; updateUndoRedoBtns(); if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); }
+    const pid = typeof ProfileManager !== 'undefined' && ProfileManager.state.active ? ProfileManager.state.active : 'default';
+    if (!historyStacks[pid]) historyStacks[pid] = [];
+    if (!redoStacks[pid]) redoStacks[pid] = [];
+
+    if (historyStacks[pid].length > 50) historyStacks[pid].shift();
+    if (typeof captureFullState === 'function') { 
+        historyStacks[pid].push(JSON.stringify(captureFullState())); 
+        redoStacks[pid] = []; 
+        updateUndoRedoBtns(); 
+        if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); 
+    }
 }
 
 function undo() {
-    if (historyStack.length === 0) return;
-    redoStack.push(JSON.stringify(captureFullState()));
-    const stateToLoad = JSON.parse(historyStack.pop());
+    const pid = typeof ProfileManager !== 'undefined' && ProfileManager.state.active ? ProfileManager.state.active : 'default';
+    if (!historyStacks[pid] || historyStacks[pid].length === 0) return;
+    if (!redoStacks[pid]) redoStacks[pid] = [];
+
+    redoStacks[pid].push(JSON.stringify(captureFullState()));
+    const stateToLoad = JSON.parse(historyStacks[pid].pop());
     
     if (typeof eggPlanQueue !== 'undefined') { 
         const currentEggStart = document.getElementById('egg-date-desktop') ? document.getElementById('egg-date-desktop').value : null; 
@@ -1098,9 +1114,12 @@ function undo() {
 }
 
 function redo() {
-    if (redoStack.length === 0) return;
-    historyStack.push(JSON.stringify(captureFullState()));
-    const stateToLoad = JSON.parse(redoStack.pop());
+    const pid = typeof ProfileManager !== 'undefined' && ProfileManager.state.active ? ProfileManager.state.active : 'default';
+    if (!redoStacks[pid] || redoStacks[pid].length === 0) return;
+    if (!historyStacks[pid]) historyStacks[pid] = [];
+
+    historyStacks[pid].push(JSON.stringify(captureFullState()));
+    const stateToLoad = JSON.parse(redoStacks[pid].pop());
     
     if (typeof eggPlanQueue !== 'undefined') { 
         const currentEggStart = document.getElementById('egg-date-desktop') ? document.getElementById('egg-date-desktop').value : null; 
@@ -1117,7 +1136,9 @@ function redo() {
 }
 
 function updateUndoRedoBtns() {
-    const hasH = historyStack.length > 0; const hasR = redoStack.length > 0;
+    const pid = typeof ProfileManager !== 'undefined' && ProfileManager.state.active ? ProfileManager.state.active : 'default';
+    const hasH = historyStacks[pid] && historyStacks[pid].length > 0; 
+    const hasR = redoStacks[pid] && redoStacks[pid].length > 0;
     const upd = (id, on) => { const el = document.getElementById(id); if (el) { el.disabled = !on; el.style.opacity = !on ? "0.3" : "1"; el.style.pointerEvents = !on ? "none" : "auto"; } };
     ['btn-undo-desktop', 'btn-undo-log', 'btn-undo-mobile-tree', 'btn-undo-mobile-log'].forEach(id => upd(id, hasH));
     ['btn-redo-desktop', 'btn-redo-log', 'btn-redo-mobile-tree', 'btn-redo-mobile-log'].forEach(id => upd(id, hasR));
