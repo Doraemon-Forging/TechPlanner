@@ -847,7 +847,7 @@ window.openMissionLevelInfoModal = function(levelOverride = null, slotsOverride 
     const potAsc = parseInt(document.getElementById('weekly-potion-asc')?.value) || 0; 
     
     const generalTechMult = 1 + (missionLvl / 100);
-    const gpCombinedMult = (1 + (potAsc / 100) + (missionLvl / 100)) * (1 + (potMissionLvl * 5) / 100);
+    const gpCombinedMult = (1 + (potAsc / 100)) * (1 + (missionLvl / 100) + (potMissionLvl * 5 / 100));
 
     let gpBase = 0;
     if (currentLv <= 2) gpBase = 3;

@@ -392,9 +392,17 @@ function updateCalculations() {
 
             if (h.type === 'delay') {
                 iconHtml = `<div class="log-node-preview" style="background-color: #bdc3c7;"><span style="font-size:1.4em; line-height:1; margin-top:2px;">💤</span></div>`;
-                nameHtml = `<div class="log-name">Delay (+${h.mins}m)</div>`;
+                
+                const hours = Math.floor(h.mins / 60);
+                const mins = Math.floor(h.mins % 60);
+                let formattedDelay = [];
+                if (hours > 0) formattedDelay.push(`${hours}h`);
+                if (mins > 0 || hours === 0) formattedDelay.push(`${mins}m`);
+                
+                nameHtml = `<div class="log-name">Delay (${formattedDelay.join(' ')})</div>`;
                 rightGroupHtml = `<div class="log-right-group"><div class="log-time">${finishDateStr}</div></div>`;
             } else {
+
                 const tierNum = typeof getTier === 'function' ? getTier(h.id) : 1;
                 const parts = h.id.split('_');
                 const iconPath = `icons/${parts[0]}_${parts.slice(2).join('_')}.png`;
@@ -913,11 +921,46 @@ function markDone(targetIdx, timestamp) {
     } catch (e) { console.error(e); }
 }
 
+function openDelayModal(message, onConfirmCallback) {
+    window.currentPromptCallback = onConfirmCallback;
+    const modal = document.getElementById('tableModal');
+    const content = modal.querySelector('.modal-content');
+    
+    content.className = 'modal-content confirm-mode'; 
+    content.style.cssText = ''; 
+    
+    content.innerHTML = `
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; text-align: center; color: #ffffff; margin-bottom: 15px; line-height: 1.3;">
+            ${message}
+        </div>
+        <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <input type="number" id="custom-prompt-h" style="width: 70px; height: 40px; background: #ffffff; border: 2px solid #000000; border-radius: 8px; font-family: 'Fredoka', sans-serif; font-size: 1rem; -webkit-text-stroke: 0px transparent !important; font-weight: 600; text-align: center; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);" placeholder="0" min="0">
+                <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1.1rem; color: #ffffff;">h</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <input type="number" id="custom-prompt-m" style="width: 70px; height: 40px; background: #ffffff; border: 2px solid #000000; border-radius: 8px; font-family: 'Fredoka', sans-serif; font-size: 1rem; -webkit-text-stroke: 0px transparent !important; font-weight: 600; text-align: center; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);" placeholder="0" min="0">
+                <span style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1.1rem; color: #ffffff;">m</span>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button class="btn-confirm-cancel" onclick="document.getElementById('tableModal').style.display='none'" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #ff4757; box-shadow: inset 0 -4px 0 0 #c0392b; transition: transform 0.1s;">
+                <img src="icons/icon_cancel.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+            <button class="btn-confirm-ok" onclick="document.getElementById('tableModal').style.display='none'; let h = parseInt(document.getElementById('custom-prompt-h').value) || 0; let m = parseInt(document.getElementById('custom-prompt-m').value) || 0; if(window.currentPromptCallback) window.currentPromptCallback((h * 60) + m);" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #00b0ff; box-shadow: inset 0 -4px 0 0 #005680; transition: transform 0.1s;">
+                <img src="icons/button_ok.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+        </div>`;
+    modal.style.display = 'block';
+
+    setTimeout(() => { const input = document.getElementById('custom-prompt-h'); if (input) input.focus(); }, 50);
+}
+
 function addDelay(i) { 
-    openPromptModal("Enter delay in MINUTES:", (m) => {
-        if (m && !isNaN(parseFloat(m))) { 
+    openDelayModal("Enter Delay:", (totalMins) => {
+        if (totalMins > 0) { 
             pushHistory(); 
-            planQueue.splice(i + 1, 0, { type: 'delay', mins: parseFloat(m) }); 
+            planQueue.splice(i + 1, 0, { type: 'delay', mins: parseFloat(totalMins) }); 
             expandedLogIndex = -1; 
             updateCalculations(); 
         } 

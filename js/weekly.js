@@ -139,7 +139,7 @@ function updateWeekly() {
     const getGpWarWinMult = () => (1 + ascPct + (ctWarWin / 100)) * (1 + (ctPotWin * 5 / 100));
     const getGpWarLoseMult = () => (1 + ascPct + (ctWarLose / 100)) * (1 + (ctPotLose * 5 / 100));
     const getGpIndivMult = () => (1 + ascPct + (ctWarPersonal / 100)) * (1 + (ctPotPersonal * 5 / 100));
-    const getGpRaceMult = () => 1 + ascPct + (ctPotRace * 5 / 100);
+    const getGpRaceMult = () => (1 + ascPct) * (1 + (ctPotRace * 5 / 100));
 
     const baseL1 = (typeof LEAGUE_REWARDS !== 'undefined' && LEAGUE_REWARDS[league1] && LEAGUE_REWARDS[league1][rank1]) ? LEAGUE_REWARDS[league1][rank1] : [0,0,0,0,0,0,0];
     let baseL2 = baseL1;

@@ -216,14 +216,42 @@ const ProfileManager = {
             const name = getValidName();
             if (!name) return;
             document.body.removeChild(overlay);
-            this.createProfile(name); 
+            
+            // Remember the active profile in case the user cancels the import mid-way
+            const activeBefore = this.state.active; 
             
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = '.json';
             fileInput.style.display = 'none';
-            fileInput.onchange = () => {
-                if (typeof uploadData === 'function') uploadData(fileInput); 
+            fileInput.onchange = (e) => {
+                if (!e.target.files || e.target.files.length === 0) return;
+                
+                const r = new FileReader();
+                r.onload = (event) => {
+                    try {
+                        const d = JSON.parse(event.target.result);
+                        
+                        if (d.profiles && d.active) {
+                            // Multi-profile save detected!
+                            this.createProfile(name); // Create the blank profile first
+                            const newProfileId = this.state.active;
+                            
+                            // Ask the user WHICH profile to unpack from the save file
+                            this.promptImportSelection(d.profiles, newProfileId, activeBefore);
+                        } else {
+                            // Legacy single-profile save detected
+                            this.createProfile(name);
+                            if (typeof wipeSlateClean === 'function') wipeSlateClean();
+                            if (typeof loadState === 'function') loadState(d);
+                            if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+                            this.closeModal();
+                        }
+                    } catch (err) {
+                        alert("Error loading file. Invalid or corrupted data.");
+                    }
+                };
+                r.readAsText(e.target.files[0]);
             };
             document.body.appendChild(fileInput);
             fileInput.click();
@@ -353,6 +381,131 @@ const ProfileManager = {
                 if (dataToCopy) {
                     this.saveCurrent(dataToCopy);
                     if (typeof loadState === 'function') loadState(dataToCopy);
+                }
+            };
+        });
+    },
+
+    promptImportSelection(uploadedProfiles, targetProfileId, activeBefore) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
+            z-index: 999999; font-family: 'Fredoka', sans-serif;
+        `;
+        
+        const modalWrapper = document.createElement('div');
+        modalWrapper.style.cssText = `
+            display: flex; flex-direction: column; align-items: center; position: relative;
+            width: 90%; max-width: 380px;
+        `;
+        
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            background: #fff; border-radius: 12px; border: 2px solid #000;
+            width: 100%; box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            display: flex; flex-direction: column; overflow: hidden;
+        `;
+
+        const headerStyle = `
+            background-color: #ebf8fa; padding: 12px; border-bottom: 2px solid #000; 
+            text-align: center; display: flex; justify-content: center; align-items: center;
+        `;
+
+        const titleStyle = `
+            font-family: 'Fredoka', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; 
+            -webkit-text-stroke: 1.5px #000; paint-order: stroke fill; letter-spacing: 1px; text-transform: uppercase;
+        `;
+        
+        let listHtml = '<div style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; padding: 4px;">';
+        
+        // List every profile found inside the uploaded save file
+        Object.entries(uploadedProfiles).forEach(([id, p]) => {
+            listHtml += `
+                <button class="import-target-btn" data-id="${id}" style="
+                    padding: 10px 15px; border-radius: 8px; border: 2px solid transparent; background-color: #f2f2f2;
+                    cursor: pointer; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1rem; color: #000;
+                    transition: transform 0.1s; width: 100%; text-align: left;
+                    display: flex; align-items: center; outline: none;
+                ">
+                    <span style="-webkit-text-stroke: 0px transparent;">${p.name}</span>
+                </button>
+            `;
+        });
+        listHtml += '</div>';
+
+        modal.innerHTML = `
+            <div style="${headerStyle}">
+                <span style="${titleStyle}">EXTRACT PROFILE</span>
+            </div>
+            <div style="padding: 15px 20px 20px 20px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="text-align: center; font-size: 0.95rem; margin-bottom: 5px; font-family: 'Fredoka', sans-serif !important; font-weight: 600 !important; color: #000000 !important; -webkit-text-stroke: 0px !important; text-shadow: none !important; letter-spacing: 0.5px;">
+                    This file contains multiple accounts. Choose which one to import:
+                </div>
+                ${listHtml}
+            </div>
+        `;
+        
+        const closeBtnWrapper = document.createElement('div');
+        closeBtnWrapper.style.cssText = `margin-top: -16px; z-index: 10;`;
+        
+        closeBtnWrapper.innerHTML = `
+            <button id="btn-cancel-import" style="
+                width: 32px; height: 32px; border-radius: 50%; border: 2px solid #000;
+                background-color: #ff4d4d; box-shadow: inset 0 -3px 0 #cc0000;
+                cursor: pointer; display: flex; align-items: center; justify-content: center;
+                transition: transform 0.1s; padding: 0;
+            ">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0px 1px 0px #000);">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        `;
+        
+        modalWrapper.appendChild(modal);
+        modalWrapper.appendChild(closeBtnWrapper);
+        overlay.appendChild(modalWrapper);
+        document.body.appendChild(overlay);
+        
+        const buttons = overlay.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.onmousedown = () => { btn.style.transform = 'translateY(2px)'; };
+            btn.onmouseup = () => { btn.style.transform = 'translateY(0)'; };
+            btn.onmouseleave = () => { btn.style.transform = 'translateY(0)'; };
+        });
+
+        // If the user cancels the extraction, revert back to their original profile
+        document.getElementById('btn-cancel-import').onclick = () => {
+            document.body.removeChild(overlay);
+            if (activeBefore) {
+                delete this.state.profiles[targetProfileId]; // Remove the blank placeholder
+                this.saveToStorage();
+                this.switchProfile(activeBefore, true); // Restore old view
+            }
+        };
+
+        // When a profile from the file is clicked, extract its data
+        const targetBtns = overlay.querySelectorAll('.import-target-btn');
+        targetBtns.forEach(btn => {
+            btn.onclick = () => {
+                const sourceId = btn.getAttribute('data-id');
+                const dataToCopy = uploadedProfiles[sourceId].data; // Isolate the targeted profile
+
+                document.body.removeChild(overlay);
+                
+                if (dataToCopy) {
+                    // Deep copy the isolated data into the new local profile
+                    const clonedData = JSON.parse(JSON.stringify(dataToCopy));
+                    this.state.profiles[targetProfileId].data = clonedData;
+                    this.saveToStorage();
+
+                    // Load it onto the screen
+                    if (typeof wipeSlateClean === 'function') wipeSlateClean();
+                    if (typeof loadState === 'function') loadState(clonedData);
+                    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+                    
+                    this.closeModal();
                 }
             };
         });

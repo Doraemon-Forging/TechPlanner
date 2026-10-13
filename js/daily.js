@@ -141,7 +141,7 @@ function getMissionSlots() {
 }
 
 function calculateMissionYields(lvl, sub, slots) {
-    let th = ((lvl - 1) * 10) + sub + 1;
+    let th = ((lvl - 1) * 10) + sub;
 
     let minLv = 1, maxLv = 4;
     if (typeof MISSION_CHECKPOINTS !== 'undefined') {
@@ -159,7 +159,7 @@ function calculateMissionYields(lvl, sub, slots) {
 
     const generalTechMult = 1 + (missionLvl / 100);
     
-    const gpCombinedMult = (1 + (potAsc / 100) + (missionLvl / 100)) * (1 + (potMissionLvl * 5) / 100);
+    const gpCombinedMult = (1 + (potAsc / 100)) * (1 + (missionLvl / 100) + (potMissionLvl * 5 / 100));
 
     const getYield = (base, techMult) => {
         let sum = 0;

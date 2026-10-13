@@ -43,6 +43,61 @@ function updateTimeToGem() {
     res.innerText = gems.toLocaleString();
 }
 
+// --- TAB SWITCHER ---
+window.switchGemTab = function(tab) {
+    document.getElementById('btn-gemtab-forge').classList.remove('active');
+    document.getElementById('btn-gemtab-egg').classList.remove('active');
+    document.getElementById('gem-content-forge').style.display = 'none';
+    document.getElementById('gem-content-egg').style.display = 'none';
+
+    document.getElementById(`btn-gemtab-${tab}`).classList.add('active');
+    document.getElementById(`gem-content-${tab}`).style.display = 'block';
+};
+
+// --- EGG GEM CALC ---
+window.updateEggGemToTime = function() {
+    let g = parseInt(document.getElementById('calc-egg-gem-input').value);
+    let res = document.getElementById('calc-egg-gem-time-res');
+    
+    if (isNaN(g) || g <= 0) { 
+        res.innerText = '0s'; 
+        return; 
+    }
+
+    let ts = Math.floor((g + 0.5) * 1000);
+    
+    let d = Math.floor(ts / 86400);
+    let h = Math.floor((ts % 86400) / 3600);
+    let m = Math.floor((ts % 3600) / 60);
+    let s = ts % 60;
+    
+    let arr = [];
+    if(d > 0) arr.push(d + 'd');
+    if(h > 0) arr.push(h + 'h');
+    if(m > 0) arr.push(m + 'm');
+    if(s > 0 || arr.length === 0) arr.push(s + 's');
+    
+    res.innerText = arr.join(' ');
+};
+
+window.updateEggTimeToGem = function() {
+    let h = parseInt(document.getElementById('calc-egg-time-h').value) || 0;
+    let m = parseInt(document.getElementById('calc-egg-time-m').value) || 0;
+    let s = parseInt(document.getElementById('calc-egg-time-s').value) || 0;
+    
+    let totalSeconds = (h * 3600) + (m * 60) + s;
+    let res = document.getElementById('calc-egg-time-gem-res');
+    
+    if (totalSeconds <= 0) {
+        res.innerText = '0';
+        return;
+    }
+
+    let gems = Math.max(1, Math.ceil((totalSeconds / 1000) - 0.5));
+    
+    res.innerText = gems.toLocaleString();
+};
+
 // --- GEM COST HELPERS ---
 window.formatFrugalWait = function(s) {
     if (s <= 0) return '0s';
@@ -92,6 +147,25 @@ window.toggleGemFrugalMode = function(isFrugal) {
         if (btnStd) btnStd.classList.add('active');
         if (btnFrg) btnFrg.classList.remove('active');
     }
+};
+
+window.getEggGemData = function(mins) {
+    if (mins <= 0) return { std: 0, frg: 0, rawWait: 0, wait: '0s' };
+
+    let totalSeconds = mins * 60;
+    
+    let stdGems = Math.max(1, Math.ceil((totalSeconds / 1000) - 0.5));
+    let frgGems = stdGems - 1;
+
+    let targetSeconds = frgGems > 0 ? (frgGems + 0.5) * 1000 : 0;
+    let waitSeconds = Math.max(0, Math.ceil(totalSeconds - targetSeconds));
+    
+    return { 
+        std: stdGems, 
+        frg: frgGems, 
+        rawWait: waitSeconds, 
+        wait: window.formatFrugalWait(waitSeconds) 
+    };
 };
 
 // --- MODAL FUNCTIONS ---
@@ -220,9 +294,11 @@ function showForgeGemTable() {
     <div style="text-align: center; margin-bottom: 12px; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">
         Speed +${cur}% ${isUpgrade ? `<span style="color: #198754; margin: 0 4px; font-weight: 800;">➜</span> <span style="color: #198754;">+${proj}%</span>` : ''}
     </div>
-    <div style="display: flex; justify-content: center; margin-bottom: 15px; gap: 12px;">
-        <button id="btn-gem-standard" class="gem-toggle-btn active" onclick="toggleGemFrugalMode(false)">Standard</button>
-        <button id="btn-gem-frugal" class="gem-toggle-btn" onclick="toggleGemFrugalMode(true)">Frugal</button>
+    <div style="display: flex; justify-content: center; width: 100%; margin: 0 0 15px 0;">
+        <div class="segmented-control" style="display: inline-flex; width: 240px; height: 35px; margin: 0 auto; z-index: 10;">
+            <button id="btn-gem-standard" class="seg-btn active" onclick="toggleGemFrugalMode(false)" style="width: 50%;">Standard</button>
+            <button id="btn-gem-frugal" class="seg-btn" onclick="toggleGemFrugalMode(true)" style="width: 50%;">Frugal</button>
+        </div>
     </div>`;
 
     let html = `
@@ -393,9 +469,11 @@ function showTechGemTable() {
     <div style="text-align: center; margin-bottom: 12px; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">
         Speed Bonus +${cur}% ${isUpgrade ? `<span style="color: #198754; margin: 0 4px; font-weight: 800;">➜</span> <span style="color: #198754;">+${proj}%</span>` : ''}
     </div>
-    <div style="display: flex; justify-content: center; margin-bottom: 15px; gap: 12px;">
-        <button id="btn-gem-standard" class="gem-toggle-btn active" onclick="toggleGemFrugalMode(false)">Standard</button>
-        <button id="btn-gem-frugal" class="gem-toggle-btn" onclick="toggleGemFrugalMode(true)">Frugal</button>
+    <div style="display: flex; justify-content: center; width: 100%; margin: 0 0 25px 0;">
+        <div class="segmented-control" style="display: inline-flex; width: 240px; height: 35px; margin: 0 auto; z-index: 10;">
+            <button id="btn-gem-standard" class="seg-btn active" onclick="toggleGemFrugalMode(false)" style="width: 50%;">Standard</button>
+            <button id="btn-gem-frugal" class="seg-btn" onclick="toggleGemFrugalMode(true)" style="width: 50%;">Frugal</button>
+        </div>
     </div>`;
 
     let html = `
@@ -408,17 +486,122 @@ function showTechGemTable() {
     renderMasterModal('techGemCost', html);
 }
 
+function showEggGemTable() {
+    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+    
+    let rowsHtml = '';
+    
+    keys.forEach(k => {
+        const data = EGG_DATA[k];
+        const baseMins = data.t;
+        
+        let curLvl = 0, projLvl = 0;
+        if (typeof setupLevels !== 'undefined' && typeof calcState === 'function') {
+            const state = calcState();
+            for (let t = 1; t <= 5; t++) {
+                curLvl += (setupLevels[`spt_T${t}_${data.id}`] || 0);
+                projLvl += (state.levels[`spt_T${t}_${data.id}`] || 0);
+            }
+        }
+        let clanLvl = typeof window.getClanEggLvl === 'function' ? window.getClanEggLvl(data.id) : 0;
+        
+        let curSpeed = (curLvl * 10) + (clanLvl * 5);
+        let projSpeed = (projLvl * 10) + (clanLvl * 5);
+        let isUpgrade = projSpeed > curSpeed;
+
+        let curMins = baseMins / (1 + curSpeed / 100);
+        let projMins = baseMins / (1 + projSpeed / 100);
+        
+        const curGem = window.getEggGemData(curMins);
+        const projGem = window.getEggGemData(projMins);
+        
+        let speedCol = `<div style="text-align: center; color: #000; font-weight: 600;">+${curSpeed}%</div>`;
+        if (isUpgrade) {
+            speedCol = `
+            <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.2;">
+                <div style="color: #000; font-weight: 600; margin-bottom: 2px;">+${curSpeed}%</div>
+                <div style="color: #198754 !important; font-weight: 600; display: flex; align-items: center;">
+                    <span style="font-weight: 900; margin-right: 4px; font-size: 0.85em; color: #198754 !important;">➜</span><span style="color: #198754 !important;">+${projSpeed}%</span>
+                </div>
+            </div>`;
+        }
+        
+        let rightCol = `
+        <div style="display: flex; justify-content: center; width: 100%;">
+            <div>${window.renderGemCell(curGem)}</div>
+        </div>`;
+        
+        if (isUpgrade && (curGem.std !== projGem.std || curGem.rawWait !== projGem.rawWait)) {
+            rightCol = `
+            <div style="display: flex; flex-direction: column; align-items: center; width: 100%; line-height: 1.2;"> 
+                <div style="margin-bottom: 4px;">${window.renderGemCell(curGem)}</div>
+                <div style="display: flex; align-items: center;">
+                    <span style="color: #198754; font-weight: 900; font-size: 0.85em; margin-right: 4px; -webkit-text-stroke: 0px;">➜</span>
+                    <div>${window.renderGemCell(projGem, '#198754')}</div>
+                </div>
+            </div>`;
+        }
+
+        rowsHtml += `<tr>
+            <td>
+                <div style="display: flex; justify-content: center; align-items: center; width: 100%;">
+                    <img src="${data.img}" style="width: 28px; height: 28px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">
+                </div>
+            </td>
+            <td>${speedCol}</td>
+            <td>${rightCol}</td>
+        </tr>`;
+    });
+
+    const dynamicStyles = `
+    <style>
+        /* Matches the gem text formatting perfectly to the speed column */
+        #modal-egg-gem-table .gem-val-standard, 
+        #modal-egg-gem-table .gem-val-frugal {
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600; /* Dropped from 700 to 600 */
+        }
+    </style>
+    `;
+
+    const subHtml = `
+    ${dynamicStyles}
+    <div style="display: flex; justify-content: center; width: 100%; margin: 5px 0 15px 0;">
+        <div class="segmented-control" style="display: inline-flex; width: 240px; height: 35px; margin: 0 auto; z-index: 10;">
+            <button id="btn-gem-standard" class="seg-btn active" onclick="toggleGemFrugalMode(false)" style="width: 50%;">Standard</button>
+            <button id="btn-gem-frugal" class="seg-btn" onclick="toggleGemFrugalMode(true)" style="width: 50%;">Frugal</button>
+        </div>
+    </div>`;
+
+    let html = `
+        ${subHtml}
+        <table id="modal-egg-gem-table" class="clean-table" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th style="text-align: center; width: 20%;">Egg</th>
+                    <th style="text-align: center; width: 30%;">Speed</th>
+                    <th style="text-align: center; width: 50%; box-sizing: border-box;">Gem Cost</th>
+                </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+        </table>
+    `;
+
+    if (typeof MODAL_SETTINGS !== 'undefined') MODAL_SETTINGS['eggGemCost'] = { title: "EGG GEM COST", headerColor: "#ebf8fa", titleColor: "#000000", disclaimer: "" };
+    renderMasterModal('eggGemCost', html);
+}
+
 function showGemInfoModal() {
     let html = `
         <div style="font-family: 'Fredoka', sans-serif; font-size: 0.95rem; color: #3f3f3f; -webkit-text-stroke: 0px; font-weight: 600; line-height: 1.5; text-align: left; padding: 10px 15px;">
             <p style="margin-bottom: 15px;">
-                This gem calculator is only for Forge Upgrade and Tech Research Time. I don't have the data for the egg hatching.
-            </p>
-            <p style="margin-bottom: 15px;">
-                In this game, 1 gem skips roughly 7 minutes and 15 seconds of wait time. However, the game actually rounds the gem costs, so if you need 1.49 gems to skip it, the game immediately rounds it to 1 gem. As a result, when there are 10 minutes and 52 seconds left on the timer, the cost drops to just 1 gem. This means by spending your gems one at a time right at the end, you get 50% more value from every single gem. This trick works for both tech and forge upgrades.
+                In this game, 1 gem skips roughly 7 minutes and 15 seconds of wait time for Forge and Tech upgrades. However, the game actually rounds the gem costs, so if you need 1.49 gems to skip it, the game immediately rounds it to 1 gem. As a result, when there are 10 minutes and 52 seconds left on the timer, the cost drops to just 1 gem. This means by spending your gems one at a time right at the end, you get 50% more value from every single gem. This trick works for both tech and forge upgrades.
             </p>
             <p style="margin-bottom: 15px;">
                 In the Forge and Tech Gem Cost table, the <strong>standard mode</strong> means what is the cost to immediately skip the whole level. The <strong>frugal mode</strong> is trying to maximize your gem value by waiting for some time and use the gem right after the value is reduced by 1.
+            </p>
+            <p style="margin-bottom: 15px;">
+                The eggs' gem calculation works similarly, except 1 gem is equal to 16 minutes and 40 seconds.
             </p>
             <div style="text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #ecf0f1;">
                 <span style="font-style: italic; font-weight: 500; color: #555;">Credit to LexAeterna for providing me the data.</span>
