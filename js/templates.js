@@ -1944,31 +1944,20 @@ const HTML_GEM = `
                 </button>
             </div>
 
-            <!-- TIME TO GEMS -->
+            <!-- GEMS TO TIME -->
             <div class="daily-card config-card" style="margin-bottom: 15px;">
                 <div class="daily-card-body" style="padding: 15px;">
-                    <div style="font-family: 'Fredoka', sans-serif !important; font-size: 1rem !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; letter-spacing: 0.5px; margin-bottom: 12px; text-align: left;">Time to Gems:</div>
+                    <div style="font-family: 'Fredoka', sans-serif !important; font-size: 1rem !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; letter-spacing: 0.5px; margin-bottom: 12px; text-align: left;">Gems to Time:</div>
                     
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 2px dashed #bdc3c7; display: flex; flex-direction: column; gap: 15px; align-items: center;">
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-                            <div style="display: flex; align-items: center; gap: 4px;">
-                                <input type="number" id="calc-egg-time-h" placeholder="0" min="0" style="width: 50px; height: 36px; text-align: center; font-size: 0.95rem; font-weight: 600; border: 2px solid #bdc3c7; border-radius: 6px; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; outline: none;" oninput="updateEggTimeToGem()">
-                                <span style="font-family: 'Fredoka', sans-serif !important; font-size: 0.95rem; font-weight: 600; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">h</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 4px;">
-                                <input type="number" id="calc-egg-time-m" placeholder="0" min="0" style="width: 50px; height: 36px; text-align: center; font-size: 0.95rem; font-weight: 600; border: 2px solid #bdc3c7; border-radius: 6px; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; outline: none;" oninput="updateEggTimeToGem()">
-                                <span style="font-family: 'Fredoka', sans-serif !important; font-size: 0.95rem; font-weight: 600; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">m</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 4px;">
-                                <input type="number" id="calc-egg-time-s" placeholder="0" min="0" style="width: 50px; height: 36px; text-align: center; font-size: 0.95rem; font-weight: 600; border: 2px solid #bdc3c7; border-radius: 6px; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; outline: none;" oninput="updateEggTimeToGem()">
-                                <span style="font-family: 'Fredoka', sans-serif !important; font-size: 0.95rem; font-weight: 600; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">s</span>
-                            </div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <img src="icons/Gem.png" style="width:20px; height:20px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
+                            <input type="number" id="calc-egg-gem-time-input" placeholder="0" min="0" style="width: 80px; height: 36px; text-align: center; font-size: 1rem; font-weight: 600; border: 2px solid #bdc3c7; border-radius: 6px; outline: none; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;" oninput="updateEggGemToTime()">
                         </div>
 
                         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border-top: 1px solid #ecf0f1; padding-top: 12px;">
                             <span style="font-weight: 600; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">=</span>
-                            <img src="icons/Gem.png" style="width:20px; height:20px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
-                            <span id="calc-egg-time-gem-res" style="font-size: 1.05rem; font-weight: 600; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">0</span>
+                            <span id="calc-egg-gem-time-res" style="font-size: 1.05rem; font-weight: 600; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; text-align: center;">0s</span>
                         </div>
                         
                         <div style="display: flex; justify-content: center; width: 100%; border-top: 1px solid #ecf0f1; padding-top: 12px;">
@@ -1976,7 +1965,6 @@ const HTML_GEM = `
                                 Egg <button class="btn-info" onclick="showEggGemTable()" style="margin: 0; transform: translateY(-1px);">i</button>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>

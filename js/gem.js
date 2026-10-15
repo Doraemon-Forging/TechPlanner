@@ -43,6 +43,31 @@ function updateTimeToGem() {
     res.innerText = gems.toLocaleString();
 }
 
+window.updateEggGemToTime = function() {
+    let g = parseInt(document.getElementById('calc-egg-gem-time-input').value);
+    let res = document.getElementById('calc-egg-gem-time-res');
+    
+    if (isNaN(g) || g <= 0) { 
+        res.innerText = '0s'; 
+        return; 
+    }
+
+    let ts = Math.floor((g + 0.5) * 1000);
+    
+    let d = Math.floor(ts / 86400);
+    let h = Math.floor((ts % 86400) / 3600);
+    let m = Math.floor((ts % 3600) / 60);
+    let s = ts % 60;
+    
+    let arr = [];
+    if(d > 0) arr.push(d + 'd');
+    if(h > 0) arr.push(h + 'h');
+    if(m > 0) arr.push(m + 'm');
+    if(s > 0 || arr.length === 0) arr.push(s + 's');
+    
+    res.innerText = arr.join(' ');
+};
+
 // --- TAB SWITCHER ---
 window.switchGemTab = function(tab) {
     document.getElementById('btn-gemtab-forge').classList.remove('active');

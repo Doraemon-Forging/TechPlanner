@@ -217,7 +217,7 @@ const getTechVal = (tree, nodeId) => {
 };
 
 const getClanTechMult = (actionKey, dayNum) => {
-    // 4% per level up to 10, then 1% for every level beyond
+
     const getTechBonus = (lv) => {
         if (lv <= 10) return lv * 0.04;
         return (10 * 0.04) + ((lv - 10) * 0.01);
