@@ -1933,24 +1933,18 @@ const HTML_GEM = `
 
         <!-- ================= EGG TAB ================= -->
         <div id="gem-content-egg" style="display: none;">
-            <div class="daily-card config-card" style="margin-bottom: 15px;">
-                <div class="daily-card-body" style="padding: 15px;">
-                    <div style="font-family: 'Fredoka', sans-serif !important; font-size: 1rem !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; letter-spacing: 0.5px; margin-bottom: 12px; text-align: left;">Gems to Time:</div>
-                    
-                    <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 2px dashed #bdc3c7; display: flex; flex-direction: column; gap: 15px; align-items: center;">
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <img src="icons/Gem.png" style="width:20px; height:20px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
-                            <input type="number" id="calc-egg-gem-input" placeholder="0" min="0" style="width: 80px; height: 36px; text-align: center; font-size: 1rem; font-weight: 600; border: 2px solid #bdc3c7; border-radius: 6px; outline: none; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;" oninput="updateEggGemToTime()">
-                        </div>
-
-                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border-top: 1px solid #ecf0f1; padding-top: 12px;">
-                            <span style="font-weight: 600; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">=</span>
-                            <span id="calc-egg-gem-time-res" style="font-size: 1.05rem; font-weight: 600; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; text-align: center;">0s</span>
-                        </div>
-                    </div>
-                </div>
+            
+            <!-- NEW CLAN TECH BUTTON -->
+            <div style="padding: 0 0 15px 0; display: flex; justify-content: center;">
+                <button class="btn-clan-tech" onclick="openCombinedClanTechModal('egg')" style="padding: 0 24px 5px 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; height: 45px; background-color: #02a2ff; border: 2px solid #000; border-radius: 12px; cursor: pointer; box-shadow: inset 0 -5px 0 0 #005d96; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;">
+                    <img src="icons/warcalc.png" style="width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0px 1.5px 0px rgba(0,0,0,0.8));">
+                    <span style="font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 1rem; font-weight: 500; color: #fff; text-transform: uppercase; letter-spacing: 0px; -webkit-text-stroke: 2px #000;">
+                        Clan Tech
+                    </span>
+                </button>
             </div>
 
+            <!-- TIME TO GEMS -->
             <div class="daily-card config-card" style="margin-bottom: 15px;">
                 <div class="daily-card-body" style="padding: 15px;">
                     <div style="font-family: 'Fredoka', sans-serif !important; font-size: 1rem !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; letter-spacing: 0.5px; margin-bottom: 12px; text-align: left;">Time to Gems:</div>
@@ -1987,16 +1981,38 @@ const HTML_GEM = `
                 </div>
             </div>
 
-            <!-- NEW CLAN TECH BUTTON -->
-            <div style="padding: 0 0 15px 0; display: flex; justify-content: center;">
-                <button class="btn-clan-tech" onclick="openCombinedClanTechModal('egg')" style="padding: 0 24px 5px 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; height: 45px; background-color: #02a2ff; border: 2px solid #000; border-radius: 12px; cursor: pointer; box-shadow: inset 0 -5px 0 0 #005d96; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;">
-                    <img src="icons/warcalc.png" style="width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0px 1.5px 0px rgba(0,0,0,0.8));">
-                    <span style="font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 1rem; font-weight: 500; color: #fff; text-transform: uppercase; letter-spacing: 0px; -webkit-text-stroke: 2px #000;">
-                        Clan Tech
-                    </span>
-                </button>
+            <!-- GEMS TO EGGS -->
+            <div class="daily-card config-card" style="margin-bottom: 15px;">
+                <div class="daily-card-body" style="padding: 15px;">
+                    <div style="display: flex; align-items: center; font-family: 'Fredoka', sans-serif !important; font-size: 1rem !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; letter-spacing: 0.5px; margin-bottom: 12px; text-align: left;">
+                    Gems to Eggs: <button class="btn-info" onclick="window.showGemsToEggsModal()" style="margin: 0 0 0 8px; transform: translateY(-1px);">i</button>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 2px dashed #bdc3c7; display: flex; flex-direction: column; gap: 15px; align-items: center;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <img src="icons/Gem.png" style="width:20px; height:20px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
+                            <input type="number" id="calc-egg-gem-input" placeholder="0" min="0" style="width: 80px; height: 36px; text-align: center; font-size: 1rem; font-weight: 600; border: 2px solid #bdc3c7; border-radius: 6px; outline: none; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;" oninput="window.updateGemsToEggs()">
+                        </div>
+
+                        <div style="width: 100%; border-top: 1px solid #ecf0f1; padding-top: 12px;">
+                            <table class="clean-table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: center; width: 30%;">Egg</th>
+                                        <th style="text-align: center; width: 35%;">Amount</th>
+                                        <th style="text-align: center; width: 35%; box-sizing: border-box;">Leftover</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="calc-egg-gem-table-body">
+                                    <tr><td colspan="3" style="text-align: center; padding: 10px; font-family: 'Fredoka', sans-serif; font-weight: 500; color: #777;">Enter gems to calculate</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
+
+            <!-- NOTE -->
             <div style="text-align: center; font-family: 'Fredoka', sans-serif !important; font-size: 1rem !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important; font-weight: 600 !important; letter-spacing: 0.5px; margin-top: 5px;">
                 Note <button class="btn-info" onclick="showGemInfoModal()" style="margin: 0; transform: translateY(-1px);">i</button>
             </div>

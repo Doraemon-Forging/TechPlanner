@@ -4,13 +4,20 @@
 
 // --- CLAN TECH MODALS ---
 window.validateClanTechInput = function(el, maxVal) {
+    let actualMax = maxVal;
+    
+    // Uncap limit if it's a War Tech and the toggle is enabled
+    if (el.id.startsWith('cw-') && window.clanTechMemory?.cwMaxUnlocked === 'true') {
+        actualMax = 9999; 
+    }
+
     let clean = el.value.replace(/[^0-9]/g, '');
     clean = clean.replace(/^0+(?=\d)/, ''); 
     
     if (clean !== '') {
         let val = parseInt(clean);
-        if (val > maxVal) {
-            clean = maxVal.toString();
+        if (val > actualMax) {
+            clean = actualMax.toString();
         }
     }
 
@@ -20,7 +27,7 @@ window.validateClanTechInput = function(el, maxVal) {
         'ct-war-personal': 'warPersonal', 'ct-war-win': 'warWin',
         'ct-war-lose': 'warLose', 'ct-mission': 'mission',
         'ct-pot-mission': 'potMission', 'ct-pot-personal': 'potPersonal',
-        'ct-pot-win': 'potWin', 'ct-pot-lose': 'potLose',
+        'ct-pot-win': 'potWin', 'ct-pot-lose': 'potLose', 'ct-pot-race': 'potRace',
 
         'cw-forge-eq': 'cwForgeEq', 'cw-summon-skill': 'cwSummonSkill',
         'cw-upgrade-skill': 'cwUpgradeSkill', 'cw-tech-tree': 'cwTechTree',
@@ -42,6 +49,29 @@ window.validateClanTechInput = function(el, maxVal) {
         if (!window.clanTechMemory) window.clanTechMemory = {};
         window.clanTechMemory[memKeyMap[el.id]] = clean;
     }
+};
+
+window.toggleCwMaxUnlocked = function(cb) {
+    if (!window.clanTechMemory) window.clanTechMemory = {};
+    window.clanTechMemory.cwMaxUnlocked = cb.checked ? 'true' : 'false';
+    
+    // Find all War inputs. If toggled off, clamp any high values back down to 10
+    const warInputs = document.querySelectorAll('#ct-tab-war input[type="number"]');
+    warInputs.forEach(input => {
+        if (!cb.checked && parseInt(input.value) > 10) {
+            input.value = '10';
+            window.validateClanTechInput(input, 10);
+        }
+        
+        // Dynamically update the "/ 10" text to "/ ∞"
+        const maxSpan = document.getElementById('max-label-' + input.id);
+        if (maxSpan) {
+            maxSpan.innerText = cb.checked ? '∞' : '10';
+        }
+    });
+    
+    if(typeof updateWeekly === 'function') updateWeekly(); 
+    if(typeof updateWarCalc === 'function') updateWarCalc();
 };
 
 window.switchClanTechTab = function(tabName) {
@@ -105,6 +135,11 @@ window.openCombinedClanTechModal = function(initialTab = 'rewards') {
     const createRow = (node) => {
         let currentVal = getSavedVal(node.id);
         
+        // Determine what max value to display natively
+        const isWarTech = node.id.startsWith('cw-');
+        const isUnlocked = isWarTech && window.clanTechMemory?.cwMaxUnlocked === 'true';
+        const displayMax = isUnlocked ? '∞' : node.max;
+        
         return `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; margin-bottom: 8px; background-color: #f2f2f2; border-radius: 8px;">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -112,8 +147,9 @@ window.openCombinedClanTechModal = function(initialTab = 'rewards') {
                 <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1rem; color: #000; -webkit-text-stroke: 0px;">${node.label}:</div>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
-                <input type="number" id="${node.id}" value="${currentVal}" placeholder="0" min="0" max="${node.max}" onfocus="this.select()" oninput="window.validateClanTechInput(this, ${node.max}); if(typeof updateWeekly === 'function') updateWeekly(); if(typeof updateWarCalc === 'function') updateWarCalc();" style="width: 55px; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; background-color: #fff; -webkit-text-stroke: 0px transparent !important;">
-                <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; white-space: nowrap; color: #000; -webkit-text-stroke: 0px;">/ <span>${node.max}</span></span>
+                <!-- Removed native max attribute to prevent HTML validation blocks -->
+                <input type="number" id="${node.id}" value="${currentVal}" placeholder="0" min="0" onfocus="this.select()" oninput="window.validateClanTechInput(this, ${node.max}); if(typeof updateWeekly === 'function') updateWeekly(); if(typeof updateWarCalc === 'function') updateWarCalc();" style="width: 55px; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; background-color: #fff; -webkit-text-stroke: 0px transparent !important;">
+                <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; white-space: nowrap; color: #000; -webkit-text-stroke: 0px;">/ <span id="max-label-${node.id}">${displayMax}</span></span>
             </div>
         </div>`;
     };
@@ -157,11 +193,19 @@ window.openCombinedClanTechModal = function(initialTab = 'rewards') {
         { id: 'ct-egg-timer-mythic',    label: 'Mythic Egg Timer',    max: 60, icon: 'cegg6.png' }
     ];
 
+    const isWarUnlocked = window.clanTechMemory?.cwMaxUnlocked === 'true';
+
     const contentHtml = `
         <style>
             #ct-tabs-container .seg-btn {
                 transition: font-size 0.1s ease, transform 0.1s ease;
             }
+            .ct-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+            .ct-switch input { opacity: 0; width: 0; height: 0; }
+            .ct-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; border: 2px solid #000; }
+            .ct-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; border: 2px solid #000; box-sizing: border-box; }
+            .ct-switch input:checked + .ct-slider { background-color: #27ae60; }
+            .ct-switch input:checked + .ct-slider:before { transform: translateX(20px); }
         </style>
         
         <div style="display: flex; justify-content: center; margin-bottom: 15px;">
@@ -179,6 +223,18 @@ window.openCombinedClanTechModal = function(initialTab = 'rewards') {
         </div>
         
         <div id="ct-tab-war" style="display: ${initialTab === 'war' ? 'block' : 'none'};">
+            <!-- Custom Toggle Banner added here -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; margin-bottom: 12px; background-color: #ebf8fa; border: 2px solid #000; border-radius: 8px; box-shadow: 0 3px 0 rgba(0,0,0,0.1);">
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px; line-height: 1.2;">
+                    All Clan Tech Maxed<br>
+                    <span style="font-size: 0.75rem; color: #555; font-weight: 500;">(Unlocks Lv 11+ for Clan War Tech)</span>
+                </div>
+                <label class="ct-switch">
+                    <input type="checkbox" id="cw-max-unlock-toggle" ${isWarUnlocked ? 'checked' : ''} onchange="window.toggleCwMaxUnlocked(this)">
+                    <span class="ct-slider"></span>
+                </label>
+            </div>
+
             <div style="display: flex; flex-direction: column; gap: 4px;">
                 ${warNodes.map(createRow).join('')}
             </div>

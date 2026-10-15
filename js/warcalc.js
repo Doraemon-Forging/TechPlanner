@@ -217,9 +217,16 @@ const getTechVal = (tree, nodeId) => {
 };
 
 const getClanTechMult = (actionKey, dayNum) => {
+    // 4% per level up to 10, then 1% for every level beyond
+    const getTechBonus = (lv) => {
+        if (lv <= 10) return lv * 0.04;
+        return (10 * 0.04) + ((lv - 10) * 0.01);
+    };
+
     const actionLv = parseInt(window.clanTechMemory?.[actionKey] || 0);
     const dayLv = parseInt(window.clanTechMemory?.[`cwDay${dayNum}`] || 0);
-    return 1 + (actionLv * 0.04) + (dayLv * 0.04);
+    
+    return 1 + getTechBonus(actionLv) + getTechBonus(dayLv);
 };
 
 function calcForgeDay(forgeLv, hammerAmt, pointsMult) {

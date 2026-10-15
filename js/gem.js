@@ -55,47 +55,57 @@ window.switchGemTab = function(tab) {
 };
 
 // --- EGG GEM CALC ---
-window.updateEggGemToTime = function() {
+window.updateGemsToEggs = function() {
     let g = parseInt(document.getElementById('calc-egg-gem-input').value);
-    let res = document.getElementById('calc-egg-gem-time-res');
+    let tableBody = document.getElementById('calc-egg-gem-table-body');
     
     if (isNaN(g) || g <= 0) { 
-        res.innerText = '0s'; 
+        if (tableBody) tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 10px; font-family: \'Fredoka\', sans-serif; font-weight: 500; color: #777;">Enter gems to calculate</td></tr>';
         return; 
     }
 
-    let ts = Math.floor((g + 0.5) * 1000);
-    
-    let d = Math.floor(ts / 86400);
-    let h = Math.floor((ts % 86400) / 3600);
-    let m = Math.floor((ts % 3600) / 60);
-    let s = ts % 60;
-    
-    let arr = [];
-    if(d > 0) arr.push(d + 'd');
-    if(h > 0) arr.push(h + 'h');
-    if(m > 0) arr.push(m + 'm');
-    if(s > 0 || arr.length === 0) arr.push(s + 's');
-    
-    res.innerText = arr.join(' ');
-};
+    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+    let html = '';
 
-window.updateEggTimeToGem = function() {
-    let h = parseInt(document.getElementById('calc-egg-time-h').value) || 0;
-    let m = parseInt(document.getElementById('calc-egg-time-m').value) || 0;
-    let s = parseInt(document.getElementById('calc-egg-time-s').value) || 0;
-    
-    let totalSeconds = (h * 3600) + (m * 60) + s;
-    let res = document.getElementById('calc-egg-time-gem-res');
-    
-    if (totalSeconds <= 0) {
-        res.innerText = '0';
-        return;
-    }
+    keys.forEach(k => {
+        if (typeof EGG_DATA === 'undefined' || !EGG_DATA[k]) return;
+        const data = EGG_DATA[k];
+        const baseMins = data.t;
+        
+        let curLvl = 0;
+        if (typeof setupLevels !== 'undefined') {
+            for (let t = 1; t <= 5; t++) {
+                curLvl += (setupLevels[`spt_T${t}_${data.id}`] || 0);
+            }
+        }
+        let clanLvl = typeof window.getClanEggLvl === 'function' ? window.getClanEggLvl(data.id) : 0;
+        
+        let curSpeed = (curLvl * 10) + (clanLvl * 5);
+        let curMins = baseMins / (1 + curSpeed / 100);
+        
+        let stdCost = window.getEggGemData(curMins).std;
+        
+        let amount = 0;
+        let leftover = g;
+        if (stdCost > 0) {
+            amount = Math.floor(g / stdCost);
+            leftover = g % stdCost;
+        }
+        
+        html += `<tr>
+            <td style="text-align: center; padding: 6px 0;">
+                <img src="${data.img}" style="width: 24px; height: 24px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">
+            </td>
+            <td style="text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; color: #000;">${amount.toLocaleString()}</td>
+            <td style="text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; color: #555;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                    <img src="icons/Gem.png" style="width: 14px; height: 14px; object-fit: contain;">${leftover.toLocaleString()}
+                </div>
+            </td>
+        </tr>`;
+    });
 
-    let gems = Math.max(1, Math.ceil((totalSeconds / 1000) - 0.5));
-    
-    res.innerText = gems.toLocaleString();
+    if (tableBody) tableBody.innerHTML = html;
 };
 
 // --- GEM COST HELPERS ---
@@ -591,6 +601,174 @@ function showEggGemTable() {
     renderMasterModal('eggGemCost', html);
 }
 
+window.showGemsToEggsModal = function() {
+    let g = parseInt(document.getElementById('calc-egg-gem-input').value);
+    
+    if (isNaN(g) || g <= 0) {
+        let emptyHtml = `
+            <table class="clean-table" style="width: 100%; border-collapse: separate; border-spacing: 0 6px;">
+                <thead>
+                    <tr>
+                        <th style="text-align: center; width: 12%; font-size: 0.75rem; padding: 8px 2px;">Egg</th>
+                        <th style="text-align: center; width: 22%; font-size: 0.75rem; padding: 8px 2px;">Amount</th>
+                        <th style="text-align: center; width: 22%; font-size: 0.75rem; padding: 8px 2px;">Leftover</th>
+                        <th style="text-align: center; width: 22%; font-size: 0.75rem; padding: 8px 2px;">Day 3</th>
+                        <th style="text-align: center; width: 22%; font-size: 0.75rem; padding: 8px 2px;">Day 5</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 12px; font-family: 'Fredoka', sans-serif; font-weight: 600; color: #000; -webkit-text-stroke: 0px transparent !important;">Enter gems to calculate</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+        if (typeof MODAL_SETTINGS !== 'undefined') MODAL_SETTINGS['gemsToEggs'] = { title: "GEMS TO EGGS", headerColor: "#ebf8fa", titleColor: "#000000", disclaimer: "" };
+        renderMasterModal('gemsToEggs', emptyHtml);
+        return;
+    }
+
+    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+    
+    const getCwMult = (actionKey, dayNum) => {
+        if (typeof getClanTechMult === 'function') return getClanTechMult(actionKey, dayNum);
+        const getTechBonus = (lv) => {
+            if (lv <= 10) return lv * 0.04;
+            return (10 * 0.04) + ((lv - 10) * 0.01);
+        };
+        const actionLv = parseInt(window.clanTechMemory?.[actionKey] || 0);
+        const dayLv = parseInt(window.clanTechMemory?.[`cwDay${dayNum}`] || 0);
+        return 1 + getTechBonus(actionLv) + getTechBonus(dayLv);
+    };
+
+    const m3Hatch = getCwMult('cwHatch', 3);
+    const m5Hatch = getCwMult('cwHatch', 5);
+
+    const formatNumberShort = (v) => {
+        if (!v || v === 0) return "0";
+        if (v < 10000) return Math.round(v).toLocaleString('en-US');
+        if (v < 1000000) return parseFloat((v / 1000).toFixed(1)) + 'k';
+        return parseFloat((v / 1000000).toFixed(2)) + 'm';
+    };
+
+    const formatCell = (valB, valA, showProj, baseColor = '#000', projColor = '#198754') => {
+        const vBStr = formatNumberShort(valB);
+        const vAStr = formatNumberShort(valA);
+        
+        if (showProj && valB !== valA) {
+            return `
+            <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.2; width: 100%;">
+                <div style="color: ${baseColor}; font-weight: 600; margin-bottom: 2px;">${vBStr}</div>
+                <div style="display: flex; align-items: center;">
+                    <span style="color: ${projColor} !important; font-weight: 900; margin-right: 4px; font-size: 0.85em; -webkit-text-stroke: 0px !important;">➜</span>
+                    <span style="color: ${projColor} !important; font-weight: 600;">${vAStr}</span>
+                </div>
+            </div>`;
+        }
+        return `<div style="text-align: center; color: ${baseColor}; font-weight: 600; width: 100%;">${vBStr}</div>`;
+    };
+
+    const formatLeftover = (valB, valA, showProj) => {
+        const vBStr = formatNumberShort(valB);
+        const vAStr = formatNumberShort(valA);
+        const gemIcon = `<img src="icons/Gem.png" style="width: 12px; height: 12px; object-fit: contain; margin-right: 3px; vertical-align: -1px;">`;
+        
+        if (showProj && valB !== valA) {
+            return `
+            <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.2; width: 100%;">
+                <div style="color: #555; font-weight: 600; margin-bottom: 2px; display: flex; align-items: center;">${gemIcon}${vBStr}</div>
+                <div style="display: flex; align-items: center;">
+                    <span style="color: #198754 !important; font-weight: 900; margin-right: 4px; font-size: 0.85em; -webkit-text-stroke: 0px !important;">➜</span>
+                    <span style="color: #198754 !important; font-weight: 600; display: flex; align-items: center;">${gemIcon}${vAStr}</span>
+                </div>
+            </div>`;
+        }
+        return `<div style="display: flex; align-items: center; justify-content: center; color: #555; font-weight: 600; width: 100%;">${gemIcon}${vBStr}</div>`;
+    };
+
+    let rowsHtml = '';
+
+    keys.forEach((k, idx) => {
+        if (typeof EGG_DATA === 'undefined' || !EGG_DATA[k]) return;
+        const data = EGG_DATA[k];
+        const baseMins = data.t;
+        
+        let curLvl = 0, projLvl = 0;
+        if (typeof setupLevels !== 'undefined' && typeof calcState === 'function') {
+            const state = calcState();
+            for (let t = 1; t <= 5; t++) {
+                curLvl += (setupLevels[`spt_T${t}_${data.id}`] || 0);
+                projLvl += (state.levels[`spt_T${t}_${data.id}`] || 0);
+            }
+        }
+        let clanLvl = typeof window.getClanEggLvl === 'function' ? window.getClanEggLvl(data.id) : 0;
+        
+        let curSpeed = (curLvl * 10) + (clanLvl * 5);
+        let projSpeed = (projLvl * 10) + (clanLvl * 5);
+        let isUpgrade = projSpeed > curSpeed;
+
+        let curMins = baseMins / (1 + curSpeed / 100);
+        let projMins = baseMins / (1 + projSpeed / 100);
+        
+        let curStdCost = window.getEggGemData(curMins).std;
+        let projStdCost = window.getEggGemData(projMins).std;
+
+        let curAmount = 0, curLeftover = g;
+        if (curStdCost > 0) {
+            curAmount = Math.floor(g / curStdCost);
+            curLeftover = g % curStdCost;
+        }
+
+        let projAmount = 0, projLeftover = g;
+        if (projStdCost > 0) {
+            projAmount = Math.floor(g / projStdCost);
+            projLeftover = g % projStdCost;
+        }
+
+        let basePts = 0;
+        if (typeof WAR_POINTS_BASE !== 'undefined' && WAR_POINTS_BASE.eggHatch && WAR_POINTS_BASE.eggHatch[idx]) {
+            basePts = WAR_POINTS_BASE.eggHatch[idx];
+        }
+
+        const curDay3Pts = Math.round(basePts * m3Hatch) * curAmount;
+        const projDay3Pts = Math.round(basePts * m3Hatch) * projAmount;
+
+        const curDay5Pts = Math.round(basePts * m5Hatch) * curAmount;
+        const projDay5Pts = Math.round(basePts * m5Hatch) * projAmount;
+
+        rowsHtml += `
+        <tr>
+            <td style="text-align: center; padding: 8px 0;">
+                <img src="${data.img}" style="width: 24px; height: 24px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">
+            </td>
+            <td style="padding: 8px 0; font-size: 0.9rem;">${formatCell(curAmount, projAmount, isUpgrade)}</td>
+            <td style="padding: 8px 0; font-size: 0.9rem;">${formatLeftover(curLeftover, projLeftover, isUpgrade)}</td>
+            <td style="padding: 8px 0; font-size: 0.9rem;">${formatCell(curDay3Pts, projDay3Pts, isUpgrade)}</td>
+            <td style="padding: 8px 0; font-size: 0.9rem;">${formatCell(curDay5Pts, projDay5Pts, isUpgrade)}</td>
+        </tr>`;
+    });
+
+    let contentHtml = `
+        <table class="clean-table" style="width: 100%; border-collapse: separate; border-spacing: 0 6px;">
+            <thead>
+                <tr>
+                    <th style="text-align: center; width: 12%; font-size: 0.75rem; padding: 8px 2px;">Egg</th>
+                    <th style="text-align: center; width: 22%; font-size: 0.75rem; padding: 8px 2px;">Amount</th>
+                    <th style="text-align: center; width: 22%; font-size: 0.75rem; padding: 8px 2px;">Leftover</th>
+                    <th style="text-align: center; width: 22%; font-size: 0.75rem; padding: 8px 2px;">Day 3</th>
+                    <th style="text-align: center; width: 22%; font-size: 0.75rem; padding: 8px 2px;">Day 5</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rowsHtml}
+            </tbody>
+        </table>
+    `;
+
+    if (typeof MODAL_SETTINGS !== 'undefined') MODAL_SETTINGS['gemsToEggs'] = { title: "GEMS TO EGGS", headerColor: "#ebf8fa", titleColor: "#000000", disclaimer: "" };
+    renderMasterModal('gemsToEggs', contentHtml);
+};
+
 function showGemInfoModal() {
     let html = `
         <div style="font-family: 'Fredoka', sans-serif; font-size: 0.95rem; color: #3f3f3f; -webkit-text-stroke: 0px; font-weight: 600; line-height: 1.5; text-align: left; padding: 10px 15px;">
@@ -601,7 +779,7 @@ function showGemInfoModal() {
                 In the Forge and Tech Gem Cost table, the <strong>standard mode</strong> means what is the cost to immediately skip the whole level. The <strong>frugal mode</strong> is trying to maximize your gem value by waiting for some time and use the gem right after the value is reduced by 1.
             </p>
             <p style="margin-bottom: 15px;">
-                The eggs' gem calculation works similarly, except 1 gem is equal to 16 minutes and 40 seconds.
+                The eggs' gem calculation works similarly, except 1 gem is equal to 16 minutes and 40 seconds which means when the timer drops to 25 minutes left, you can spend 1 gem to get 50% extra value from that gem.
             </p>
             <div style="text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #ecf0f1;">
                 <span style="font-style: italic; font-weight: 500; color: #555;">Credit to LexAeterna for providing me the data.</span>
