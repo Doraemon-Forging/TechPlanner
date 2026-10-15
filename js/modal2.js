@@ -6,6 +6,7 @@
 window.validateClanTechInput = function(el, maxVal) {
     let actualMax = maxVal;
     
+    // Uncap limit if it's a War Tech and the toggle is enabled
     if (el.id.startsWith('cw-') && window.clanTechMemory?.cwMaxUnlocked === 'true') {
         actualMax = 9999; 
     }
@@ -91,50 +92,163 @@ window.switchClanTechTab = function(tabName) {
     });
 };
 
-window.validateClanTechInput = function(el, maxVal) {
-    let actualMax = maxVal;
-    
-    if (el.id.startsWith('cw-') && window.clanTechMemory?.cwMaxUnlocked === 'true') {
-        actualMax = 9999; 
+window.openCombinedClanTechModal = function(initialTab = 'rewards') {
+    if (typeof MODAL_SETTINGS !== 'undefined') {
+        MODAL_SETTINGS.combinedClanTech = { 
+            title: "CLAN TECH SETTINGS", 
+            headerColor: "#ebf8fa", 
+            titleColor: "#000000",  
+        };
     }
 
-    let clean = el.value.replace(/[^0-9]/g, '');
-    clean = clean.replace(/^0+(?=\d)/, ''); 
-    
-    if (clean !== '') {
-        let val = parseInt(clean);
-        if (val > actualMax) {
-            clean = actualMax.toString();
-        }
-    }
-
-    el.value = clean;
-
-    const memKeyMap = {
-        'ct-war-personal': 'warPersonal', 'ct-war-win': 'warWin',
-        'ct-war-lose': 'warLose', 'ct-mission': 'mission',
-        'ct-pot-mission': 'potMission', 'ct-pot-personal': 'potPersonal',
-        'ct-pot-win': 'potWin', 'ct-pot-lose': 'potLose', 'ct-pot-race': 'potRace',
-
-        'cw-forge-eq': 'cwForgeEq', 'cw-summon-skill': 'cwSummonSkill',
-        'cw-upgrade-skill': 'cwUpgradeSkill', 'cw-tech-tree': 'cwTechTree',
-        'cw-forge-up': 'cwForgeUp', 'cw-dungeon': 'cwDungeon',
-        'cw-hatch': 'cwHatch', 'cw-merge-pet': 'cwMergePet',
-        'cw-summon-mount': 'cwSummonMount', 'cw-merge-mount': 'cwMergeMount',
-        'cw-day1': 'cwDay1', 'cw-day2': 'cwDay2', 'cw-day3': 'cwDay3',
-        'cw-day4': 'cwDay4', 'cw-day5': 'cwDay5',
-
-        'ct-egg-timer-common': 'eggTimerCommon',
-        'ct-egg-timer-rare': 'eggTimerRare',
-        'ct-egg-timer-epic': 'eggTimerEpic',
-        'ct-egg-timer-legendary': 'eggTimerLegendary',
-        'ct-egg-timer-ultimate': 'eggTimerUltimate',
-        'ct-egg-timer-mythic': 'eggTimerMythic'
+    const getSavedVal = (id) => {
+        const memKeyMap = {
+            
+            'ct-war-personal': 'warPersonal', 'ct-war-win': 'warWin',
+            'ct-war-lose': 'warLose', 'ct-mission': 'mission',
+            'ct-pot-mission': 'potMission', 'ct-pot-personal': 'potPersonal',
+            'ct-pot-win': 'potWin', 'ct-pot-lose': 'potLose',
+            'ct-pot-race': 'potRace',
+            
+            'cw-forge-eq': 'cwForgeEq', 'cw-summon-skill': 'cwSummonSkill',
+            'cw-upgrade-skill': 'cwUpgradeSkill', 'cw-tech-tree': 'cwTechTree',
+            'cw-forge-up': 'cwForgeUp', 'cw-dungeon': 'cwDungeon',
+            'cw-hatch': 'cwHatch', 'cw-merge-pet': 'cwMergePet',
+            'cw-summon-mount': 'cwSummonMount', 'cw-merge-mount': 'cwMergeMount',
+            'cw-day1': 'cwDay1', 'cw-day2': 'cwDay2', 'cw-day3': 'cwDay3',
+            'cw-day4': 'cwDay4', 'cw-day5': 'cwDay5',
+            
+            'ct-egg-timer-common': 'eggTimerCommon',
+            'ct-egg-timer-rare': 'eggTimerRare',
+            'ct-egg-timer-epic': 'eggTimerEpic',
+            'ct-egg-timer-legendary': 'eggTimerLegendary',
+            'ct-egg-timer-ultimate': 'eggTimerUltimate',
+            'ct-egg-timer-mythic': 'eggTimerMythic'
+        };
+        
+        const existingEl = document.getElementById(id);
+        const val = existingEl ? existingEl.value : (window.clanTechMemory?.[memKeyMap[id]] || '');
+        
+        return (val === '0' || val === 0) ? '' : val;
     };
-    
-    if (memKeyMap[el.id]) {
-        if (!window.clanTechMemory) window.clanTechMemory = {};
-        window.clanTechMemory[memKeyMap[el.id]] = clean;
+
+    const createRow = (node) => {
+        let currentVal = getSavedVal(node.id);
+        
+        // Determine what max value to display natively
+        const isWarTech = node.id.startsWith('cw-');
+        const isUnlocked = isWarTech && window.clanTechMemory?.cwMaxUnlocked === 'true';
+        const displayMax = isUnlocked ? '∞' : node.max;
+        
+        return `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; margin-bottom: 8px; background-color: #f2f2f2; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="icons/${node.icon}" style="width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0px 1px 0px rgba(0,0,0,0.5));" onerror="this.style.display='none'">
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 1rem; color: #000; -webkit-text-stroke: 0px;">${node.label}:</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap;">
+                <!-- Removed native max attribute to prevent HTML validation blocks -->
+                <input type="number" id="${node.id}" value="${currentVal}" placeholder="0" min="0" onfocus="this.select()" oninput="window.validateClanTechInput(this, ${node.max}); if(typeof updateWeekly === 'function') updateWeekly(); if(typeof updateWarCalc === 'function') updateWarCalc();" style="width: 55px; height: 32px; border: 2px solid #000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; outline: none; background-color: #fff; -webkit-text-stroke: 0px transparent !important;">
+                <span style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; white-space: nowrap; color: #000; -webkit-text-stroke: 0px;">/ <span id="max-label-${node.id}">${displayMax}</span></span>
+            </div>
+        </div>`;
+    };
+
+    const rewardsNodes = [
+        { id: 'ct-war-personal', label: 'War Personal Rewards', max: 10, icon: 'cr_personal.png' },
+        { id: 'ct-war-win',      label: 'War Win Rewards',      max: 10, icon: 'cr_warwin.png' },
+        { id: 'ct-war-lose',     label: 'War Lose Rewards',     max: 10, icon: 'cr_warlose.png' },
+        { id: 'ct-mission',      label: 'Mission Rewards',      max: 10, icon: 'cr_mission.png' },
+        { id: 'ct-pot-mission',  label: 'Potion from Mission',  max: 20, icon: 'cr_missionpot.png' },
+        { id: 'ct-pot-personal', label: 'Potion from Personal', max: 20, icon: 'cr_personalpot.png' },
+        { id: 'ct-pot-win',      label: 'Potion from War Win',  max: 20, icon: 'cr_warwinpot.png' },
+        { id: 'ct-pot-lose',     label: 'Potion from War Lose', max: 20, icon: 'cr_warlosepot.png' },
+        { id: 'ct-pot-race',     label: 'Potion from Race',     max: 20, icon: 'cr_racepot.png' }
+    ];
+
+    const warNodes = [
+        { id: 'cw-forge-eq',     label: 'Forging Equipment', max: 10, icon: 'cw_forge.png' },
+        { id: 'cw-summon-skill', label: 'Summoning Skills',  max: 10, icon: 'cw_skill.png' },
+        { id: 'cw-upgrade-skill',label: 'Upgrading Skills',  max: 10, icon: 'cw_skillup.png' },
+        { id: 'cw-tech-tree',    label: 'Tech Tree',         max: 10, icon: 'cw_tech.png' },
+        { id: 'cw-forge-up',     label: 'Forge Upgrades',    max: 10, icon: 'cw_forgeup.png' },
+        { id: 'cw-dungeon',      label: 'Dungeon Keys',      max: 10, icon: 'cw_key.png' },
+        { id: 'cw-hatch',        label: 'Hatching Eggs',     max: 10, icon: 'cw_hatch.png' },
+        { id: 'cw-merge-pet',    label: 'Merging Pets',      max: 10, icon: 'cw_eggmerge.png' },
+        { id: 'cw-summon-mount', label: 'Summoning Mounts',  max: 10, icon: 'cw_mount.png' },
+        { id: 'cw-merge-mount',  label: 'Merging Mounts',    max: 10, icon: 'cw_mountmerge.png' },
+        { id: 'cw-day1',         label: 'War Day 1',         max: 10, icon: 'cw_day1.png' },
+        { id: 'cw-day2',         label: 'War Day 2',         max: 10, icon: 'cw_day2.png' },
+        { id: 'cw-day3',         label: 'War Day 3',         max: 10, icon: 'cw_day3.png' },
+        { id: 'cw-day4',         label: 'War Day 4',         max: 10, icon: 'cw_day4.png' },
+        { id: 'cw-day5',         label: 'War Day 5',         max: 10, icon: 'cw_day5.png' }
+    ];
+
+    const eggNodes = [
+        { id: 'ct-egg-timer-common',    label: 'Common Egg Timer',    max: 60, icon: 'cegg1.png' },
+        { id: 'ct-egg-timer-rare',      label: 'Rare Egg Timer',      max: 60, icon: 'cegg2.png' },
+        { id: 'ct-egg-timer-epic',      label: 'Epic Egg Timer',      max: 60, icon: 'cegg3.png' },
+        { id: 'ct-egg-timer-legendary', label: 'Legendary Egg Timer', max: 60, icon: 'cegg4.png' },
+        { id: 'ct-egg-timer-ultimate',  label: 'Ultimate Egg Timer',  max: 60, icon: 'cegg5.png' },
+        { id: 'ct-egg-timer-mythic',    label: 'Mythic Egg Timer',    max: 60, icon: 'cegg6.png' }
+    ];
+
+    const isWarUnlocked = window.clanTechMemory?.cwMaxUnlocked === 'true';
+
+    const contentHtml = `
+        <style>
+            #ct-tabs-container .seg-btn {
+                transition: font-size 0.1s ease, transform 0.1s ease;
+            }
+            .ct-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+            .ct-switch input { opacity: 0; width: 0; height: 0; }
+            .ct-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; border: 2px solid #000; }
+            .ct-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .3s; border-radius: 50%; border: 2px solid #000; box-sizing: border-box; }
+            .ct-switch input:checked + .ct-slider { background-color: #27ae60; }
+            .ct-switch input:checked + .ct-slider:before { transform: translateX(20px); }
+        </style>
+        
+        <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+            <div id="ct-tabs-container" class="segmented-control" style="width: 100%; max-width: 320px; height: 38px; display: flex;">
+                <button id="btn-ct-tab-rewards" class="seg-btn ${initialTab === 'rewards' ? 'active' : ''}" onclick="window.switchClanTechTab('rewards')" style="flex: 1;">Rewards</button>
+                <button id="btn-ct-tab-war" class="seg-btn ${initialTab === 'war' ? 'active' : ''}" onclick="window.switchClanTechTab('war')" style="flex: 1;">War</button>
+                <button id="btn-ct-tab-egg" class="seg-btn ${initialTab === 'egg' ? 'active' : ''}" onclick="window.switchClanTechTab('egg')" style="flex: 1;">Egg</button>
+            </div>
+        </div>
+        
+        <div id="ct-tab-rewards" style="display: ${initialTab === 'rewards' ? 'block' : 'none'};">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                ${rewardsNodes.map(createRow).join('')}
+            </div>
+        </div>
+        
+        <div id="ct-tab-war" style="display: ${initialTab === 'war' ? 'block' : 'none'};">
+            <!-- Custom Toggle Banner added here -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; margin-bottom: 12px; background-color: #ebf8fa; border: 2px solid #000; border-radius: 8px; box-shadow: 0 3px 0 rgba(0,0,0,0.1);">
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px; line-height: 1.2;">
+                    All Clan Tech Maxed<br>
+                    <span style="font-size: 0.75rem; color: #555; font-weight: 500;">(Unlocks Lv 11+ for Clan War Tech)</span>
+                </div>
+                <label class="ct-switch">
+                    <input type="checkbox" id="cw-max-unlock-toggle" ${isWarUnlocked ? 'checked' : ''} onchange="window.toggleCwMaxUnlocked(this)">
+                    <span class="ct-slider"></span>
+                </label>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                ${warNodes.map(createRow).join('')}
+            </div>
+        </div>
+
+        <div id="ct-tab-egg" style="display: ${initialTab === 'egg' ? 'block' : 'none'};">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                ${eggNodes.map(createRow).join('')}
+            </div>
+        </div>
+    `;
+
+    if (typeof renderMasterModal === 'function') {
+        renderMasterModal('combinedClanTech', contentHtml);
     }
 };
 
@@ -506,7 +620,7 @@ window.openWeeklyBreakdownModal = function() {
         }
     };
 
-    // ==========================================
+        // ==========================================
     // TAB 1: BY SOURCE
     // ==========================================
     let sourceHtml = '<div style="display: flex; flex-direction: column; gap: 12px;">';
