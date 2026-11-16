@@ -420,9 +420,17 @@ function showPotionTable(cur, proj) {
     for (let t = 1; t <= 6; t++) {
         let tierSumBefore = 0;
         let tierSumAfter = 0;
+        let hasUnknown = false;
 
         for (let i = 0; i < 5; i++) {
-            const base = (typeof potionCosts !== 'undefined' && potionCosts[t]) ? (potionCosts[t][i] || 0) : 0;
+            const base = (typeof potionCosts !== 'undefined' && potionCosts[t]) ? potionCosts[t][i] : '?';
+
+            if (typeof base !== 'number' || isNaN(base)) {
+                hasUnknown = true;
+                allRows.push([`${i + 1}`, '?']);
+                continue;
+            }
+
             const v1 = Math.round(base * (1 - cur / 100));
             const v2 = Math.round(base * (1 - proj / 100));
             tierSumBefore += v1;
@@ -433,8 +441,11 @@ function showPotionTable(cur, proj) {
             allRows.push([`${i + 1}`, valStr]);
         }
 
-        let sumStr = `${tierSumBefore.toLocaleString()}`;
-        if (isUpgrade) sumStr += ` ➜ ${tierSumAfter.toLocaleString()}`;
+        const suffix = hasUnknown ? '+' : '';
+        let sumStr = tierSumBefore > 0 ? `${tierSumBefore.toLocaleString()}${suffix}` : '?';
+        if (isUpgrade && tierSumBefore > 0) {
+            sumStr += ` ➜ ${tierSumAfter.toLocaleString()}${suffix}`;
+        }
         allRows.push([`Total`, sumStr]);
     }
 

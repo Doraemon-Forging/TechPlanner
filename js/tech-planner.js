@@ -137,10 +137,11 @@ function maxTier(tree, tier) {
         updateCalculations();
     });
 }
+
 // --- CALCULATION ENGINE ---
 function calcState(customQueue) {
     const levels = { ...setupLevels };
-    let totalMin = 0, history = [], speed = 0, totalPotions = 0, totalGems = 0, totalSellBonusCur = 0, currentDiscount = 0;
+    let totalMin = 0, history = [], speed = 0, totalPotions = 0, hasUnknownPotions = false, totalGems = 0, totalSellBonusCur = 0, currentDiscount = 0;
 
     Object.keys(setupLevels).forEach(id => { const m = getMeta(id); if (m && m.n === "Eq. Sell Price") totalSellBonusCur += (setupLevels[id] * (m.val !== undefined ? m.val : 1)); });
     Object.keys(levels).forEach(id => { const m = getMeta(id); if (m && m.speed) speed += m.speed * levels[id]; if (m && m.isDiscount) currentDiscount += levels[id] * (m.val !== undefined ? m.val : 2); });
@@ -157,7 +158,8 @@ function calcState(customQueue) {
             if (cur >= m.m) return;
             const tier = getTier(item.id);
 
-            let finalTime = tierTimes[tier][cur] / (1 + speed);
+            const baseTime = (typeof tierTimes !== 'undefined' && tierTimes[tier] && typeof tierTimes[tier][cur] === 'number') ? tierTimes[tier][cur] : 0;
+            let finalTime = baseTime / (1 + speed);
             let gemReduction = 0;
             let effectiveGems = 0; 
 
@@ -170,8 +172,17 @@ function calcState(customQueue) {
                 finalTime = Math.max(0, finalTime - gemReduction);
             }
 
-            const potionBase = potionCosts[tier][cur]; const finalPotion = Math.round(potionBase * (1 - (currentDiscount / 100)));
-            totalMin += finalTime; totalPotions += finalPotion; levels[item.id] = cur + 1;
+            const potionBase = (typeof potionCosts !== 'undefined' && potionCosts[tier]) ? potionCosts[tier][cur] : '?';
+            const isPotionKnown = typeof potionBase === 'number' && !isNaN(potionBase);
+            const finalPotion = isPotionKnown ? Math.round(potionBase * (1 - (currentDiscount / 100))) : '?';
+
+            totalMin += finalTime;
+            if (isPotionKnown) {
+                totalPotions += finalPotion;
+            } else {
+                hasUnknownPotions = true;
+            }
+            levels[item.id] = cur + 1;
             const spStr = Math.round(speed * 100);
             
             if (m.speed) { speed += m.speed; if (speed > 1) speed = 1; }
@@ -188,7 +199,7 @@ function calcState(customQueue) {
     let totalSellBonusProj = 0;
     Object.keys(levels).forEach(id => { const m = getMeta(id); if (m && m.n === "Eq. Sell Price") totalSellBonusProj += (levels[id] * (m.val !== undefined ? m.val : 1)); });
     
-    return { levels, totalMin, history, finalSpeed: speed, brokenSteps, totalPotions, totalGems, totalSellBonusCur, totalSellBonusProj };
+    return { levels, totalMin, history, finalSpeed: speed, brokenSteps, totalPotions, hasUnknownPotions, totalGems, totalSellBonusCur, totalSellBonusProj };
 }
 
 // --- NEW GEM FUNCTIONS ---
@@ -315,9 +326,12 @@ function updateCalculations() {
         startTime = new Date().getTime();
     }
 
-    const potStr = state.totalPotions >= 10000 
+    const basePotStr = state.totalPotions >= 10000 
         ? (state.totalPotions / 1000).toFixed(1) + 'k' 
         : state.totalPotions.toLocaleString('en-US');
+    const potStr = state.hasUnknownPotions 
+        ? (state.totalPotions > 0 ? basePotStr + '+' : '?') 
+        : basePotStr;
     const gemStr = (state.totalGems || 0).toLocaleString('en-US'); 
     const timeStr = formatSmartTime(state.totalMin);
     
@@ -434,6 +448,7 @@ function updateCalculations() {
                 nameHtml = `<div class="log-name">${h.name} ${typeof toRoman === 'function' ? toRoman(tierNum) : tierNum}-${h.lvl}</div>`;
 
                 const displayGems = h.gems || 0;
+                const costStr = typeof h.cost === 'number' ? h.cost.toLocaleString('en-US') : h.cost;
                 
                 let gemHtml = `
                     <div class="ld-part gem" onclick="event.stopPropagation(); editGem(${h.idx})" style="cursor: pointer; transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Click to edit Gem amount">
@@ -446,7 +461,7 @@ function updateCalculations() {
                     <div class="log-right-group">
                         <div class="log-time">${finishDateStr}</div>
                         <div class="log-details">
-                            <div class="ld-part pot"><img src="icons/red_potion.png" class="ld-icon"><span>${h.cost.toLocaleString('en-US')}</span></div>
+                            <div class="ld-part pot"><img src="icons/red_potion.png" class="ld-icon"><span>${costStr}</span></div>
                             ${gemHtml}
                             <div class="ld-part time"><img src="icons/icon_time.png" class="ld-icon"><span>${durStr}</span></div>
                         </div>
@@ -682,10 +697,10 @@ function handleClick(id, isRight) {
 }
 
 function handleShiftClick(id) {
-    window.ongoingForgeSnapshot = null;
-    pushHistory(); setupLevels[id] = getMeta(id).m;
-    const ensure = (cid) => getParents(cid).forEach(pid => { if ((setupLevels[pid] || 0) === 0) { setupLevels[pid] = 1; ensure(pid); } });
-    ensure(id); updateCalculations();
+    window.ongoingForgeSnapshot = null;
+    pushHistory(); setupLevels[id] = getMeta(id).m;
+    const ensure = (cid) => getParents(cid).forEach(pid => { if ((setupLevels[pid] || 0) === 0) { setupLevels[pid] = 1; ensure(pid); } });
+    ensure(id); updateCalculations();
 }
 
 function autoUnlock(id) { getParents(id).forEach(p => { if ((setupLevels[p] || 0) === 0) { setupLevels[p] = 1; autoUnlock(p); } }); }
@@ -1128,20 +1143,20 @@ function executeCut(idx) {
 }
 
 function resetCurrentTree() {
-    openConfirmModal(`Reset ${activeTreeKey.toUpperCase()} tree?`, () => {
-        window.ongoingForgeSnapshot = null; 
-        pushHistory();
-        Object.keys(setupLevels).forEach(id => { if (id.startsWith(activeTreeKey + "_")) delete setupLevels[id]; });
-        planQueue = planQueue.filter(item => (item.type === 'node') ? !item.id.startsWith(activeTreeKey + "_") : true);
-        let clean = false; 
-        while (!clean) { 
-            const sim = calcState(planQueue); 
-            if (sim.brokenSteps.length > 0) 
-                for (let j = sim.brokenSteps.length - 1; j >= 0; j--) planQueue.splice(sim.brokenSteps[j], 1); 
-            else clean = true; 
-        }
-        updateCalculations();
-    });
+    openConfirmModal(`Reset ${activeTreeKey.toUpperCase()} tree?`, () => {
+        window.ongoingForgeSnapshot = null; 
+        pushHistory();
+        Object.keys(setupLevels).forEach(id => { if (id.startsWith(activeTreeKey + "_")) delete setupLevels[id]; });
+        planQueue = planQueue.filter(item => (item.type === 'node') ? !item.id.startsWith(activeTreeKey + "_") : true);
+        let clean = false; 
+        while (!clean) { 
+            const sim = calcState(planQueue); 
+            if (sim.brokenSteps.length > 0) 
+                for (let j = sim.brokenSteps.length - 1; j >= 0; j--) planQueue.splice(sim.brokenSteps[j], 1); 
+            else clean = true; 
+        }
+        updateCalculations();
+    });
 }
 
 // --- UNDO / REDO ---
