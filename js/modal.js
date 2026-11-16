@@ -460,13 +460,40 @@ function showPotionTable(cur, proj) {
     );
 }
 function showTechTimerTable(cur, proj) {
-    const isUpgrade = proj > cur; const headers = ['Level', 'Duration']; const allRows = [];
-    for (let t = 1; t <= 5; t++) {
-        let tierSumBefore = 0; let tierSumAfter = 0;
-        for (let i = 0; i < 5; i++) { const base = tierTimes[t][i]; const v1 = base / (1 + cur / 100); const v2 = base / (1 + proj / 100); tierSumBefore += v1; tierSumAfter += v2; let valStr = formatSmartTime(v1); if (isUpgrade) valStr += ` ➜ ${formatSmartTime(v2)}`; allRows.push([`${i + 1}`, valStr]); }
-        let sumStr = `${formatSmartTime(tierSumBefore)}`; if (isUpgrade) sumStr += ` ➜ ${formatSmartTime(tierSumAfter)}`; allRows.push([`Total`, sumStr]);
+    const isUpgrade = proj > cur;
+    const headers = ['Level', 'Duration'];
+    const allRows = [];
+
+    for (let t = 1; t <= 6; t++) {
+        let tierSumBefore = 0;
+        let tierSumAfter = 0;
+
+        for (let i = 0; i < 5; i++) {
+            const base = (typeof tierTimes !== 'undefined' && tierTimes[t]) ? (tierTimes[t][i] || 0) : 0;
+            const v1 = base / (1 + cur / 100);
+            const v2 = base / (1 + proj / 100);
+            tierSumBefore += v1;
+            tierSumAfter += v2;
+
+            let valStr = formatSmartTime(v1);
+            if (isUpgrade) valStr += ` ➜ ${formatSmartTime(v2)}`;
+            allRows.push([`${i + 1}`, valStr]);
+        }
+
+        let sumStr = `${formatSmartTime(tierSumBefore)}`;
+        if (isUpgrade) sumStr += ` ➜ ${formatSmartTime(tierSumAfter)}`;
+        allRows.push([`Total`, sumStr]);
     }
-    showTable("TECH RESEARCH TIMER", "icons/spt_timer.png", { label: "Speed Bonus", before: `+${cur}%`, after: `+${proj}%` }, headers, allRows, 6, ['I', 'II', 'III', 'IV', 'V']);
+
+    showTable(
+        "TECH RESEARCH TIMER",
+        "icons/spt_timer.png",
+        { label: "Speed Bonus", before: `+${cur}%`, after: `+${proj}%` },
+        headers,
+        allRows,
+        6,
+        ['I', 'II', 'III', 'IV', 'V', 'VI']
+    );
 }
 function showEqSellTable(cur, proj) {
     const isUpgrade = proj > cur; const headers = ["Level", "Sell Price"]; const allRows = [];
