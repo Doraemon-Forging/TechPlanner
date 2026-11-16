@@ -89,7 +89,7 @@ window.updateGemsToEggs = function() {
         return; 
     }
 
-    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic', 'heroic', 'infinite', 'eternal'];
     let html = '';
 
     keys.forEach(k => {
@@ -99,7 +99,7 @@ window.updateGemsToEggs = function() {
         
         let curLvl = 0;
         if (typeof setupLevels !== 'undefined') {
-            for (let t = 1; t <= 5; t++) {
+            for (let t = 1; t <= 6; t++) {
                 curLvl += (setupLevels[`spt_T${t}_${data.id}`] || 0);
             }
         }
@@ -357,7 +357,7 @@ function showTechGemTable() {
     let cur = 0, proj = 0;
     if (typeof setupLevels !== 'undefined' && typeof calcState === 'function') {
         const state = calcState();
-        for (let t = 1; t <= 5; t++) {
+        for (let t = 1; t <= 6; t++) {
             cur += (setupLevels[`spt_T${t}_timer`] || 0) * 4;
             proj += (state.levels[`spt_T${t}_timer`] || 0) * 4;
         }
@@ -365,7 +365,7 @@ function showTechGemTable() {
     const isUpgrade = proj > cur;
 
     let tabsHtml = `<div id="modal-tabs-container" style="display: flex; justify-content: center; margin-bottom: 15px;">`;
-    ['I', 'II', 'III', 'IV', 'V'].forEach((name, idx) => {
+    ['I', 'II', 'III', 'IV', 'V', 'VI'].forEach((name, idx) => {
         const activeCls = idx === 0 ? 'active' : '';
         tabsHtml += `<button class="seg-btn ${activeCls}" onclick="document.querySelectorAll('.tech-gem-tab').forEach(el=>el.style.display='none'); document.getElementById('tech-gem-tab-${idx}').style.display='block'; this.parentNode.querySelectorAll('.seg-btn').forEach(btn=>btn.classList.remove('active')); this.classList.add('active');">${name}</button>`;
     });
@@ -373,13 +373,13 @@ function showTechGemTable() {
 
     let contentHtml = '';
 
-    for (let t = 1; t <= 5; t++) {
+    for (let t = 1; t <= 6; t++) {
         let totalStdBefore = 0, totalFrgBefore = 0, totalWaitBefore = 0;
         let totalStdAfter = 0, totalFrgAfter = 0, totalWaitAfter = 0;
         let rowsHtml = '';
         
         for (let i = 0; i < 5; i++) {
-            const baseMins = tierTimes[t][i]; 
+            const baseMins = (typeof tierTimes !== 'undefined' && tierTimes[t]) ? (tierTimes[t][i] || 0) : 0; 
             const curData = window.getGemData(baseMins / (1 + cur / 100));
             const projData = window.getGemData(baseMins / (1 + proj / 100));
 
@@ -522,18 +522,19 @@ function showTechGemTable() {
 }
 
 function showEggGemTable() {
-    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic', 'heroic', 'infinite', 'eternal'];
     
     let rowsHtml = '';
     
     keys.forEach(k => {
+        if (typeof EGG_DATA === 'undefined' || !EGG_DATA[k]) return;
         const data = EGG_DATA[k];
         const baseMins = data.t;
         
         let curLvl = 0, projLvl = 0;
         if (typeof setupLevels !== 'undefined' && typeof calcState === 'function') {
             const state = calcState();
-            for (let t = 1; t <= 5; t++) {
+            for (let t = 1; t <= 6; t++) {
                 curLvl += (setupLevels[`spt_T${t}_${data.id}`] || 0);
                 projLvl += (state.levels[`spt_T${t}_${data.id}`] || 0);
             }
@@ -653,7 +654,7 @@ window.showGemsToEggsModal = function() {
         return;
     }
 
-    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic'];
+    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic', 'heroic', 'infinite', 'eternal'];
     
     const getCwMult = (actionKey, dayNum) => {
         if (typeof getClanTechMult === 'function') return getClanTechMult(actionKey, dayNum);
@@ -721,7 +722,7 @@ window.showGemsToEggsModal = function() {
         let curLvl = 0, projLvl = 0;
         if (typeof setupLevels !== 'undefined' && typeof calcState === 'function') {
             const state = calcState();
-            for (let t = 1; t <= 5; t++) {
+            for (let t = 1; t <= 6; t++) {
                 curLvl += (setupLevels[`spt_T${t}_${data.id}`] || 0);
                 projLvl += (state.levels[`spt_T${t}_${data.id}`] || 0);
             }

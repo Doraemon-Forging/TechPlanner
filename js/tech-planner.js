@@ -24,19 +24,43 @@ let historyStacks = {};
 let redoStacks = {};
 
 // --- HELPERS (Logic) ---
-function getMeta(id) { const p = id.split('_'); return TREES[p[0]].meta[p.slice(2).join('_')]; }
+function getStructure(tree, tier) {
+    const tData = TREES[tree];
+    return (tData.tierOverrides && tData.tierOverrides[tier] && tData.tierOverrides[tier].structure)
+        ? tData.tierOverrides[tier].structure
+        : tData.structure;
+}
+
+function getMeta(id) {
+    const p = id.split('_');
+    const tree = p[0];
+    const tier = parseInt(p[1].substring(1));
+    const local = p.slice(2).join('_');
+    const baseMeta = TREES[tree].meta[local];
+    const overrideMeta = TREES[tree].tierOverrides && TREES[tree].tierOverrides[tier] && TREES[tree].tierOverrides[tier].meta
+        ? TREES[tree].tierOverrides[tier].meta[local]
+        : null;
+    return overrideMeta ? { ...baseMeta, ...overrideMeta } : baseMeta;
+}
+
 function getTier(id) { return parseInt(id.split('_T')[1]); }
+
 function getParents(id) {
-    const p = id.split('_'), tree = p[0], tier = parseInt(p[1].substring(1)), local = p.slice(2).join('_'), meta = TREES[tree].meta[local], res = [];
+    const p = id.split('_'), tree = p[0], tier = parseInt(p[1].substring(1)), local = p.slice(2).join('_');
+    const meta = getMeta(id), res = [];
     meta.p.forEach(par => res.push(`${tree}_T${tier}_${par}`));
     if (tier > 1) {
         if (tree === 'forge' && local === 'timer') res.push(`forge_T${tier - 1}_off_c`);
         if (tree === 'forge' && local === 'disc') res.push(`forge_T${tier - 1}_off_h`);
-        if (tree === 'spt' && local === 'timer') res.push(`spt_T${tier - 1}_key_g`, `spt_T${tier - 1}_key_r`);
+        if (tree === 'spt') {
+            if (tier < 6 && local === 'timer') res.push(`spt_T${tier - 1}_key_g`, `spt_T${tier - 1}_key_r`);
+            if (tier === 6 && local === 'skill_dmg') res.push(`spt_T${tier - 1}_key_g`, `spt_T${tier - 1}_key_r`);
+        }
         if (tree === 'power' && (local === 'weapon_1' || local === 'helmet_1')) res.push(`power_T${tier - 1}_mount_chance`);
     }
     return res;
 }
+
 function isUnlocked(id, lvls) { const p = getParents(id); return p.length === 0 || p.every(pr => (lvls[pr] || 0) > 0); }
 
 // --- TREE NAVIGATION & RENDERING ---
@@ -69,7 +93,7 @@ function renderTree(key) {
     const canvas = document.getElementById('canvas');
     Array.from(canvas.children).forEach(c => { if (!c.classList.contains('connections-layer') && !c.classList.contains('tree-reset-btn')) c.remove(); });
     const data = TREES[key];
-    for (let t = 1; t <= 5; t++) {
+    for (let t = 1; t <= 6; t++) {
         const block = document.createElement('div'); block.className = 'tier-block';
 
         const header = document.createElement('div'); header.className = 'tier-header';
@@ -77,15 +101,15 @@ function renderTree(key) {
         block.appendChild(header);
 
         const rows = {};
-        data.structure.forEach(nDef => {
+        getStructure(key, t).forEach(nDef => {
             const fullId = `${key}_T${t}_${nDef.id}`;
-            const meta = data.meta[nDef.id];
+            const meta = getMeta(fullId);
             if (!meta) return;
             if (!rows[nDef.r]) {
                 const rDiv = document.createElement('div'); rDiv.style = "display:flex;justify-content:center;margin-bottom:60px;width:100%";
                 block.appendChild(rDiv); rows[nDef.r] = rDiv;
             }
-const node = document.createElement('div'); node.className = 'node'; node.id = fullId; node.setAttribute('data-name', meta.n);
+            const node = document.createElement('div'); node.className = 'node'; node.id = fullId; node.setAttribute('data-name', meta.n);
             if (nDef.c === 1) node.style.marginLeft = "120px"; 
             node.innerHTML = `<div class="node-tier-badge">${toRoman(t)}</div><img src="icons/${key}_${nDef.id}.png" class="node-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="node-fallback" style="display:none">${key==='forge'?'🔨':(key==='spt'?'🐾':'⚔️')}</div><div class="node-level">0/${meta.m}</div>`;
             node.onclick = (e) => (e.shiftKey && currentMode === 'setup') ? handleShiftClick(fullId) : handleClick(fullId, false);
@@ -98,20 +122,20 @@ const node = document.createElement('div'); node.className = 'node'; node.id = f
 }
 
 function maxTier(tree, tier) {
-    openConfirmModal(`Max all nodes in ${tree.toUpperCase()} tier ${toRoman(tier)} ?`, () => {
-        window.ongoingForgeSnapshot = null; 
-        pushHistory();
-        TREES[tree].structure.forEach(nDef => {
-            const fullId = `${tree}_T${tier}_${nDef.id}`;
-            const meta = getMeta(fullId);
-            if (meta) {
-                setupLevels[fullId] = meta.m;
-                const ensure = (cid) => getParents(cid).forEach(pid => { if ((setupLevels[pid] || 0) === 0) { setupLevels[pid] = 1; ensure(pid); } });
-                ensure(fullId);
-            }
-        });
-        updateCalculations();
-    });
+    openConfirmModal(`Max all nodes in ${tree.toUpperCase()} tier ${toRoman(tier)} ?`, () => {
+        window.ongoingForgeSnapshot = null; 
+        pushHistory();
+        getStructure(tree, tier).forEach(nDef => {
+            const fullId = `${tree}_T${tier}_${nDef.id}`;
+            const meta = getMeta(fullId);
+            if (meta) {
+                setupLevels[fullId] = meta.m;
+                const ensure = (cid) => getParents(cid).forEach(pid => { if ((setupLevels[pid] || 0) === 0) { setupLevels[pid] = 1; ensure(pid); } });
+                ensure(fullId);
+            }
+        });
+        updateCalculations();
+    });
 }
 // --- CALCULATION ENGINE ---
 function calcState(customQueue) {

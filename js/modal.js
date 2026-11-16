@@ -413,13 +413,40 @@ function openPromptModal(message, onConfirmCallback) {
 
 // --- STATS TAB MODALS ---
 function showPotionTable(cur, proj) {
-    const isUpgrade = proj > cur; const headers = ['Level', 'Upgrade Cost']; const allRows = [];
-    for (let t = 1; t <= 5; t++) {
-        let tierSumBefore = 0; let tierSumAfter = 0;
-        for (let i = 0; i < 5; i++) { const base = potionCosts[t][i]; const v1 = Math.round(base * (1 - cur / 100)); const v2 = Math.round(base * (1 - proj / 100)); tierSumBefore += v1; tierSumAfter += v2; let valStr = v1.toLocaleString(); if (isUpgrade) valStr += ` ➜ ${v2.toLocaleString()}`; allRows.push([`${i + 1}`, valStr]); }
-        let sumStr = `${tierSumBefore.toLocaleString()}`; if (isUpgrade) sumStr += ` ➜ ${tierSumAfter.toLocaleString()}`; allRows.push([`Total`, sumStr]);
+    const isUpgrade = proj > cur;
+    const headers = ['Level', 'Upgrade Cost'];
+    const allRows = [];
+
+    for (let t = 1; t <= 6; t++) {
+        let tierSumBefore = 0;
+        let tierSumAfter = 0;
+
+        for (let i = 0; i < 5; i++) {
+            const base = (typeof potionCosts !== 'undefined' && potionCosts[t]) ? (potionCosts[t][i] || 0) : 0;
+            const v1 = Math.round(base * (1 - cur / 100));
+            const v2 = Math.round(base * (1 - proj / 100));
+            tierSumBefore += v1;
+            tierSumAfter += v2;
+
+            let valStr = v1.toLocaleString();
+            if (isUpgrade) valStr += ` ➜ ${v2.toLocaleString()}`;
+            allRows.push([`${i + 1}`, valStr]);
+        }
+
+        let sumStr = `${tierSumBefore.toLocaleString()}`;
+        if (isUpgrade) sumStr += ` ➜ ${tierSumAfter.toLocaleString()}`;
+        allRows.push([`Total`, sumStr]);
     }
-    showTable("TECH UPGRADE COST", "icons/spt_disc.png", { label: "Discount", before: `-${cur}%`, after: `-${proj}%` }, headers, allRows, 6, ['I', 'II', 'III', 'IV', 'V']);
+
+    showTable(
+        "TECH UPGRADE COST",
+        "icons/spt_disc.png",
+        { label: "Discount", before: `-${cur}%`, after: `-${proj}%` },
+        headers,
+        allRows,
+        6,
+        ['I', 'II', 'III', 'IV', 'V', 'VI']
+    );
 }
 function showTechTimerTable(cur, proj) {
     const isUpgrade = proj > cur; const headers = ['Level', 'Duration']; const allRows = [];

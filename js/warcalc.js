@@ -207,11 +207,11 @@ function calcWarSummonYields(startLv, startExp, startAsc, totalPulls, dataTable)
 const getTechVal = (tree, nodeId) => {
     let beforeLvl = 0, afterLvl = 0;
     if (typeof setupLevels !== 'undefined') {
-        for (let t = 1; t <= 5; t++) beforeLvl += (setupLevels[`${tree}_T${t}_${nodeId}`] || 0);
+        for (let t = 1; t <= 6; t++) beforeLvl += (setupLevels[`${tree}_T${t}_${nodeId}`] || 0);
     }
     let planState = typeof calcState === 'function' ? calcState().levels : (typeof setupLevels !== 'undefined' ? setupLevels : {});
     if (planState) {
-        for (let t = 1; t <= 5; t++) afterLvl += (planState[`${tree}_T${t}_${nodeId}`] || 0);
+        for (let t = 1; t <= 6; t++) afterLvl += (planState[`${tree}_T${t}_${nodeId}`] || 0);
     }
     return { before: beforeLvl, after: afterLvl };
 };
@@ -381,13 +381,15 @@ function calcMountDay(mountKey, mergeAmt, multSummon, multMerge) {
 
 function calcEggDay(hatchAmts, mergeAmt, multHatch, multMerge) {
     let wHatchB = 0, wHatchA = 0;
-    for (let i = 0; i < 6; i++) {
-        const pts = Math.round(WAR_POINTS_BASE.eggHatch[i] * multHatch);
-        wHatchB += hatchAmts[i] * pts;
-        wHatchA += hatchAmts[i] * pts;
+    const eggBase = (typeof WAR_POINTS_BASE !== 'undefined' && Array.isArray(WAR_POINTS_BASE.eggHatch)) ? WAR_POINTS_BASE.eggHatch : [];
+    for (let i = 0; i < hatchAmts.length; i++) {
+        const basePts = eggBase[i] || 0;
+        const pts = Math.round(basePts * multHatch);
+        wHatchB += (hatchAmts[i] || 0) * pts;
+        wHatchA += (hatchAmts[i] || 0) * pts;
     }
 
-    const ptsMerge = Math.round(WAR_POINTS_BASE.eggMerge * multMerge);
+    const ptsMerge = Math.round((WAR_POINTS_BASE?.eggMerge || 0) * multMerge);
     const wMergeB = mergeAmt * ptsMerge;
     const wMergeA = mergeAmt * ptsMerge;
 
@@ -396,11 +398,13 @@ function calcEggDay(hatchAmts, mergeAmt, multHatch, multMerge) {
 
 function calcTechDay(techAmts, multTech) {
     let wTechB = 0, wTechA = 0;
-    const tiers = ['tier1', 'tier2', 'tier3', 'tier4', 'tier5'];
-    for (let i = 0; i < 5; i++) {
-        const pts = Math.round(WAR_POINTS_BASE.techUpgrade[tiers[i]] * multTech);
-        wTechB += techAmts[i] * pts;
-        wTechA += techAmts[i] * pts;
+    const tiers = ['tier1', 'tier2', 'tier3', 'tier4', 'tier5', 'tier6'];
+    const techBase = (typeof WAR_POINTS_BASE !== 'undefined' && WAR_POINTS_BASE.techUpgrade) ? WAR_POINTS_BASE.techUpgrade : {};
+    for (let i = 0; i < tiers.length; i++) {
+        const basePts = techBase[tiers[i]] || 0;
+        const pts = Math.round(basePts * multTech);
+        wTechB += (techAmts[i] || 0) * pts;
+        wTechA += (techAmts[i] || 0) * pts;
     }
     return { b: wTechB, a: wTechA };
 }
@@ -450,7 +454,7 @@ function updateWarCalc() {
     const d2ForgeLv = getVInt('wc-d2-forge-lv', 20);
     const d2ForgeNodes = getV('wc-forge-nodes');
     const d2ForgeGem = getV('wc-forge-gem');
-    const d2TechAmts = [getV('wc-tech-I'), getV('wc-tech-II'), getV('wc-tech-III'), getV('wc-tech-IV'), getV('wc-tech-V')];
+    const d2TechAmts = [getV('wc-tech-I'), getV('wc-tech-II'), getV('wc-tech-III'), getV('wc-tech-IV'), getV('wc-tech-V'), getV('wc-tech-VI')];
     const d2MountKey = getV('wc-mount-key');
     const d2MountMerge = getV('wc-merge-mount-total');
 
@@ -491,7 +495,11 @@ function updateWarCalc() {
     const d3SkillExp = getV('wc-d3-skill-exp');
     const d3SkillAsc = getVInt('wc-d3-skill-asc', 0);
     const d3Ticket = getV('wc-d3-ticket');
-    const d3Hatch = [getV('wc-hatch-common'), getV('wc-hatch-rare'), getV('wc-hatch-epic'), getV('wc-hatch-legendary'), getV('wc-hatch-ultimate'), getV('wc-hatch-mythic')];
+    const d3Hatch = [
+        getV('wc-hatch-common'), getV('wc-hatch-rare'), getV('wc-hatch-epic'),
+        getV('wc-hatch-legendary'), getV('wc-hatch-ultimate'), getV('wc-hatch-mythic'),
+        getV('wc-hatch-heroic'), getV('wc-hatch-infinite'), getV('wc-hatch-eternal')
+    ];
     const d3PetMerge = getV('wc-merge-pet-total');
 
     const m3ForgeEq = getClanTechMult('cwForgeEq', 3);
@@ -557,8 +565,12 @@ function updateWarCalc() {
     // ==========================================
     const d5ForgeLv = getVInt('wc-d5-forge-lv', 20);
     const d5Hammer = getV('wc-d5-hammer');
-    const d5TechAmts = [getV('wc-d5-tech-I'), getV('wc-d5-tech-II'), getV('wc-d5-tech-III'), getV('wc-d5-tech-IV'), getV('wc-d5-tech-V')];
-    const d5Hatch = [getV('wc-d5-hatch-common'), getV('wc-d5-hatch-rare'), getV('wc-d5-hatch-epic'), getV('wc-d5-hatch-legendary'), getV('wc-d5-hatch-ultimate'), getV('wc-d5-hatch-mythic')];
+    const d5TechAmts = [getV('wc-d5-tech-I'), getV('wc-d5-tech-II'), getV('wc-d5-tech-III'), getV('wc-d5-tech-IV'), getV('wc-d5-tech-V'), getV('wc-d5-tech-VI')];
+    const d5Hatch = [
+        getV('wc-d5-hatch-common'), getV('wc-d5-hatch-rare'), getV('wc-d5-hatch-epic'),
+        getV('wc-d5-hatch-legendary'), getV('wc-d5-hatch-ultimate'), getV('wc-d5-hatch-mythic'),
+        getV('wc-d5-hatch-heroic'), getV('wc-d5-hatch-infinite'), getV('wc-d5-hatch-eternal')
+    ];
     const d5PetMerge = getV('wc-d5-merge-pet-total');
 
     const m5ForgeEq = getClanTechMult('cwForgeEq', 5);
@@ -820,6 +832,7 @@ function updateWarCalc() {
                 if (pts.techUpgrade.tier3) apHtml += renderApRow('Tech Tier III', pts.techUpgrade.tier3 * mTech);
                 if (pts.techUpgrade.tier4) apHtml += renderApRow('Tech Tier IV', pts.techUpgrade.tier4 * mTech);
                 if (pts.techUpgrade.tier5) apHtml += renderApRow('Tech Tier V', pts.techUpgrade.tier5 * mTech);
+                if (pts.techUpgrade.tier6) apHtml += renderApRow('Tech Tier VI', pts.techUpgrade.tier6 * mTech);
             }
         }
 
@@ -834,7 +847,7 @@ function updateWarCalc() {
             let mHatch = getM('cwHatch');
             let mPetMerge = getM('cwMergePet');
             if (pts.eggHatch) {
-                const eggRarities = ['Common', 'Rare', 'Epic', 'Legendary', 'Ultimate', 'Mythic'];
+                const eggRarities = ['Common', 'Rare', 'Epic', 'Legendary', 'Ultimate', 'Mythic', 'Heroic', 'Infinite', 'Eternal'];
                 pts.eggHatch.forEach((base, idx) => {
                     if (base > 0) {
                         apHtml += renderApRow(`Hatch ${eggRarities[idx] || ''} Egg`, base * mHatch);

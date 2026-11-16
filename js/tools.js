@@ -30,8 +30,8 @@ function renderStats() {
     
     let totalAvgSellCombined = 0; 
     slots.forEach(sid => {
-        let l = 0; for (let t = 1; t <= 5; t++) l += (setupLevels[`power_T${t}_${sid}`] || 0);
-        let lProj = 0; for (let t = 1; t <= 5; t++) lProj += (state.levels[`power_T${t}_${sid}`] || 0);
+        let l = 0; for (let t = 1; t <= 6; t++) l += (setupLevels[`power_T${t}_${sid}`] || 0);
+        let lProj = 0; for (let t = 1; t <= 6; t++) lProj += (state.levels[`power_T${t}_${sid}`] || 0);
         
         totalAvgCur += getSlotStats(99 + l * 2, state.totalSellBonusCur).avg;
         totalAvgSellIso += getSlotStats(99 + l * 2, state.totalSellBonusProj).avg;
@@ -42,7 +42,7 @@ function renderStats() {
     const globProj_SellCombined = slots.length > 0 ? totalAvgSellCombined / slots.length : 0;
     
     let techTimerLevels = 0;
-    for (let t = 1; t <= 5; t++) {
+    for (let t = 1; t <= 6; t++) {
         techTimerLevels += (setupLevels[`spt_T${t}_timer`] || 0);
     }
     const speedDivisor = 1 + (techTimerLevels * 4) / 100;
@@ -56,12 +56,12 @@ function renderStats() {
         let totalTreeTime = 0;
         let spentTreeTime = 0;
         
-        treeData.structure.forEach(ns => {
-            const meta = treeData.meta[ns.id];
-            if (!meta) return;
-            const maxLevel = meta.m || 5;
-            for (let t = 1; t <= 5; t++) {
+        for (let t = 1; t <= 6; t++) {
+            getStructure(key, t).forEach(ns => {
                 const id = `${key}_T${t}_${ns.id}`;
+                const meta = getMeta(id);
+                if (!meta) return;
+                const maxLevel = meta.m || 5;
                 const cLvl = (setupLevels[id] || 0);
                 
                 for (let l = 0; l < maxLevel; l++) {
@@ -69,8 +69,8 @@ function renderStats() {
                     totalTreeTime += timeCost;
                     if (l < cLvl) spentTreeTime += timeCost;
                 }
-            }
-        });
+            });
+        }
 
         totalTreeTime = totalTreeTime / speedDivisor;
         spentTreeTime = spentTreeTime / speedDivisor;
@@ -114,18 +114,36 @@ function renderStats() {
         group.appendChild(header);
 
         let hasStats = false;
-        treeData.structure.forEach(ns => {
+        const allNodes = [];
+        const seenIds = new Set();
+        for (let t = 1; t <= 6; t++) {
+            getStructure(key, t).forEach(ns => {
+                if (!seenIds.has(ns.id)) {
+                    seenIds.add(ns.id);
+                    const egg6Idx = allNodes.findIndex(n => n.id === 'egg6');
+                    if (ns.id.startsWith('egg') && egg6Idx !== -1) {
+                        let insertPos = egg6Idx + 1;
+                        while (insertPos < allNodes.length && allNodes[insertPos].id.startsWith('egg')) insertPos++;
+                        allNodes.splice(insertPos, 0, ns);
+                    } else {
+                        allNodes.push(ns);
+                    }
+                }
+            });
+        }
+
+        allNodes.forEach(ns => {
             const meta = treeData.meta[ns.id];
             if (!meta || !meta.stat) return;
             let curT = 0, projT = 0, curW = 0, projW = 0;
-            for (let t = 1; t <= 5; t++) { 
+            for (let t = 1; t <= 6; t++) { 
                 const id = `${key}_T${t}_${ns.id}`; 
                 const cLvl = (setupLevels[id] || 0);
                 const pLvl = (state.levels[id] || 0);
                 curT += cLvl; 
                 projT += pLvl; 
-                curW += cLvl * t;
-                projW += pLvl * t;
+                curW += cLvl * t; 
+                projW += pLvl * t; 
             }
             hasStats = true;
             let txtCur = meta.stat(curT, curW); let txtProj = meta.stat(projT, projW);
@@ -169,10 +187,11 @@ function renderStats() {
             if (meta.isEgg) {
                 let clanLvl = typeof window.getClanEggLvl === 'function' ? window.getClanEggLvl(ns.id) : 0;
                 if (clanLvl > 0) {
-                    let totalCur = (curT * 10) + (clanLvl * 5);
-                    let totalProj = (projT * 10) + (clanLvl * 5);
-                    let txtC = `Speed +${totalCur}% (${formatEggTime(meta.base / (1 + totalCur / 100))})`;
-                    let txtP = `Speed +${totalProj}% (${formatEggTime(meta.base / (1 + totalProj / 100))})`;
+                    const eggRate = meta.rate || 10;
+                    let totalCur = (curT * eggRate) + (clanLvl * 5);
+                    let totalProj = (projT * eggRate) + (clanLvl * 5);
+                    let txtC = meta.base ? `Speed +${totalCur}% (${formatEggTime(meta.base / (1 + totalCur / 100))})` : `Speed +${totalCur}%`;
+                    let txtP = meta.base ? `Speed +${totalProj}% (${formatEggTime(meta.base / (1 + totalProj / 100))})` : `Speed +${totalProj}%`;
                     
                     let clanLine = txtC;
                     if (projT > curT) {
@@ -295,7 +314,7 @@ function syncTargetForgeDropdown() {
 
 function getTechBonuses(lvls) {
     let speed = 0, sell = 0, hBonus = 0, cBonus = 0, free = 0, offH = 0, offC = 0, forgeDisc = 0;
-    const sumLvl = (id) => { let s = 0; for (let t = 1; t <= 5; t++) s += (lvls[`forge_T${t}_${id}`] || 0); return s; };
+    const sumLvl = (id) => { let s = 0; for (let t = 1; t <= 6; t++) s += (lvls[`forge_T${t}_${id}`] || 0); return s; };
     
     const getVal = (id, fallback) => {
         if (TREES && TREES.forge && TREES.forge.meta && TREES.forge.meta[id] && TREES.forge.meta[id].val !== undefined) return TREES.forge.meta[id].val;
@@ -315,7 +334,7 @@ function getTechBonuses(lvls) {
     if (TREES.power && TREES.power.structure) { 
         TREES.power.structure.forEach(s => { 
             if (TREES.power.meta[s.id].isSlot) { 
-                let l = 0; for (let t = 1; t <= 5; t++) l += (lvls[`power_T${t}_${s.id}`] || 0); 
+                let l = 0; for (let t = 1; t <= 6; t++) l += (lvls[`power_T${t}_${s.id}`] || 0); 
                 const slotMult = TREES.power.meta[s.id].val !== undefined ? TREES.power.meta[s.id].val : 2;
                 totalAvg += getSlotStats(99 + l * slotMult, sell).avg; count++; 
             } 
@@ -794,7 +813,7 @@ function updateEggUndoButtons() {
 function populateEggDropdowns() { populateDateDropdowns(); }
 function getEggSpeedAtTime(techIdSuffix, targetTimeMs) {
     let personalLvl = 0; 
-    for (let t = 1; t <= 5; t++) { personalLvl += (setupLevels[`spt_T${t}_${techIdSuffix}`] || 0); }
+    for (let t = 1; t <= 6; t++) { personalLvl += (setupLevels[`spt_T${t}_${techIdSuffix}`] || 0); }
     let mainStartTime = new Date(document.getElementById('start-date').value).getTime();
     
     let techState = calcState(); 

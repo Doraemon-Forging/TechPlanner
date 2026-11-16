@@ -181,6 +181,7 @@ const HTML_WAR = `
                         <div class="wc-row"><div class="wc-label">Tech Tier III:</div><input type="text" id="wc-tech-III" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
                         <div class="wc-row"><div class="wc-label">Tech Tier IV:</div><input type="text" id="wc-tech-IV" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
                         <div class="wc-row"><div class="wc-label">Tech Tier V:</div><input type="text" id="wc-tech-V" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier VI:</div><input type="text" id="wc-tech-VI" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
                         
                         <div class="wc-line"></div>
 
@@ -245,6 +246,9 @@ const HTML_WAR = `
                         <div class="wc-row"><div class="wc-label">Hatch Legendary Egg:</div><input type="text" id="wc-hatch-legendary" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
                         <div class="wc-row"><div class="wc-label">Hatch Ultimate Egg:</div><input type="text" id="wc-hatch-ultimate" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
                         <div class="wc-row"><div class="wc-label">Hatch Mythic Egg:</div><input type="text" id="wc-hatch-mythic" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Heroic Egg:</div><input type="text" id="wc-hatch-heroic" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Infinite Egg:</div><input type="text" id="wc-hatch-infinite" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Eternal Egg:</div><input type="text" id="wc-hatch-eternal" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
                         
                         <div class="wc-row">
                             <div class="wc-label">Merge Egg / Pet:</div>
@@ -315,6 +319,7 @@ const HTML_WAR = `
                         <div class="wc-row"><div class="wc-label">Tech Tier III:</div><input type="text" id="wc-d5-tech-III" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
                         <div class="wc-row"><div class="wc-label">Tech Tier IV:</div><input type="text" id="wc-d5-tech-IV" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
                         <div class="wc-row"><div class="wc-label">Tech Tier V:</div><input type="text" id="wc-d5-tech-V" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Tech Tier VI:</div><input type="text" id="wc-d5-tech-VI" style="width:140px;" oninput="cleanInput(this); updateWarCalc()"></div>
                         
                         <div class="wc-line"></div>
 
@@ -324,6 +329,9 @@ const HTML_WAR = `
                         <div class="wc-row"><div class="wc-label">Hatch Legendary Egg:</div><input type="text" id="wc-d5-hatch-legendary" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
                         <div class="wc-row"><div class="wc-label">Hatch Ultimate Egg:</div><input type="text" id="wc-d5-hatch-ultimate" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
                         <div class="wc-row"><div class="wc-label">Hatch Mythic Egg:</div><input type="text" id="wc-d5-hatch-mythic" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Heroic Egg:</div><input type="text" id="wc-d5-hatch-heroic" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Infinite Egg:</div><input type="text" id="wc-d5-hatch-infinite" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
+                        <div class="wc-row"><div class="wc-label">Hatch Eternal Egg:</div><input type="text" id="wc-d5-hatch-eternal" style="width:140px;" onfocus="unformatInput(this)" onblur="formatInput(this); updateWarCalc()" oninput="cleanInput(this); updateWarCalc()"></div>
                         
                         <div class="wc-row">
                             <div class="wc-label">Merge Egg / Pet:</div>

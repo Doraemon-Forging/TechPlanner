@@ -5,12 +5,26 @@
 
 const TREES = {
     forge: {
-        name: "Forge", colorClass: "active-forge", maxLevels: 230,
+        name: "Forge", colorClass: "active-forge", maxLevels: 265,
         structure: [
             { id: "timer", r: 0, c: 0 }, { id: "disc", r: 0, c: 1 }, { id: "sell", r: 1, c: 0.5 },
             { id: "h_bonus", r: 2, c: 0 }, { id: "c_bonus", r: 2, c: 1 }, { id: "auto", r: 3, c: 0.5 },
             { id: "free", r: 4, c: 0.5 }, { id: "max", r: 5, c: 0.5 }, { id: "off_c", r: 6, c: 0 }, { id: "off_h", r: 6, c: 1 }
         ],
+        tierOverrides: {
+            6: {
+                structure: [
+                    { id: "timer", r: 0, c: 0 }, { id: "disc", r: 0, c: 1 },
+                    { id: "sell", r: 1, c: 0.5 },
+                    { id: "h_bonus", r: 2, c: 0 }, { id: "c_bonus", r: 2, c: 1 },
+                    { id: "off_c", r: 3, c: 0 }, { id: "off_h", r: 3, c: 1 }
+                ],
+                meta: {
+                    off_c: { p: ["h_bonus"] },
+                    off_h: { p: ["c_bonus"] }
+                }
+            }
+        },
         meta: {
             timer: { n: "Forge Timer", p: [], m: 5, val: 2, stat: l => `Speed +${l * 2}%` },
             disc: { n: "Forge Disc", p: [], m: 5, val: 1, stat: l => `Cost -${l * 1}%` },
@@ -20,13 +34,13 @@ const TREES = {
             auto: { n: "Auto Forge", p: ["h_bonus", "c_bonus"], m: 1, val: 1, stat: (l, w) => `Hammers +${w !== undefined ? w : l}` },
             free: { n: "Free Forge Chance", p: ["auto"], m: 5, val: 1, stat: l => `Chance +${l}%` },
             max: {
-                n: "Max Offline Timer", p: ["free"], m: 5, val: 16, 
+                n: "Max Offline Timer", p: ["free"], m: 5, val: 16,
                 stat: (l) => {
                     const p = l * 16; const m = 240 * (1 + p / 100);
                     const h = Math.floor(m / 60); const min = Math.round(m % 60);
                     let cLvl = 0, hLvl = 0;
                     if (typeof setupLevels !== 'undefined') {
-                        for (let t = 1; t <= 5; t++) {
+                        for (let t = 1; t <= 6; t++) {
                             cLvl += (setupLevels[`forge_T${t}_off_c`] || 0);
                             hLvl += (setupLevels[`forge_T${t}_off_h`] || 0);
                         }
@@ -58,7 +72,7 @@ const TREES = {
         }
     },
     spt: {
-        name: "Skills, Pets & Tech", colorClass: "active-spt", maxLevels: 425,
+        name: "Skills, Pets & Tech", colorClass: "active-spt", maxLevels: 515,
         structure: [
             { id: "timer", r: 0, c: 0.5 }, { id: "skill_dmg", r: 1, c: 0.5 },
             { id: "skill_pd", r: 2, c: 0 }, { id: "skill_ph", r: 2, c: 1 }, { id: "disc", r: 3, c: 0.5 },
@@ -67,6 +81,28 @@ const TREES = {
             { id: "egg5", r: 8, c: 0 }, { id: "egg6", r: 8, c: 1 }, { id: "lucky", r: 9, c: 0.5 },
             { id: "key_g", r: 10, c: 0 }, { id: "key_r", r: 10, c: 1 }
         ],
+        tierOverrides: {
+            6: {
+                structure: [
+                    { id: "skill_dmg", r: 0, c: 0.5 },
+                    { id: "skill_pd", r: 1, c: 0 }, { id: "skill_ph", r: 1, c: 1 },
+                    { id: "disc", r: 2, c: 0.5 },
+                    { id: "pet_dmg", r: 3, c: 0 }, { id: "pet_hp", r: 3, c: 1 },
+                    { id: "ticket", r: 4, c: 0.5 },
+                    { id: "egg1", r: 5, c: 0 }, { id: "egg2", r: 5, c: 1 },
+                    { id: "egg3", r: 6, c: 0 }, { id: "egg4", r: 6, c: 1 },
+                    { id: "egg5", r: 7, c: 0 }, { id: "egg6", r: 7, c: 1 },
+                    { id: "egg7", r: 8, c: 0 }, { id: "egg8", r: 8, c: 1 },
+                    { id: "egg9", r: 9, c: 0.5 },
+                    { id: "key_g", r: 10, c: 0 }, { id: "key_r", r: 10, c: 1 }
+                ],
+                meta: {
+                    skill_dmg: { p: [] },
+                    key_g: { p: ["egg9"] },
+                    key_r: { p: ["egg9"] }
+                }
+            }
+        },
         meta: {
             timer: { n: "Tech Research Timer", p: [], m: 5, speed: 0.04, stat: l => `Speed +${l * 4}%` },
             skill_dmg: { n: "Skill Damage", p: ["timer"], m: 5, stat: l => `Dmg +${l * 2}%` },
@@ -82,20 +118,23 @@ const TREES = {
                 }
             },
 
-            egg1: { n: "Common Egg Timer", p: ["ticket"], m: 5, isEgg: true, base: 30, stat: l => eggStat(l, 30) },
-            egg2: { n: "Rare Egg Timer", p: ["ticket"], m: 5, isEgg: true, base: 120, stat: l => eggStat(l, 120) },
-            egg3: { n: "Epic Egg Timer", p: ["egg1"], m: 5, isEgg: true, base: 240, stat: l => eggStat(l, 240) },
-            egg4: { n: "Legendary Egg Timer", p: ["egg2"], m: 5, isEgg: true, base: 480, stat: l => eggStat(l, 480) },
-            egg5: { n: "Ultimate Egg Timer", p: ["egg3"], m: 5, isEgg: true, base: 960, stat: l => eggStat(l, 960) },
-            egg6: { n: "Mythic Egg Timer", p: ["egg4"], m: 5, isEgg: true, base: 1920, stat: l => eggStat(l, 1920) },
-            
+            egg1: { n: "Common Egg Timer", p: ["ticket"], m: 5, isEgg: true, base: 30, rate: 10, stat: l => eggStat(l, 30, 10) },
+            egg2: { n: "Rare Egg Timer", p: ["ticket"], m: 5, isEgg: true, base: 120, rate: 10, stat: l => eggStat(l, 120, 10) },
+            egg3: { n: "Epic Egg Timer", p: ["egg1"], m: 5, isEgg: true, base: 240, rate: 10, stat: l => eggStat(l, 240, 10) },
+            egg4: { n: "Legendary Egg Timer", p: ["egg2"], m: 5, isEgg: true, base: 480, rate: 10, stat: l => eggStat(l, 480, 10) },
+            egg5: { n: "Ultimate Egg Timer", p: ["egg3"], m: 5, isEgg: true, base: 960, rate: 10, stat: l => eggStat(l, 960, 10) },
+            egg6: { n: "Mythic Egg Timer", p: ["egg4"], m: 5, isEgg: true, base: 1920, rate: 10, stat: l => eggStat(l, 1920, 10) },
+            egg7: { n: "Heroic Egg Timer", p: ["egg5"], m: 5, isEgg: true, base: null, rate: 60, stat: l => eggStat(l, null, 60) },
+            egg8: { n: "Infinite Egg Timer", p: ["egg6"], m: 5, isEgg: true, base: null, rate: 60, stat: l => eggStat(l, null, 60) },
+            egg9: { n: "Eternal Egg Timer", p: ["egg7", "egg8"], m: 5, isEgg: true, base: null, rate: 60, stat: l => eggStat(l, null, 60) },
+
             lucky: { n: "Extra Egg Chance", p: ["egg5", "egg6"], m: 5, stat: l => `Chance +${l * 2}%` },
             key_g: { n: "Ghost Town Ticket", p: ["lucky"], m: 5, stat: l => `Drop +${l}%` },
             key_r: { n: "Zombie Rush Potion", p: ["lucky"], m: 5, stat: l => `Drop +${l * 2}%` }
         }
     },
     power: {
-        name: "Power", colorClass: "active-power", maxLevels: 500,
+        name: "Power", colorClass: "active-power", maxLevels: 555,
         structure: [
             { id: "weapon_1", r: 0, c: 0 }, { id: "helmet_1", r: 0, c: 1 },
             { id: "gloves_1", r: 1, c: 0 }, { id: "armor_1", r: 1, c: 1 },
@@ -108,6 +147,22 @@ const TREES = {
             { id: "ring_2", r: 9, c: 0 }, { id: "belt_2", r: 9, c: 1 },
             { id: "mount_cost", r: 10, c: 0.5 }, { id: "mount_chance", r: 11, c: 0.5 }
         ],
+        tierOverrides: {
+            6: {
+                structure: [
+                    { id: "weapon_1", r: 0, c: 0 }, { id: "helmet_1", r: 0, c: 1 },
+                    { id: "gloves_1", r: 1, c: 0 }, { id: "armor_1", r: 1, c: 1 },
+                    { id: "necklace_1", r: 2, c: 0 }, { id: "boots_1", r: 2, c: 1 },
+                    { id: "ring_1", r: 3, c: 0 }, { id: "belt_1", r: 3, c: 1 },
+                    { id: "mount_dmg", r: 4, c: 0.5 },
+                    { id: "mount_hp", r: 5, c: 0.5 },
+                    { id: "mount_cost", r: 6, c: 0.5 }
+                ],
+                meta: {
+                    mount_cost: { p: ["mount_hp"] }
+                }
+            }
+        },
         meta: {
             weapon_1: { n: "Weapon Mastery", p: [], m: 5, stat: l => `Dmg +${l * 2}%` },
             helmet_1: { n: "Helmet Mastery", p: [], m: 5, stat: l => `HP +${l * 2}%` },
@@ -150,14 +205,19 @@ const formatEggTime = (totalMins) => {
     return parts.join(" ") || "0s";
 };
 
-const eggStat = (l, b) => `Speed +${l * 10}% (${formatEggTime(b / (1 + l * 0.1))})`;
+const eggStat = (l, b, rate = 10) => {
+    const pct = l * rate;
+    if (!b) return `Speed +${pct}%`;
+    return `Speed +${pct}% (${formatEggTime(b / (1 + pct / 100))})`;
+};
 
 const tierTimes = {
     1: [5, 10, 20, 40, 80],
     2: [160, 320, 640, 1280, 1408],
     3: [1548.8, 1703.68, 1874.048, 2061.4528, 2267.59808],
     4: [2494.357888, 2743.7936768, 3018.17304448, 3320.000348928, 3652.0003838208],
-    5: [4017.2004222, 4418.9204644, 4860.8125109, 5346.8937620, 5881.5831381]
+    5: [4017.2004222, 4418.9204644, 4860.8125109, 5346.8937620, 5881.5831381],
+    6: [6469.721965, 7116.694161, 7828.363577, 8611.199935, 9472.319929]
 };
 
 const potionCosts = {
@@ -165,7 +225,8 @@ const potionCosts = {
     2: [161, 226, 316, 443, 620],
     3: [868, 1007, 1168, 1354, 1571],
     4: [1823, 2114, 2452, 2845, 3300],
-    5: [3828, 4441, 5151, 5975, 6931]
+    5: [3828, 4441, 5151, 5975, 6931],
+    6: [15000, 17100, 19494, 22223, 25334]
 };
 
 // Format: [UpgradeCost, Timer(Hours), MaxNodes]
@@ -254,7 +315,7 @@ const WAR_POINTS_BASE = {
     
     skillSummon: [125, 125, 125, 125, 125, 125],
     skillUpgrade: [125, 125, 125, 125, 125, 125],
-    eggHatch: [400, 1600, 3200, 6400, 12800, 25600],
+    eggHatch: [400, 1600, 3200, 6400, 12800, 25600, 33000, 45000, 65000],
     
     eggMerge: 1250,
     mountSummonBase: 600, 
@@ -265,7 +326,8 @@ const WAR_POINTS_BASE = {
         tier2: 9000,
         tier3: 26000,
         tier4: 47800,
-        tier5: 90700
+        tier5: 90700,
+        tier6: 181000
     }
 };
 
