@@ -786,8 +786,24 @@ let eggPlanQueue = []; let eggInsertIdx = -1; let expandedEggIdx = -1;
 let eggHistoryStack = []; let eggRedoStack = [];
 
 window.getClanEggLvl = function(id) {
-    const memMap = { 'egg1': 'eggTimerCommon', 'egg2': 'eggTimerRare', 'egg3': 'eggTimerEpic', 'egg4': 'eggTimerLegendary', 'egg5': 'eggTimerUltimate', 'egg6': 'eggTimerMythic' };
-    const domMap = { 'egg1': 'ct-egg-timer-common', 'egg2': 'ct-egg-timer-rare', 'egg3': 'ct-egg-timer-epic', 'egg4': 'ct-egg-timer-legendary', 'egg5': 'ct-egg-timer-ultimate', 'egg6': 'ct-egg-timer-mythic' };
+    const memMap = { 
+        'egg1': 'eggTimerCommon', 
+        'egg2': 'eggTimerRare', 
+        'egg3': 'eggTimerEpic', 
+        'egg4': 'eggTimerLegendary', 
+        'egg5': 'eggTimerUltimate', 
+        'egg6': 'eggTimerMythic',
+        'egg7': 'eggTimerHeroic'
+    };
+    const domMap = { 
+        'egg1': 'ct-egg-timer-common', 
+        'egg2': 'ct-egg-timer-rare', 
+        'egg3': 'ct-egg-timer-epic', 
+        'egg4': 'ct-egg-timer-legendary', 
+        'egg5': 'ct-egg-timer-ultimate', 
+        'egg6': 'ct-egg-timer-mythic',
+        'egg7': 'ct-egg-timer-heroic'
+    };
     
     let val = 0;
     const el = document.getElementById(domMap[id]);
@@ -827,8 +843,11 @@ function getEggSpeedAtTime(techIdSuffix, targetTimeMs) {
         } 
     });
     
+    const ratePerLvl = (typeof TREES !== 'undefined' && TREES.spt?.meta?.[techIdSuffix]?.rate)
+        ? TREES.spt.meta[techIdSuffix].rate / 100
+        : 0.10;
     let clanLvl = window.getClanEggLvl(techIdSuffix);
-    return 1 + (personalLvl * 0.10) + (clanLvl * 0.05);
+    return 1 + (personalLvl * ratePerLvl) + (clanLvl * 0.05);
 }
 
 function activateEggInsert(idx) { 

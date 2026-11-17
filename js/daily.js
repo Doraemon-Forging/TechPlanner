@@ -36,11 +36,11 @@ function calculateDailyMath() {
     const getTechBonus = (tree, nodeId, percentPerLevel) => {
         let beforeLvl = 0, afterLvl = 0;
         if (typeof setupLevels !== 'undefined' && setupLevels) {
-            for (let t = 1; t <= 5; t++) beforeLvl += (setupLevels[`${tree}_T${t}_${nodeId}`] || 0);
+            for (let t = 1; t <= 6; t++) beforeLvl += (setupLevels[`${tree}_T${t}_${nodeId}`] || 0);
         }
         let planState = typeof calcState === 'function' ? calcState().levels : setupLevels;
         if (planState) {
-            for (let t = 1; t <= 5; t++) afterLvl += (planState[`${tree}_T${t}_${nodeId}`] || 0);
+            for (let t = 1; t <= 6; t++) afterLvl += (planState[`${tree}_T${t}_${nodeId}`] || 0);
         }
         return { before: beforeLvl * percentPerLevel, after: afterLvl * percentPerLevel };
     };
@@ -227,7 +227,7 @@ function initDailyDropdowns() {
         
         lvlSelect.innerHTML = ''; 
         subSelect.innerHTML = '';
-        for (let i = 1; i <= 40; i++) lvlSelect.add(new Option(i, i));
+        for (let i = 1; i <= 50; i++) lvlSelect.add(new Option(i, i));
         for (let i = 1; i <= 10; i++) subSelect.add(new Option(i, i));
     });
 }

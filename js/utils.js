@@ -92,14 +92,28 @@ function unformatInput(el) {
 }
 
 function validateLevelOnBlur(el, isTarget = false) {
-    if (el.value === "") {
-        if (!isTarget) el.value = 1; 
-        return; 
+    if (!el || el.value === "") {
+        if (!isTarget && el) el.value = 1;
+        return;
     }
-    
+
+    let maxLv = 100;
+    if (el.id) {
+        const parts = el.id.split('-'); 
+        const prefix = parts[0];        
+        const type = parts[1];          
+        const targetMode = isTarget || el.id.includes('-target-');
+        const ascId = targetMode ? `${prefix}-${type}-target-asc` : `${prefix}-${type}-asc`;
+        const asc = parseInt(document.getElementById(ascId)?.value) || 0;
+
+        if (asc === 3 && (type === 'pet' || type === 'mount')) {
+            maxLv = 150;
+        }
+    }
+
     let val = parseInt(el.value);
-    if (val > 100) el.value = 100;
-    else if (val < 1) el.value = 1;
+    if (isNaN(val) || val < 1) el.value = 1;
+    else if (val > maxLv) el.value = maxLv;
 }
 
 function toggleDropdown(id) {

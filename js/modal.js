@@ -1193,20 +1193,34 @@ function openForgeProbModal(levelOverride = null) {
 // --- SUMMON PROBABILITY MODAL ---
 let currentProbModalType = 'skill';
 let currentProbModalLevel = 1;
+let currentProbModalAsc = 0;
 
-function openSummonProbModal(type, levelOverride = null) {
+function openSummonProbModal(type, levelOverride = null, ascOverride = null) {
     currentProbModalType = type;
-    
+
+    const targetLvVal = document.getElementById(`sum-${type}-target-lv`)?.value;
+    const targetAscVal = document.getElementById(`sum-${type}-target-asc`)?.value;
+    const currentLvVal = document.getElementById(`sum-${type}-lvl`)?.value;
+    const currentAscVal = document.getElementById(`sum-${type}-asc`)?.value;
+
+    if (ascOverride !== null) {
+        currentProbModalAsc = parseInt(ascOverride) || 0;
+    } else if (targetLvVal && targetLvVal.trim() !== '') {
+        currentProbModalAsc = parseInt(targetAscVal) || 0;
+    } else {
+        currentProbModalAsc = parseInt(currentAscVal) || 0;
+    }
+
+    const maxLevel = (currentProbModalAsc === 3 && (type === 'pet' || type === 'mount')) ? 150 : 100;
+
     if (levelOverride !== null) {
         currentProbModalLevel = parseInt(levelOverride);
     } else {
-        const targetInput = document.getElementById(`sum-${type}-target-lv`)?.value;
-        const currentInput = document.getElementById(`sum-${type}-lvl`)?.value;
-        currentProbModalLevel = parseInt(targetInput) || parseInt(currentInput) || 1;
+        currentProbModalLevel = parseInt(targetLvVal) || parseInt(currentLvVal) || 1;
     }
 
     if (currentProbModalLevel < 1) currentProbModalLevel = 1;
-    if (currentProbModalLevel > 100) currentProbModalLevel = 100;
+    if (currentProbModalLevel > maxLevel) currentProbModalLevel = maxLevel;
 
     const config = typeof SUMMON_CONFIG !== 'undefined' ? SUMMON_CONFIG[type] : null;
     let listHtml = '';
@@ -1216,12 +1230,15 @@ function openSummonProbModal(type, levelOverride = null) {
     } else {
         const rates = config.db[currentProbModalLevel];
         const tiers = [
-            { name: 'Common', rate: rates[1] || 0, color: '#f1f2f6' },
-            { name: 'Rare', rate: rates[2] || 0, color: '#5cd8fe' },
-            { name: 'Epic', rate: rates[3] || 0, color: '#5dfe8a' },
+            { name: 'Common',    rate: rates[1] || 0, color: '#f1f2f6' },
+            { name: 'Rare',      rate: rates[2] || 0, color: '#5cd8fe' },
+            { name: 'Epic',      rate: rates[3] || 0, color: '#5dfe8a' },
             { name: 'Legendary', rate: rates[4] || 0, color: '#fcfe5d' },
-            { name: 'Ultimate', rate: rates[5] || 0, color: '#ff5c5d' },
-            { name: 'Mythic', rate: rates[6] || 0, color: '#d55cff' }
+            { name: 'Ultimate',  rate: rates[5] || 0, color: '#ff5c5d' },
+            { name: 'Mythic',    rate: rates[6] || 0, color: '#d55cff' },
+            { name: 'Heroic',    rate: rates[7] || 0, color: '#fe0000' },
+            { name: 'Infinite',    rate: rates[8] || 0, color: '#228bff' },
+            { name: 'Eternal',    rate: rates[9] || 0, color: '#a5d801' }
         ];
 
         const fontStyle = "font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000; -webkit-text-stroke: 0px;";
@@ -1288,7 +1305,7 @@ function openSummonProbModal(type, levelOverride = null) {
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
         
-        <button onclick="openSummonProbModal('${type}', ${currentProbModalLevel - 1})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center;">
+        <button onclick="openSummonProbModal('${type}', ${currentProbModalLevel - 1}, ${currentProbModalAsc})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center; visibility: ${currentProbModalLevel > 1 ? 'visible' : 'hidden'};">
             ${leftArrowSvg}
         </button>
         
@@ -1297,7 +1314,7 @@ function openSummonProbModal(type, levelOverride = null) {
             <div style="${subTextStyle}">${displayType} probabilities</div>
         </div>
         
-        <button onclick="openSummonProbModal('${type}', ${currentProbModalLevel + 1})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center;">
+        <button onclick="openSummonProbModal('${type}', ${currentProbModalLevel + 1}, ${currentProbModalAsc})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center; visibility: ${currentProbModalLevel < maxLevel ? 'visible' : 'hidden'};">
             ${rightArrowSvg}
         </button>
         

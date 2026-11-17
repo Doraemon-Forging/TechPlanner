@@ -10,26 +10,41 @@ function updateAscensionCaps(type) {
     const lvEl = document.getElementById(`asc-${type}-lv`);
     const expEl = document.getElementById(`asc-${type}-exp`);
     const maxEl = document.getElementById(`asc-${type}-max`);
-    
+    const ascEl = document.getElementById(`asc-${type}-asc`);
+    const targetLvEl = document.getElementById(`asc-${type}-target-lv`);
+    const targetAscEl = document.getElementById(`asc-${type}-target-asc`);
+
     if (!lvEl || !maxEl || !expEl) return;
 
-    let rawLv = parseInt(lvEl.value);
-    let lv = isNaN(rawLv) ? 1 : rawLv;
-    if (lv < 1) lv = 1;
-    
-    if (rawLv > 100) {
-        lv = 100;
-        lvEl.value = 100; 
-    }
-    
     let db = null;
     if (type === 'skill' && typeof SKILL_LEVEL_DATA !== 'undefined') db = SKILL_LEVEL_DATA;
     if (type === 'pet' && typeof PET_LEVEL_DATA !== 'undefined') db = PET_LEVEL_DATA;
     if (type === 'mount' && typeof MOUNT_LEVEL_DATA !== 'undefined') db = MOUNT_LEVEL_DATA;
-    
+
+    const asc = parseInt(ascEl?.value) || 0;
+    const maxAscLv = (asc >= 3 && db && db[150]) ? 150 : 100;
+
+    let rawLv = parseInt(lvEl.value);
+    let lv = isNaN(rawLv) ? 1 : rawLv;
+    if (lv < 1) lv = 1;
+
+    if (rawLv > maxAscLv) {
+        lv = maxAscLv;
+        lvEl.value = maxAscLv;
+    }
+
+    if (targetLvEl && targetLvEl.value !== '') {
+        const targetAsc = parseInt(targetAscEl?.value) || 0;
+        const maxTargetLv = (targetAsc >= 3 && db && db[150]) ? 150 : 100;
+        let rawTargetLv = parseInt(targetLvEl.value);
+        if (!isNaN(rawTargetLv) && rawTargetLv > maxTargetLv) {
+            targetLvEl.value = maxTargetLv;
+        }
+    }
+
     if (db && db[lv]) {
         let maxExp = db[lv][0];
-        if (maxExp === "MAX" || lv === 100) {
+        if (maxExp === "MAX" || lv >= maxAscLv) {
             maxEl.innerText = "MAX";
             expEl.value = "";
             expEl.disabled = true;
@@ -37,9 +52,9 @@ function updateAscensionCaps(type) {
             maxEl.innerText = maxExp.toLocaleString();
             expEl.disabled = false;
             let currentExp = parseFloat(expEl.value);
-            
+
             if (!isNaN(currentExp) && currentExp >= maxExp) {
-                expEl.value = maxExp - 1; 
+                expEl.value = maxExp - 1;
             }
         }
     }
@@ -215,10 +230,10 @@ function updateWeekly() {
     const getWeeklyTechVal = (tree, nodeId) => {
         let beforeLvl = 0, afterLvl = 0;
         if (typeof setupLevels !== 'undefined' && setupLevels) {
-            for (let t = 1; t <= 5; t++) beforeLvl += (setupLevels[`${tree}_T${t}_${nodeId}`] || 0);
+            for (let t = 1; t <= 6; t++) beforeLvl += (setupLevels[`${tree}_T${t}_${nodeId}`] || 0);
         }
         let planState = typeof calcState === 'function' ? calcState().levels : setupLevels || {};
-        for (let t = 1; t <= 5; t++) afterLvl += (planState[`${tree}_T${t}_${nodeId}`] || 0);
+        for (let t = 1; t <= 6; t++) afterLvl += (planState[`${tree}_T${t}_${nodeId}`] || 0);
         return { before: beforeLvl, after: afterLvl };
     };
 
@@ -381,25 +396,27 @@ function updateWeekly() {
     // ------------------------------------------
     const getExpDiff = (type, db, isTarget = false) => {
         if (!db || typeof getCumulativePulls !== 'function') return isTarget ? null : 0;
-        
+
         let cLv = parseInt(document.getElementById(`asc-${type}-lv`)?.value) || 1;
         let cExp = parseInt(document.getElementById(`asc-${type}-exp`)?.value) || 0;
         let cAsc = parseInt(document.getElementById(`asc-${type}-asc`)?.value) || 0;
-        
+
         let tLv, tAsc;
-        
+
         if (isTarget) {
             tLv = parseInt(document.getElementById(`asc-${type}-target-lv`)?.value);
             tAsc = parseInt(document.getElementById(`asc-${type}-target-asc`)?.value) || 0;
-            if (isNaN(tLv) || tLv < 1) return null; 
+            if (isNaN(tLv) || tLv < 1) return null;
+            const maxTargetLv = (tAsc >= 3 && db && db[150]) ? 150 : 100;
+            if (tLv > maxTargetLv) tLv = maxTargetLv;
         } else {
-            tLv = 100;
-            tAsc = cAsc; 
+            tLv = (cAsc >= 3 && db && db[150]) ? 150 : 100;
+            tAsc = cAsc;
         }
 
         let currentCum = getCumulativePulls(cLv, cExp, db, cAsc);
         let targetCum = getCumulativePulls(tLv, 0, db, tAsc);
-        
+
         return Math.max(0, targetCum - currentCum);
     };
 
@@ -514,8 +531,15 @@ function updateWeekly() {
 document.addEventListener('DOMContentLoaded', () => {
     updateSecondaryLeagueOptions();
     toggleLeagueMode();
-    updateAscensionCaps('skill');
-    updateAscensionCaps('pet');
-    updateAscensionCaps('mount');
+    ['skill', 'pet', 'mount'].forEach(type => {
+        updateAscensionCaps(type);
+        const ascEl = document.getElementById(`asc-${type}-asc`);
+        if (ascEl) {
+            ascEl.addEventListener('change', () => {
+                updateAscensionCaps(type);
+                updateWeekly();
+            });
+        }
+    });
     updateWeekly();
 });

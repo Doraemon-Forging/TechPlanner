@@ -15,7 +15,7 @@ const SUMMON_CONFIG = {
         yieldPerPull: 5,
         techPrefix: 'spt',
         techCostKey: 'ticket',
-        techChanceKey: null,    
+        techChanceKey: null,
         chanceMult: 0,
         icon: 'green_ticket.png',
         itemName: 'Skills',
@@ -52,19 +52,33 @@ const SUMMON_CONFIG = {
     }
 };
 
+function getMaxLevelForAsc(dataTable, asc) {
+    if (!dataTable) return 100;
+    if (asc < 3) return 100;
+    return dataTable[150] ? 150 : 100;
+}
+
+function getRarityCount(dataTable, asc = 3) {
+    const total = (dataTable && dataTable[1]) ? dataTable[1].length - 1 : 6;
+    // Heroic, Infinity, and Eternal ONLY exist in Ascension 3
+    if (asc < 3) return Math.min(6, total);
+    return total;
+}
+
 // ==========================================
 // 1. NAVIGATION & UI
 // ==========================================
-function toggleSummonTab(tabId) {['skill', 'pet', 'mount'].forEach(t => {
+function toggleSummonTab(tabId) {
+    ['skill', 'pet', 'mount'].forEach(t => {
         const btn = document.getElementById(`btn-toggle-sum-${t}`);
-        if(btn) btn.classList.remove('active');
+        if (btn) btn.classList.remove('active');
         const view = document.getElementById(`view-summon-${t}`);
-        if(view) view.style.display = 'none';
+        if (view) view.style.display = 'none';
     });
-    
+
     document.getElementById(`btn-toggle-sum-${tabId}`).classList.add('active');
     document.getElementById(`view-summon-${tabId}`).style.display = 'block';
-    
+
     updateSummonCap(tabId);
     updateSummonCalc(tabId);
 }
@@ -73,26 +87,41 @@ function updateSummonCap(type) {
     const config = SUMMON_CONFIG[type];
     if (!config || !config.db) return;
 
-    const lv = parseInt(document.getElementById(`sum-${type}-lvl`).value) || 1;
+    const asc = parseInt(document.getElementById(`sum-${type}-asc`)?.value) || 0;
+    const lvEl = document.getElementById(`sum-${type}-lvl`);
+    const maxAscLv = getMaxLevelForAsc(config.db, asc);
+
+    let lv = parseInt(lvEl.value) || 1;
+    if (lv > maxAscLv) {
+        lv = maxAscLv;
+        lvEl.value = maxAscLv;
+    }
+    if (lv < 1) {
+        lv = 1;
+        lvEl.value = 1;
+    }
+
     const maxSpan = document.getElementById(`sum-${type}-max`);
-    const expInput = document.getElementById(`sum-${type}-exp`); 
-    
+    const expInput = document.getElementById(`sum-${type}-exp`);
+
     if (maxSpan) {
-        let maxVal = config.db[lv] ? config.db[lv][0] : "MAX";
+        let isMaxLv = (lv >= maxAscLv) || !config.db[lv] || config.db[lv][0] === "MAX";
+        let maxVal = isMaxLv ? "MAX" : config.db[lv][0];
         maxSpan.innerText = maxVal === "MAX" ? "MAX" : maxVal.toLocaleString();
-        
+
         if (expInput) {
             if (maxVal === "MAX") {
-                expInput.value = 0; 
+                expInput.value = 0;
             } else {
                 let currentExp = parseInt(expInput.value) || 0;
                 if (currentExp >= maxVal) {
-                    expInput.value = maxVal - 1; 
+                    expInput.value = maxVal - 1;
                 }
             }
         }
     }
 }
+
 // ==========================================
 // 2. CORE MATH ENGINE
 // ==========================================
@@ -102,10 +131,11 @@ function validateProbability(el) {
     if (val < 1) el.value = 1;
 }
 
-function getExpPerAscension(dataTable) {
+function getExpPerAscension(dataTable, asc = 0) {
     if (!dataTable) return 0;
+    const maxLv = getMaxLevelForAsc(dataTable, asc);
     let total = 0;
-    for (let i = 1; i <= 100; i++) {
+    for (let i = 1; i < maxLv; i++) {
         if (dataTable[i] && dataTable[i][0] !== "MAX") {
             total += dataTable[i][0];
         }
@@ -115,32 +145,54 @@ function getExpPerAscension(dataTable) {
 
 function getCumulativePulls(level, exp, dataTable, ascension = 0) {
     if (!dataTable) return 0;
+    const maxLv = getMaxLevelForAsc(dataTable, ascension);
+    const clampedLv = Math.min(level, maxLv);
     let total = 0;
-    for (let i = 1; i < level; i++) {
+    for (let i = 1; i < clampedLv; i++) {
         if (dataTable[i] && dataTable[i][0] !== "MAX") total += dataTable[i][0];
     }
-    let expPerAsc = getExpPerAscension(dataTable);
-    return (ascension * expPerAsc) + total + exp;
+    let expPerBaseAsc = getExpPerAscension(dataTable, 0);
+    let effectiveExp = (clampedLv >= maxLv) ? 0 : exp;
+    return (ascension * expPerBaseAsc) + total + effectiveExp;
 }
 
 function getLevelFromCumulative(totalPulls, dataTable) {
     if (!dataTable) return { level: 1, exp: 0, maxExp: 0, ascension: 0 };
-    
-    let expPerAsc = getExpPerAscension(dataTable);
-    if (expPerAsc === 0) return { level: 1, exp: 0, maxExp: "MAX", ascension: 0 };
 
-    let ascension = Math.floor(totalPulls / expPerAsc);
-    let exp = totalPulls % expPerAsc;
+    let expPerBaseAsc = getExpPerAscension(dataTable, 0);
+    if (expPerBaseAsc === 0) return { level: 1, exp: 0, maxExp: "MAX", ascension: 0 };
+
+    let expPerAsc3 = getExpPerAscension(dataTable, 3);
+    let maxLv3 = getMaxLevelForAsc(dataTable, 3);
+    let totalMaxPulls = (3 * expPerBaseAsc) + expPerAsc3;
+
+    if (totalPulls >= totalMaxPulls) {
+        return { level: maxLv3, exp: 0, maxExp: "MAX", ascension: 3 };
+    }
+
+    // Ascension 3 (extends to Lv 150 for Pets & Mounts)
+    if (totalPulls >= 3 * expPerBaseAsc) {
+        let exp = totalPulls - (3 * expPerBaseAsc);
+        let lvl = 1;
+        while (lvl < maxLv3 && dataTable[lvl] && dataTable[lvl][0] !== "MAX") {
+            let maxExp = dataTable[lvl][0];
+            if (exp >= maxExp) {
+                exp -= maxExp;
+                lvl++;
+            } else {
+                return { level: lvl, exp: exp, maxExp: maxExp, ascension: 3 };
+            }
+        }
+        return { level: maxLv3, exp: 0, maxExp: "MAX", ascension: 3 };
+    }
+
+    // Ascensions 0, 1, and 2 (capped at Lv 100)
+    let ascension = Math.floor(totalPulls / expPerBaseAsc);
+    let exp = totalPulls % expPerBaseAsc;
 
     if (exp === 0 && ascension > 0) {
         ascension -= 1;
-        exp = expPerAsc;
-    }
-
-    if (ascension >= 3) {
-        if (totalPulls >= expPerAsc * 4) {
-            return { level: 100, exp: 0, maxExp: "MAX", ascension: 3 };
-        }
+        exp = expPerBaseAsc;
     }
 
     let lvl = 1;
@@ -153,44 +205,48 @@ function getLevelFromCumulative(totalPulls, dataTable) {
             return { level: lvl, exp: exp, maxExp: maxExp, ascension: ascension };
         }
     }
-    return { level: 100, exp: exp, maxExp: "MAX", ascension: ascension };
+    return { level: 100, exp: 0, maxExp: "MAX", ascension: ascension };
 }
 
 function getGlobalPity(type, config, cLv, cExp, cAsc, remaining, targetProb, targetFail, cost, extra) {
-    let results =[];
-    for (let rarityIndex = 1; rarityIndex <= 6; rarityIndex++) {
+    const numRarities = getRarityCount(config.db, 3);
+    let results = [];
+
+    for (let rarityIndex = 1; rarityIndex <= numRarities; rarityIndex++) {
         if (targetProb <= 0) { results.push({ items: 0, res: 0 }); continue; }
         let currentFail = 1.0;
         let tempLv = cLv, tempExp = cExp, tempAsc = cAsc, tempRem = remaining;
 
         while (tempRem > 0 && currentFail > targetFail) {
-            let levelData = config.db[tempLv] || config.db[100];
-            if ((levelData[0] === "MAX" || tempLv === 100) && tempAsc < 3) {
+            let maxAscLv = getMaxLevelForAsc(config.db, tempAsc);
+            let levelData = config.db[tempLv] || config.db[maxAscLv];
+            if ((levelData[0] === "MAX" || tempLv >= maxAscLv) && tempAsc < 3) {
                 tempLv = 1; tempExp = 0; tempAsc++; continue;
             }
-            let dropRate = levelData[rarityIndex] / 100;
-            if ((levelData[0] === "MAX" || tempLv === 100) && tempAsc >= 3) {
+            let dropRate = (levelData[rarityIndex] || 0) / 100;
+            if ((levelData[0] === "MAX" || tempLv >= maxAscLv) && tempAsc >= 3) {
                 currentFail *= Math.pow(1 - dropRate, tempRem); break;
             }
             let expNeeded = levelData[0] - tempExp;
             let applied = tempRem >= expNeeded ? expNeeded : tempRem;
             currentFail *= Math.pow(1 - dropRate, applied);
             tempRem -= applied;
-            if(tempRem > 0) { tempLv++; tempExp = 0; }
+            if (tempRem > 0) { tempLv++; tempExp = 0; }
         }
 
         if (currentFail <= targetFail) { results.push({ items: 0, res: 0 }); continue; }
 
         let addYields = 0;
         while (currentFail > targetFail) {
-            let levelData = config.db[tempLv] || config.db[100];
-            if ((levelData[0] === "MAX" || tempLv === 100) && tempAsc < 3) {
+            let maxAscLv = getMaxLevelForAsc(config.db, tempAsc);
+            let levelData = config.db[tempLv] || config.db[maxAscLv];
+            if ((levelData[0] === "MAX" || tempLv >= maxAscLv) && tempAsc < 3) {
                 tempLv = 1; tempExp = 0; tempAsc++; continue;
             }
-            let dropRate = levelData[rarityIndex] / 100;
-            
+            let dropRate = (levelData[rarityIndex] || 0) / 100;
+
             if (dropRate === 1) { addYields += 1; break; }
-            if ((levelData[0] === "MAX" || tempLv === 100) && tempAsc >= 3) {
+            if ((levelData[0] === "MAX" || tempLv >= maxAscLv) && tempAsc >= 3) {
                 if (dropRate > 0) addYields += Math.log(targetFail / currentFail) / Math.log(1 - dropRate);
                 break;
             }
@@ -212,20 +268,22 @@ function getGlobalPity(type, config, cLv, cExp, cAsc, remaining, targetProb, tar
 }
 
 function simulatePhaseFlow(type, config, startLv, startExp, startAsc, pulls, cost, extra, targetProb, targetFail) {
+    const numRarities = getRarityCount(config.db, 3);
     let phases = [];
     let currLv = parseInt(startLv, 10) || 1;
     let currExp = parseFloat(startExp) || 0;
     let currAsc = parseInt(startAsc, 10) || 0;
     let remPulls = parseFloat(pulls) || 0;
+
     if (remPulls <= 0) {
         let pities = getGlobalPity(type, config, currLv, currExp, currAsc, 0, targetProb, targetFail, cost, extra);
         phases.push({
-            asc: currAsc, 
-            startLv: currLv, 
+            asc: currAsc,
+            startLv: currLv,
             startExp: currExp,
-            yields: [0, 0, 0, 0, 0, 0], 
-            pullsUsed: 0, 
-            cost: cost, 
+            yields: new Array(numRarities).fill(0),
+            pullsUsed: 0,
+            cost: cost,
             extra: extra,
             pityItems: pities.map(p => p.items),
             pityCost: pities.map(p => p.res)
@@ -235,12 +293,12 @@ function simulatePhaseFlow(type, config, startLv, startExp, startAsc, pulls, cos
 
     while (currAsc <= 3 && remPulls > 0) {
         let phase = {
-            asc: currAsc, 
-            startLv: currLv, 
+            asc: currAsc,
+            startLv: currLv,
             startExp: currExp,
-            yields: [0, 0, 0, 0, 0, 0], 
-            pullsUsed: 0, 
-            cost: cost, 
+            yields: new Array(numRarities).fill(0),
+            pullsUsed: 0,
+            cost: cost,
             extra: extra
         };
 
@@ -248,58 +306,58 @@ function simulatePhaseFlow(type, config, startLv, startExp, startAsc, pulls, cos
         phase.pityItems = [...pities.map(p => p.items)];
         phase.pityCost = [...pities.map(p => p.res)];
 
-        let phasePulls = 0; 
+        let phasePulls = 0;
 
         while (remPulls > 0) {
-            let levelData = config.db[currLv] || config.db[100];
-            let maxExp = levelData[0];
+            let maxAscLv = getMaxLevelForAsc(config.db, currAsc);
+            let levelData = config.db[currLv] || config.db[maxAscLv];
+            let maxExp = (currLv >= maxAscLv) ? "MAX" : levelData[0];
 
             if (maxExp === "MAX" || maxExp === undefined) {
                 if (currAsc < 3) {
-                    currAsc++; 
-                    currLv = 1; 
-                    currExp = 0; 
-                    break; 
+                    currAsc++;
+                    currLv = 1;
+                    currExp = 0;
+                    break;
                 } else {
-
-                    for(let i = 0; i < 6; i++) {
-                        phase.yields[i] += remPulls * ((levelData[i+1] || 0) / 100);
+                    for (let i = 0; i < numRarities; i++) {
+                        phase.yields[i] += remPulls * ((levelData[i + 1] || 0) / 100);
                     }
                     phasePulls += remPulls;
-                    remPulls = 0; 
+                    remPulls = 0;
                     break;
                 }
             }
 
             let expNeeded = Math.max(0, maxExp - currExp);
             let applied = Math.min(remPulls, expNeeded);
-            
+
             if (applied > 0) {
-                for(let i = 0; i < 6; i++) {
-                    phase.yields[i] += applied * ((levelData[i+1] || 0) / 100);
+                for (let i = 0; i < numRarities; i++) {
+                    phase.yields[i] += applied * ((levelData[i + 1] || 0) / 100);
                 }
                 phasePulls += applied;
                 remPulls -= applied;
                 currExp += applied;
             }
-            
+
             if (currExp >= maxExp) {
-                if (currLv < 100) {
-                    currLv++; 
+                if (currLv < maxAscLv) {
+                    currLv++;
                     currExp = 0;
                 } else {
-                    currExp = 0; 
+                    currExp = 0;
                 }
             }
         }
-        
+
         phase.pullsUsed = phasePulls;
 
         if (phase.pullsUsed > 0) {
             phases.push(phase);
         }
     }
-    
+
     return phases;
 }
 
@@ -314,14 +372,14 @@ function updateSummonCalc(type) {
     const lvInput = parseInt(document.getElementById(`sum-${type}-lvl`).value) || 1;
     const expInput = parseFloat(document.getElementById(`sum-${type}-exp`).value.replace(/,/g, '')) || 0;
     const resInput = parseFloat(document.getElementById(`sum-${type}-res`).value.replace(/,/g, '')) || 0;
-    
+
     const targetAscInput = parseInt(document.getElementById(`sum-${type}-target-asc`)?.value) || 0;
     const targetLvInput = parseInt(document.getElementById(`sum-${type}-target-lv`)?.value) || 0;
 
     let curCostLv = 0, planCostLv = 0, curChanceLv = 0, planChanceLv = 0;
 
     if (typeof setupLevels !== 'undefined') {
-        for(let t=1; t<=5; t++) {
+        for (let t = 1; t <= 5; t++) {
             if (config.techCostKey) curCostLv += (setupLevels[`${config.techPrefix}_T${t}_${config.techCostKey}`] || 0);
             if (config.techChanceKey) curChanceLv += (setupLevels[`${config.techPrefix}_T${t}_${config.techChanceKey}`] || 0);
         }
@@ -333,7 +391,7 @@ function updateSummonCalc(type) {
         const state = calcState();
         if (state && state.levels) {
             planCostLv = 0; planChanceLv = 0;
-            for(let t=1; t<=5; t++) {
+            for (let t = 1; t <= 5; t++) {
                 if (config.techCostKey) planCostLv += (state.levels[`${config.techPrefix}_T${t}_${config.techCostKey}`] || 0);
                 if (config.techChanceKey) planChanceLv += (state.levels[`${config.techPrefix}_T${t}_${config.techChanceKey}`] || 0);
             }
@@ -343,7 +401,7 @@ function updateSummonCalc(type) {
     const calcCost = (lv) => {
         if (!config.techCostKey) return config.baseCost;
         let mult = config.baseCost * (1 - (lv * 1) / 100);
-        
+
         if (config.costRoundMode === 'ceil') return Math.max(1, Math.ceil(mult));
         if (config.costRoundMode === 'none') return Math.max(1, mult);
         return Math.max(1, Math.round(mult));
@@ -371,8 +429,8 @@ function updateSummonCalc(type) {
     const isMobile = window.innerWidth <= 768;
     renderHeader(type, projB, projA, isMobile);
     renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extraChanceB, extraChanceA, isMobile, targetLvInput, targetAscInput);
-    
-    if(document.getElementById(`sum-${type}-yield-container`)) {
+
+    if (document.getElementById(`sum-${type}-yield-container`)) {
         calculateUniversalYieldTable(type, config, lvInput, expInput, sAsc, pullsB, pullsA, yieldB, yieldA, costB, costA, extraChanceB, extraChanceA, isMobile, projB.ascension, projA.ascension);
     }
 }
@@ -382,27 +440,39 @@ function updateSummonCalc(type) {
 // ==========================================
 function getDynamicMilestones(type, config) {
     if (window[config.globalMilestoneKey]) return window[config.globalMilestoneKey];
-    if (!config.db) return[];
+    if (!config.db) return [];
 
-    const dynamicMilestones =[
+    const maxLv3 = getMaxLevelForAsc(config.db, 3);
+    const dynamicMilestones = [
         { name: "Rare", index: 2, color: "#5cd8fe", targetLv: 0, ascension: 0 },
         { name: "Epic", index: 3, color: "#5dfe8a", targetLv: 0, ascension: 0 },
         { name: "Legendary", index: 4, color: "#fcfe5d", targetLv: 0, ascension: 0 },
         { name: "Ultimate", index: 5, color: "#ff5c5d", targetLv: 0, ascension: 0 },
-        { name: "Mythic", index: 6, color: "#d55cff", targetLv: 0, ascension: 0 },
-        { name: "Max", index: null, color: "#fe9e0c", targetLv: 100, ascension: 0 } 
+        { name: "Mythic", index: 6, color: "#d55cff", targetLv: 0, ascension: 0 }
     ];
 
-    for (let level = 1; level <= 100; level++) {
+    // Heroic, Infinity, and Eternal ONLY exist in Ascension 3
+    if (maxLv3 > 100) {
+        dynamicMilestones.push(
+            { name: "Heroic", index: 7, color: "#fe0000", targetLv: 0, ascension: 3 },
+            { name: "Infinite", index: 8, color: "#228bff", targetLv: 0, ascension: 3 },
+            { name: "Eternal", index: 9, color: "#a5d801", targetLv: 0, ascension: 3 }
+        );
+    }
+
+    for (let level = 1; level <= maxLv3; level++) {
         let levelData = config.db[level];
         if (!levelData) continue;
         dynamicMilestones.forEach(m => {
-            if (m.index !== null && m.targetLv === 0 && levelData[m.index] > 0) {
-                m.targetLv = level; 
-                m.ascension = 0;
+            if (m.index !== null && m.targetLv === 0 && (levelData[m.index] || 0) > 0) {
+                m.targetLv = level;
+                if (m.index >= 7 || level > 100) {
+                    m.ascension = 3;
+                }
             }
         });
     }
+
     window[config.globalMilestoneKey] = dynamicMilestones;
     return dynamicMilestones;
 }
@@ -416,7 +486,7 @@ const getAscensionStars = (asc) => {
 
 function renderHeader(type, projB, projA, isMobile) {
     const lvParent = document.getElementById(`sum-${type}-res-lv`)?.parentElement;
-    if(lvParent) {
+    if (lvParent) {
         lvParent.style.backgroundColor = '#e4e4e4';
         lvParent.style.padding = '12px 15px';
         lvParent.style.borderRadius = '8px';
@@ -456,7 +526,7 @@ function renderHeader(type, projB, projA, isMobile) {
     if (projB.maxExp === "MAX" || (projB.level === projA.level && projB.ascension === projA.ascension && formatExp(projB.exp) === formatExp(projA.exp))) {
         levelHtml = valB;
     } else {
-        levelHtml = isMobile 
+        levelHtml = isMobile
             ? `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;"><div style="white-space: nowrap;">${valB}</div><div style="display:flex; align-items:center; white-space: nowrap;">${arrow}${valA}</div></div>`
             : `<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px;"><div style="white-space: nowrap;">${valB}</div><div style="display: flex; align-items: center; white-space: nowrap;">${arrow} ${valA}</div></div>`;
     }
@@ -464,32 +534,44 @@ function renderHeader(type, projB, projA, isMobile) {
 }
 
 function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extraB, extraA, isMobile, targetLvInput, targetAscInput) {
-    let baseDynamic =[];
+    let baseDynamic = [];
     if (typeof getDynamicMilestones === 'function') {
-        baseDynamic = getDynamicMilestones(type, config) ||[];
+        baseDynamic = getDynamicMilestones(type, config) || [];
     }
 
-    let allMilestones =[];
+    const startAsc = parseInt(document.getElementById(`sum-${type}-asc`)?.value) || 0;
+
+    let allMilestones = [];
     for (let a = 0; a <= 3; a++) {
         baseDynamic.forEach(bm => {
+
+            if ((bm.index >= 7 || bm.targetLv > 100 || bm.ascension === 3) && a !== 3) return;
             allMilestones.push({ ...bm, ascension: a });
+        });
+
+        allMilestones.push({
+            name: "Max",
+            index: null,
+            color: "#fe9e0c",
+            targetLv: getMaxLevelForAsc(config.db, a),
+            ascension: a
         });
     }
 
     if (targetLvInput > 0) {
+        const clampedTargetLv = Math.min(targetLvInput, getMaxLevelForAsc(config.db, targetAscInput));
         allMilestones.push({
             name: "Target",
-            index: 'custom', 
-            color: "#e4e4e4", 
-            targetLv: targetLvInput,
+            index: 'custom',
+            color: "#e4e4e4",
+            targetLv: clampedTargetLv,
             ascension: targetAscInput,
-            isTarget: true 
+            isTarget: true
         });
     }
 
-    const expPerAsc = getExpPerAscension(config.db);
     allMilestones.forEach(m => {
-        m.targetCum = m.ascension * expPerAsc + getCumulativePulls(m.targetLv, 0, config.db);
+        m.targetCum = getCumulativePulls(m.targetLv, 0, config.db, m.ascension);
     });
 
     allMilestones.sort((a, b) => {
@@ -500,8 +582,13 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
         return 0;
     });
 
-    const startAsc = parseInt(document.getElementById(`sum-${type}-asc`)?.value) || 0;
-    allMilestones = allMilestones.filter(m => m.isTarget || m.ascension >= startAsc);
+    // Strictly hide Ascension 3 milestones unless the user is in Ascension 3
+    allMilestones = allMilestones.filter(m => {
+        if (m.isTarget) return true;
+        if (m.ascension < startAsc) return false;
+        if (startAsc < 3 && m.ascension === 3) return false;
+        return true;
+    });
 
     const projB = getLevelFromCumulative(totalCumB, config.db);
     const projA = getLevelFromCumulative(totalCumA, config.db);
@@ -535,9 +622,9 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
     let targetAscToShow = firstLockedIdx !== -1 ? allMilestones[firstLockedIdx].ascension : startAsc;
 
     let filteredMilestones = allMilestones.filter((m, i) => {
-        if (m.isTarget) return true; 
-        if (lastUnlockedIdx !== -1 && i === lastUnlockedIdx) return true; 
-        if (i > lastUnlockedIdx && m.ascension <= targetAscToShow) return true;         
+        if (m.isTarget) return true;
+        if (lastUnlockedIdx !== -1 && i === lastUnlockedIdx) return true;
+        if (i > lastUnlockedIdx && m.ascension <= targetAscToShow) return true;
         return false;
     });
 
@@ -569,7 +656,7 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
 
     const arrow = `<span style="font-family: 'Fredoka', sans-serif; font-weight: 800; color: #198754; font-size: 1.05rem; margin: 0 4px; -webkit-text-stroke: 0px !important;">➜</span>`;
 
-    filteredMilestones.forEach((m, index) => {
+    filteredMilestones.forEach((m) => {
         const unlockedB = checkUnlocked(totalCumB, projB, m);
         const unlockedA = checkUnlocked(totalCumA, projA, m);
 
@@ -584,13 +671,13 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
         } else {
             const statB = buildStatus(unlockedB, needsB.items, needsB.res);
             const statA = buildStatus(unlockedA, needsA.items, needsA.res);
-            statusHtml = isMobile 
+            statusHtml = isMobile
                 ? `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;"><div style="white-space: nowrap;">${statB}</div><div style="display: flex; align-items: center; white-space: nowrap;">${arrow}${statA}</div></div>`
                 : `<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px;"><div style="white-space: nowrap;">${statB}</div><div style="display: flex; align-items: center; white-space: nowrap;">${arrow} ${statA}</div></div>`;
         }
 
         const borderStyle = m.isTarget ? 'border: 1px solid rgba(0,0,0,0.15); box-shadow: 0 2px 4px rgba(0,0,0,0.05);' : 'border: 1px solid transparent;';
-        
+
         let stars = getAscensionStars(m.ascension);
         let displayLv = m.ascension > 0 ? `${stars}Lv ${m.targetLv}` : `Lv ${m.targetLv}`;
 
@@ -604,20 +691,21 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
         </div>`;
     });
 
-    let absoluteMaxExp = expPerAsc;
-    if(absoluteMaxExp === 0) absoluteMaxExp = 1; 
+    const expPerBaseAsc = getExpPerAscension(config.db, 0);
+    let absoluteMaxExpB = getExpPerAscension(config.db, projB.ascension) || 1;
+    let absoluteMaxExpA = getExpPerAscension(config.db, projA.ascension) || 1;
 
-    let loopExpB = totalCumB - (projB.ascension * expPerAsc);
-    let loopExpA = totalCumA - (projA.ascension * expPerAsc);
+    let loopExpB = totalCumB - (projB.ascension * expPerBaseAsc);
+    let loopExpA = totalCumA - (projA.ascension * expPerBaseAsc);
 
-    let pctB = (loopExpB / absoluteMaxExp) * 100;
-    let pctA = (loopExpA / absoluteMaxExp) * 100;
+    let pctB = (loopExpB / absoluteMaxExpB) * 100;
+    let pctA = (loopExpA / absoluteMaxExpA) * 100;
 
     const formatExp = (val) => type === 'skill' ? Math.round(val).toLocaleString('en-US') : val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
     let nextAsc = projB.ascension + 1;
-    let progressTitle = projB.ascension >= 3 
-        ? "Progress to Max" 
+    let progressTitle = projB.ascension >= 3
+        ? "Progress to Max"
         : `Progress to Ascension <img src="icons/asc${nextAsc}.png" style="height: 1.3em; vertical-align: -3px; object-fit: contain; margin-left: 2px;">`;
 
     html += `
@@ -626,13 +714,12 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
         <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px;">
             <div class="pet-progress-wrapper" style="margin-left: 0; margin-bottom: 0; height: 32px;">
                 <div class="pet-progress-fill" style="width: ${Math.min(pctB, 100)}%;"></div>
-                <div class="pet-progress-text">${formatExp(loopExpB)} / ${absoluteMaxExp.toLocaleString()} (${pctB.toFixed(1)}%)</div>
+                <div class="pet-progress-text">${formatExp(loopExpB)} / ${absoluteMaxExpB.toLocaleString()} (${pctB.toFixed(1)}%)</div>
             </div>`;
 
     if (formatExp(loopExpB) !== formatExp(loopExpA) || projB.ascension !== projA.ascension) {
-        
         let transitionHtml = `<div style="text-align: center; color: #198754; font-size: 1.3rem; font-weight: 900; -webkit-text-stroke: 0px; line-height: 1; margin: 2px 0;">⬇</div>`;
-        
+
         if (projB.ascension !== projA.ascension) {
             transitionHtml = `
             <div style="background-color: #f8f9fa; border: 2px dashed #d1d5db; border-radius: 8px; padding: 6px 15px; margin: 4px auto; width: fit-content; display: flex; align-items: center; justify-content: center; gap: 6px;">
@@ -647,11 +734,11 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
             ${transitionHtml}
             <div class="pet-progress-wrapper" style="margin-left: 0; margin-bottom: 0; height: 32px;">
                 <div class="pet-progress-fill" style="width: ${Math.min(pctA, 100)}%; background-color: #00e676;"></div>
-                <div class="pet-progress-text">${formatExp(loopExpA)} / ${absoluteMaxExp.toLocaleString()} (${pctA.toFixed(1)}%)</div>
+                <div class="pet-progress-text">${formatExp(loopExpA)} / ${absoluteMaxExpA.toLocaleString()} (${pctA.toFixed(1)}%)</div>
             </div>`;
     }
     html += `</div>`;
-    
+
     let cont = document.getElementById(`sum-${type}-milestones-container`);
     if (cont) cont.innerHTML = html;
 }
@@ -660,6 +747,8 @@ function renderMilestones(type, config, totalCumB, totalCumA, costB, costA, extr
 // 5. YIELD & PITY CALCULATOR
 // ==========================================
 function calculateUniversalYieldTable(type, config, sLv, sExp, sAsc, pullsB, pullsA, yieldB, yieldA, costB, costA, extraB, extraA, isMobile, projB_Asc, projA_Asc) {
+
+    const numRarities = getRarityCount(config.db, sAsc);
     const arrowHtml = `<span style="font-family: 'Fredoka', sans-serif; font-weight: 800; color: #198754; font-size: 1.05rem; margin: 0 4px; -webkit-text-stroke: 0px !important;">➜</span>`;
     const fontStyle = "font-family: 'Fredoka', sans-serif; font-size: 0.95rem; font-weight: 600; color: #000000; -webkit-text-stroke: 0px;";
 
@@ -670,13 +759,13 @@ function calculateUniversalYieldTable(type, config, sLv, sExp, sAsc, pullsB, pul
     let phasesA = simulatePhaseFlow(type, config, sLv, sExp, sAsc, yieldA, costA, extraA, targetProb, targetFail);
 
     if (!window.currentSummonYields) window.currentSummonYields = {};
-    window.currentSummonYields[type] = { phasesB, phasesA, targetProb, config };
+    window.currentSummonYields[type] = { phasesB, phasesA, targetProb, config, sAsc };
 
     const infoBtn = document.getElementById(`btn-sum-${type}-yield-info`);
-    if (infoBtn) {  
+    if (infoBtn) {
         const activePhasesB = phasesB.filter(p => p.pullsUsed > 0.1);
         const activePhasesA = phasesA.filter(p => p.pullsUsed > 0.1);
-        
+
         let minAsc = 3, maxAsc = 0;
         [...activePhasesB, ...activePhasesA].forEach(p => {
             if (p.asc > maxAsc) maxAsc = p.asc;
@@ -690,15 +779,16 @@ function calculateUniversalYieldTable(type, config, sLv, sExp, sAsc, pullsB, pul
         }
     }
 
-    let expBefore =[0,0,0,0,0,0]; let expAfter =[0,0,0,0,0,0];
-    phasesB.forEach(p => { for(let i=0; i<6; i++) expBefore[i] += p.yields[i]; });
-    phasesA.forEach(p => { for(let i=0; i<6; i++) expAfter[i] += p.yields[i]; });
+    let expBefore = new Array(numRarities).fill(0);
+    let expAfter = new Array(numRarities).fill(0);
+    phasesB.forEach(p => { for (let i = 0; i < numRarities; i++) expBefore[i] += p.yields[i]; });
+    phasesA.forEach(p => { for (let i = 0; i < numRarities; i++) expAfter[i] += p.yields[i]; });
 
-    let pityBefore = phasesB.length > 0 ? phasesB[0] : { pityItems: [0,0,0,0,0,0], pityCost:[0,0,0,0,0,0] };
-    let pityAfter = phasesA.length > 0 ? phasesA[0] : { pityItems:[0,0,0,0,0,0], pityCost: [0,0,0,0,0,0] };
+    let pityBefore = phasesB.length > 0 ? phasesB[0] : { pityItems: new Array(numRarities).fill(0), pityCost: new Array(numRarities).fill(0) };
+    let pityAfter = phasesA.length > 0 ? phasesA[0] : { pityItems: new Array(numRarities).fill(0), pityCost: new Array(numRarities).fill(0) };
 
     const formatTotal = (val) => type === 'skill' ? Math.round(val).toLocaleString('en-US') : val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    
+
     const formatYieldRow = (val) => {
         if (!val || val < 0.01) return "0";
         if (val < 10) return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -706,30 +796,41 @@ function calculateUniversalYieldTable(type, config, sLv, sExp, sAsc, pullsB, pul
     };
 
     const totalYieldParent = document.getElementById(`sum-${type}-total-yield`)?.parentElement;
-    if(totalYieldParent) totalYieldParent.style.backgroundColor = '#e4e4e4';
+    if (totalYieldParent) totalYieldParent.style.backgroundColor = '#e4e4e4';
 
     let totalYieldHtml = `<span style="${fontStyle}">${formatTotal(yieldB)}</span>`;
     if (formatTotal(yieldB) !== formatTotal(yieldA)) {
         const vB = `<span style="${fontStyle}">${formatTotal(yieldB)}</span>`;
         const vA = `<span style="${fontStyle} color: #000;">${formatTotal(yieldA)}</span>`;
-        totalYieldHtml = isMobile 
+        totalYieldHtml = isMobile
             ? `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div style="white-space: nowrap;">${vB}</div><div style="display: flex; align-items: center; white-space: nowrap;">${arrowHtml}${vA}</div></div>`
             : `<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px;"><div style="white-space: nowrap;">${vB}</div><div style="display: flex; align-items: center; white-space: nowrap;">${arrowHtml} ${vA}</div></div>`;
     }
-    
-    let totalCont = document.getElementById(`sum-${type}-total-yield`);
-    if(totalCont) totalCont.innerHTML = totalYieldHtml;
 
-    const colors =[{ bg: '#ecf0f1' }, { bg: '#5cd8fe' }, { bg: '#5dfe8a' }, { bg: '#fcfe5d' }, { bg: '#ff5c5d' }, { bg: '#d55cff' }];
+    let totalCont = document.getElementById(`sum-${type}-total-yield`);
+    if (totalCont) totalCont.innerHTML = totalYieldHtml;
+
+    const colors = [
+        { bg: '#ecf0f1' }, // Common
+        { bg: '#5cd8fe' }, // Rare
+        { bg: '#5dfe8a' }, // Epic
+        { bg: '#fcfe5d' }, // Legendary
+        { bg: '#ff5c5d' }, // Ultimate
+        { bg: '#d55cff' }, // Mythic
+        { bg: '#fe0000' }, // Heroic (Ascension 3 only)
+        { bg: '#228bff' }, // Infinite (Ascension 3 only)
+        { bg: '#a5d801' }  // Eternal (Ascension 3 only)
+    ];
+
     let html = '';
     const keyIcon = `<img src="icons/${config.icon}" style="width: 1rem; height: 1rem; object-fit: contain; vertical-align: -2px;">`;
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < numRarities; i++) {
         let fmtB = formatYieldRow(expBefore[i]); let fmtA = formatYieldRow(expAfter[i]);
         let expCell = `<div style="${fontStyle}">${fmtB}</div>`;
-        
+
         if (fmtB !== fmtA) {
-            expCell = isMobile 
+            expCell = isMobile
                 ? `<div style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;"><div style="white-space: nowrap;"><span style="${fontStyle}">${fmtB}</span></div><div style="display: flex; align-items: center; white-space: nowrap;">${arrowHtml}<span style="${fontStyle} color:#000;">${fmtA}</span></div></div>`
                 : `<div style="display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 4px;"><div style="white-space: nowrap;"><span style="${fontStyle}">${fmtB}</span></div><div style="display: flex; align-items: center; white-space: nowrap;">${arrowHtml} <span style="${fontStyle} color:#000;">${fmtA}</span></div></div>`;
         }
@@ -740,12 +841,12 @@ function calculateUniversalYieldTable(type, config, sLv, sExp, sAsc, pullsB, pul
             return `<div style="display: inline-flex; align-items: center; gap: 4px; color: #000; white-space: nowrap;"><span style="${fontStyle} color: #000;">${items.toLocaleString()}</span><span style="${fontStyle} font-weight:500; font-size:0.8rem; color: #000;">(${keyIcon} ${fmtRes})</span></div>`;
         };
 
-        let pityB_HTML = renderPity(pityBefore.pityItems[i], pityBefore.pityCost[i]); 
+        let pityB_HTML = renderPity(pityBefore.pityItems[i], pityBefore.pityCost[i]);
         let pityA_HTML = renderPity(pityAfter.pityItems[i], pityAfter.pityCost[i]);
         let pityCell = pityB_HTML;
-        
+
         if (pityBefore.pityCost[i] !== pityAfter.pityCost[i] || pityBefore.pityItems[i] !== pityAfter.pityItems[i]) {
-            pityCell = isMobile 
+            pityCell = isMobile
                 ? `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div style="white-space: nowrap;">${pityB_HTML}</div><div style="display: flex; align-items: center; white-space: nowrap;">${arrowHtml}${pityA_HTML}</div></div>`
                 : `<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px;"><div style="white-space: nowrap;">${pityB_HTML}</div><div style="display: flex; align-items: center; white-space: nowrap;">${arrowHtml} ${pityA_HTML}</div></div>`;
         }
@@ -756,9 +857,9 @@ function calculateUniversalYieldTable(type, config, sLv, sExp, sAsc, pullsB, pul
             <div style="flex: 1 1 auto; text-align: right; display: flex; justify-content: flex-end;">${pityCell}</div>
         </div>`;
     }
-    
+
     let yieldCont = document.getElementById(`sum-${type}-yield-container`);
-    if(yieldCont) yieldCont.innerHTML = html;
+    if (yieldCont) yieldCont.innerHTML = html;
 }
 
 // ==========================================
@@ -767,6 +868,15 @@ function calculateUniversalYieldTable(type, config, sLv, sExp, sAsc, pullsB, pul
 function initSummonCalc() {
     toggleSummonTab('skill');
 }
+
+document.addEventListener('change', (e) => {
+    ['skill', 'pet', 'mount'].forEach(t => {
+        if (e.target && e.target.id === `sum-${t}-asc`) {
+            updateSummonCap(t);
+            updateSummonCalc(t);
+        }
+    });
+});
 
 document.addEventListener('input', (e) => {
     if (e.target.id && e.target.id.includes('power_T')) {

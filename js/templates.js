@@ -896,6 +896,7 @@ const HTML_EGG = `
                 <button class="egg-btn" onclick="addEggToQueue('legendary')"><img src="icons/EggLegendary.png"></button>
                 <button class="egg-btn" onclick="addEggToQueue('ultimate')"><img src="icons/EggUltimate.png"></button>
                 <button class="egg-btn" onclick="addEggToQueue('mythic')"><img src="icons/EggMythic.png"></button>
+                <button class="egg-btn" onclick="addEggToQueue('heroic')"><img src="icons/EggHeroic.png"></button>
             </div>
         </div>
         <div id="egg-total-summary"></div>
@@ -1171,7 +1172,7 @@ const HTML_WEEKLY = `
                     <div class="calc-row-input">
                         <label>Target Lv:</label>
                         <div style="display: flex; gap: 6px;">
-                            <select id="asc-skill-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
+                            <select id="asc-skill-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(document.getElementById('asc-skill-target-lv'), true); updateWeekly()">
                                 <option value="0">Asc 0</option>
                                 <option value="1">Asc 1</option>
                                 <option value="2">Asc 2</option>
@@ -1194,7 +1195,7 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-pet-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('pet'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('pet'); updateWeekly()">
+                            <input type="number" id="asc-pet-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="1" min="1" max="150" oninput="updateAscensionCaps('pet'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('pet'); updateWeekly()">
                         </div>
                     </div>
                     <div class="calc-row-input">
@@ -1211,13 +1212,13 @@ const HTML_WEEKLY = `
                     <div class="calc-row-input">
                         <label>Target Lv:</label>
                         <div style="display: flex; gap: 6px;">
-                            <select id="asc-pet-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
+                            <select id="asc-pet-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(document.getElementById('asc-pet-target-lv'), true); updateWeekly()">
                                 <option value="0">Asc 0</option>
                                 <option value="1">Asc 1</option>
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-pet-target-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                            <input type="number" id="asc-pet-target-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="-" min="1" max="150" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
                         </div>
                     </div>
                 </div>
@@ -1234,7 +1235,7 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-mount-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('mount'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('mount'); updateWeekly()">
+                            <input type="number" id="asc-mount-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="1" min="1" max="150" oninput="updateAscensionCaps('mount'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('mount'); updateWeekly()">
                         </div>
                     </div>
                     <div class="calc-row-input">
@@ -1251,13 +1252,13 @@ const HTML_WEEKLY = `
                     <div class="calc-row-input">
                         <label>Target Lv:</label>
                         <div style="display: flex; gap: 6px;">
-                            <select id="asc-mount-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateWeekly()">
+                            <select id="asc-mount-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(document.getElementById('asc-mount-target-lv'), true); updateWeekly()">
                                 <option value="0">Asc 0</option>
                                 <option value="1">Asc 1</option>
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-mount-target-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                            <input type="number" id="asc-mount-target-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="-" min="1" max="150" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
                         </div>
                     </div>
                 </div>
@@ -1271,7 +1272,7 @@ const HTML_WEEKLY = `
 
                 <hr class="pet-hr" style="margin: 15px 0;">
 
-                <div style="text-align: center; margin: 5px 0 15px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">Estimated Weeks to Lv 100</div>
+                <div style="text-align: center; margin: 5px 0 15px 0; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; -webkit-text-stroke: 0px; line-height: 1.3;">Estimated Weeks to Max Lv</div>
                 <div class="calc-line"><span class="calc-label">Skill</span><div class="calc-val-group" id="asc-res-skill" style="font-weight: bold; color: #ffeb3b;">--</div></div>
                 <div class="calc-line"><span class="calc-label">Pet</span><div class="calc-val-group" id="asc-res-pet" style="font-weight: bold; color: #ffeb3b;">--</div></div>
                 <div class="calc-line"><span class="calc-label">Mount</span><div class="calc-val-group" id="asc-res-mount" style="font-weight: bold; color: #ffeb3b;">--</div></div>
@@ -1627,7 +1628,7 @@ const HTML_SUMMON = `
                         <div class="calc-row-input">
                             <label>Target Lv:&nbsp; <button class="btn-info" onclick="openSummonProbModal('skill')" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
                             <div style="display: flex; gap: 6px;">
-                                <select id="sum-skill-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateSummonCalc('skill')">
+                                <select id="sum-skill-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="validateLevelOnBlur(document.getElementById('sum-skill-target-lv'), true); updateSummonCalc('skill')">
                                     <option value="0">Asc 0</option>
                                     <option value="1">Asc 1</option>
                                     <option value="2">Asc 2</option>
@@ -1695,7 +1696,7 @@ const HTML_SUMMON = `
                                     <option value="2">Asc 2</option>
                                     <option value="3">Asc 3</option>
                                 </select>
-                                <input type="number" id="sum-pet-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('pet'); updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, false); updateSummonCap('pet'); updateSummonCalc('pet')">
+                                <input type="number" id="sum-pet-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="150" oninput="updateSummonCap('pet'); updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, false); updateSummonCap('pet'); updateSummonCalc('pet')">
                             </div>
                         </div>
                         <div class="calc-row-input">
@@ -1712,13 +1713,13 @@ const HTML_SUMMON = `
                         <div class="calc-row-input">
                             <label>Target Lv:&nbsp; <button class="btn-info" onclick="openSummonProbModal('pet')" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
                             <div style="display: flex; gap: 6px;">
-                                <select id="sum-pet-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateSummonCalc('pet')">
+                                <select id="sum-pet-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="validateLevelOnBlur(document.getElementById('sum-pet-target-lv'), true); updateSummonCalc('pet')">
                                     <option value="0">Asc 0</option>
                                     <option value="1">Asc 1</option>
                                     <option value="2">Asc 2</option>
                                     <option value="3">Asc 3</option>
                                 </select>
-                                <input type="number" id="sum-pet-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('pet')">
+                                <input type="number" id="sum-pet-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="150" oninput="updateSummonCalc('pet')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('pet')">
                             </div>
                         </div>
                     </div>
@@ -1780,13 +1781,13 @@ const HTML_SUMMON = `
                                     <option value="2">Asc 2</option>
                                     <option value="3">Asc 3</option>
                                 </select>
-                                <input type="number" id="sum-mount-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('mount'); updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, false); updateSummonCap('mount'); updateSummonCalc('mount')">
+                                <input type="number" id="sum-mount-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="150" oninput="updateSummonCap('mount'); updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, false); updateSummonCap('mount'); updateSummonCalc('mount')">
                             </div>
                         </div>
                         <div class="calc-row-input">
                             <label>Summon Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="sum-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateSummonCap('mount'); updateSummonCalc('mount')">
+                                <input type="number" id="sum-mount-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateSummonCap('mount'); updateSummonCalc('mount')" onblur="validateExpOnBlur('mount'); updateSummonCalc('mount')">
                                 <span class="calc-label pet-label-sub">/ <span id="sum-mount-max">2</span></span>
                             </div>
                         </div>
@@ -1797,13 +1798,13 @@ const HTML_SUMMON = `
                         <div class="calc-row-input">
                             <label>Target Lv:&nbsp; <button class="btn-info" onclick="openSummonProbModal('mount')" style="vertical-align: middle; margin-bottom: 2px;">i</button></label>
                             <div style="display: flex; gap: 6px;">
-                                <select id="sum-mount-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="updateSummonCalc('mount')">
+                                <select id="sum-mount-target-asc" class="calc-input-chunky" style="width: 75px; padding: 0 5px; text-align: center;" onchange="validateLevelOnBlur(document.getElementById('sum-mount-target-lv'), true); updateSummonCalc('mount')">
                                     <option value="0">Asc 0</option>
                                     <option value="1">Asc 1</option>
                                     <option value="2">Asc 2</option>
                                     <option value="3">Asc 3</option>
                                 </select>
-                                <input type="number" id="sum-mount-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('mount')">
+                                <input type="number" id="sum-mount-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="150" oninput="updateSummonCalc('mount')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('mount')">
                             </div>
                         </div>
                     </div>

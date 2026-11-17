@@ -259,7 +259,7 @@ span.stat-arrow {
 .egg-actions { display: flex; gap: 5px; }
 .egg-instruction { font-size: 0.85em; color: #7f8c8d; font-weight: 600; margin-bottom: 5px; padding-left: 2px; }
 
-.egg-selector { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; padding: 10px; background: #ffffff !important; border: 2px solid #000000 !important; border-radius: 8px !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px; }
+.egg-selector { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 10px; background: #ffffff !important; border: 2px solid #000000 !important; border-radius: 8px !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px; }
 .egg-btn { background: transparent !important; border: none !important; box-shadow: none !important; cursor: pointer; padding: 2px; display: flex; justify-content: center; align-items: center; transition: transform 0.2s; }
 .egg-btn img { width: 54px; height: 54px; object-fit: contain; filter: none !important; }
 .egg-btn:hover img { transform: scale(1.15); filter: none !important; }
