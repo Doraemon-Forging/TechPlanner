@@ -6,8 +6,44 @@
 const TIER_MULTIPLIERS = {
     "Primitive": 1, "Medieval": Math.pow(4, 1), "Early-Modern": Math.pow(4, 2), "Modern": Math.pow(4, 3),
     "Space": Math.pow(4, 4), "Interstellar": Math.pow(4, 5), "Multiverse": Math.pow(4, 6),
-    "Quantum": Math.pow(4, 7), "Underworld": Math.pow(4, 8), "Divine": Math.pow(4, 9)
+    "Quantum": Math.pow(4, 7), "Underworld": Math.pow(4, 8), "Divine": Math.pow(4, 9),
+    "Heroic": Math.pow(4, 10), "Infinite": Math.pow(4, 11), "Eternal": Math.pow(4, 12)
 };
+
+const ASC3_EXCLUSIVE_TIERS = ["Heroic", "Infinite", "Eternal"];
+const EQ_TIER_SELECT_IDS = [
+    "eq-helmet-tier", "eq-armor-tier", "eq-boots-tier", "eq-belt-tier",
+    "eq-weapon-tier", "eq-gloves-tier", "eq-neck-tier", "eq-ring-tier",
+    "eq-avg-tier"
+];
+
+function syncEqAscensionTiers(ascVal) {
+    const isAsc3 = ascVal === 3;
+    EQ_TIER_SELECT_IDS.forEach(selectId => {
+        const sel = document.getElementById(selectId);
+        if (!sel) return;
+
+        if (isAsc3) {
+            ASC3_EXCLUSIVE_TIERS.forEach(tierName => {
+                if (!Array.from(sel.options).some(opt => opt.value === tierName)) {
+                    const opt = document.createElement('option');
+                    opt.value = tierName;
+                    opt.textContent = tierName;
+                    sel.appendChild(opt);
+                }
+            });
+        } else {
+            if (ASC3_EXCLUSIVE_TIERS.includes(sel.value)) {
+                sel.value = "Divine";
+            }
+            Array.from(sel.options).forEach(opt => {
+                if (ASC3_EXCLUSIVE_TIERS.includes(opt.value)) {
+                    opt.remove();
+                }
+            });
+        }
+    });
+}
 
 function formatEqValue(val) {
     if (val === 0) return "0";
@@ -15,7 +51,8 @@ function formatEqValue(val) {
     if (val < 1000000) return (val / 1000).toLocaleString('en-US', {maximumFractionDigits: 1}) + 'k';
     if (val < 1000000000) return (val / 1000000).toLocaleString('en-US', {maximumFractionDigits: 1}) + 'm';
     if (val < 1000000000000) return (val / 1000000000).toLocaleString('en-US', {maximumFractionDigits: 1}) + 'b';
-    return (val / 1000000000000).toLocaleString('en-US', {maximumFractionDigits: 1}) + 't';
+    if (val < 1000000000000000) return (val / 1000000000000).toLocaleString('en-US', {maximumFractionDigits: 1}) + 't';
+    return (val / 1000000000000000).toLocaleString('en-US', {maximumFractionDigits: 1}) + 'q';
 }
 
 function formatCombatStat(val) {
@@ -24,7 +61,8 @@ function formatCombatStat(val) {
     if (val < 1000000) return parseFloat((val / 1000).toFixed(1)) + 'k';        
     if (val < 1000000000) return parseFloat((val / 1000000).toFixed(2)) + 'm';   
     if (val < 1000000000000) return parseFloat((val / 1000000000).toFixed(2)) + 'b'; 
-    return parseFloat((val / 1000000000000).toFixed(2)) + 't';                  
+    if (val < 1000000000000000) return parseFloat((val / 1000000000000).toFixed(2)) + 't';
+    return parseFloat((val / 1000000000000000).toFixed(2)) + 'q';                  
 }
 
 function getTechLevels(tree, nodeId) {
@@ -167,6 +205,14 @@ function buildEqRowHTML(iconName, labelText, valBefore, valAfter, innerIconHtml,
 }
 
 function updateEquipment() {
+    // --- UNIVERSAL ASCENSION MULTIPLIER ---
+    const ascEl = document.getElementById('eq-ascension');
+    const ascVal = ascEl ? parseInt(ascEl.value) : 0;
+    const ASC_MULTS = [1, 50, 2500, 125000];
+    const ascMult = ASC_MULTS[ascVal] || 1;
+
+    syncEqAscensionTiers(ascVal);
+
     if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
 
     const weaponTypeEl = document.getElementById('eq-weapon-type');
@@ -176,12 +222,6 @@ function updateEquipment() {
     const avgWeaponEl = document.getElementById('eq-avg-weapon-type');
     const avgTier = avgTierEl ? avgTierEl.value : 'Quantum';
     const avgWeapon = avgWeaponEl ? avgWeaponEl.value : 'Ranged';
-
-    // --- UNIVERSAL ASCENSION MULTIPLIER ---
-    const ascEl = document.getElementById('eq-ascension');
-    const ascVal = ascEl ? parseInt(ascEl.value) : 0;
-    const ASC_MULTS = [1, 50, 2500, 125000];
-    const ascMult = ASC_MULTS[ascVal] || 1;
 
     const items = [
         { id: 'helmet', icon: 'eqhelmet', type: 'hp',  base: 40, masteryNode: 'helmet_1', maxNode: 'helmet_2' },

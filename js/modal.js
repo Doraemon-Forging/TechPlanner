@@ -1211,7 +1211,7 @@ function openSummonProbModal(type, levelOverride = null, ascOverride = null) {
         currentProbModalAsc = parseInt(currentAscVal) || 0;
     }
 
-    const maxLevel = (currentProbModalAsc === 3 && (type === 'pet' || type === 'mount')) ? 150 : 100;
+    const maxLevel = (currentProbModalAsc === 3 && (type === 'skill' || type === 'pet' || type === 'mount')) ? 150 : 100;
 
     if (levelOverride !== null) {
         currentProbModalLevel = parseInt(levelOverride);

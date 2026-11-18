@@ -906,6 +906,309 @@ const HTML_EGG = `
 </div>
 `;
 
+const HTML_EQUIPMENT = `
+<style>
+    /* EQUIPMENT TYPOGRAPHY RESET */
+    #panel-equipment .eq-label {
+        font-family: 'Fredoka', sans-serif !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        color: #000000 !important;
+        -webkit-text-stroke: 0px transparent !important;
+        text-shadow: none !important;
+        letter-spacing: 0.5px;
+    }
+    #panel-equipment .eq-disclaimer {
+        font-family: 'Fredoka', sans-serif !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px;
+        font-size: 0.85rem !important;
+        color: #333333 !important;
+        text-align: center;
+        margin-bottom: 12px;
+        padding: 0 15px;
+        line-height: 1.3;
+        -webkit-text-stroke: 0px transparent !important;
+        text-shadow: none !important;
+    }
+    #panel-equipment .text-clean-black {
+        font-family: 'Fredoka', sans-serif !important;
+        font-weight: 600 !important;
+        color: #000000 !important;
+        -webkit-text-stroke: 0px transparent !important;
+        text-shadow: none !important;
+        letter-spacing: 0.5px;
+    }
+    #panel-equipment .text-clean-green {
+        font-family: 'Fredoka', sans-serif !important;
+        font-weight: 600 !important;
+        color: #198754 !important;
+        -webkit-text-stroke: 0px transparent !important;
+        text-shadow: none !important;
+        letter-spacing: 0.5px;
+    }
+    #panel-equipment .text-clean-arrow {
+        font-family: 'Fredoka', sans-serif !important;
+        font-weight: 700 !important;
+        color: #198754 !important;
+        margin: 0 8px;
+        -webkit-text-stroke: 0px transparent !important;
+        text-shadow: none !important;
+    }
+        /* Increase HP/DMG icon size ONLY in the Equipment Panel */
+#panel-equipment img[src*="icon_hp.png"], 
+#panel-equipment img[src*="icon_dmg.png"] {
+    width: 18px !important;  /* Adjust this number to change size */
+    height: 18px !important; /* Keep height same as width */
+}
+    
+    /* NEW: Header Button Style */
+    .header-info-btn {
+        width: 22px; 
+        height: 22px; 
+        background-color: #000; 
+        color: #fff; 
+        border-radius: 50%; 
+        display: none; /* Hidden by default, shown via JS */
+        align-items: center; 
+        justify-content: center; 
+        font-family: 'Fredoka', sans-serif; 
+        font-weight: bold; 
+        font-size: 0.9rem; 
+        cursor: pointer; 
+        user-select: none;
+        line-height: 1; 
+        padding-top: 1px; 
+        padding-left: 1px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        
+    }
+
+    #panel-equipment .eq-inline-group {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    #panel-equipment .eq-inline-group > *,
+    #panel-equipment .eq-inline-group .calc-val-before,
+    #panel-equipment .eq-inline-group .calc-val-after {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        width: auto !important;
+        margin: 0 3px !important;
+        white-space: nowrap !important;
+    }
+    #panel-equipment .eq-inline-group br {
+        display: none !important;
+    }
+
+    /* MOBILE FIX: Prevent single values from wrapping to the 2nd row */
+    @media (max-width: 768px) {
+        #panel-equipment .calc-val-group.single-val {
+            width: auto !important;
+            margin-left: auto !important;
+            justify-content: flex-end !important;
+        }
+        #panel-equipment .calc-val-group.single-val .calc-val-before {
+            width: auto !important; 
+        }
+    }
+</style>
+
+<div id="panel-equipment" class="sidebar-panel" style="display:none;">
+    <div class="log-container">
+
+        <div class="daily-card config-card">
+            <div class="daily-card-body">
+                
+                <div class="daily-input-row"><label class="daily-label">Ascension:</label>
+    <div class="war-select-group flex-center">
+        <select id="eq-ascension" class="war-select" style="width: 70px; font-size: 0.9rem; text-align: center;" onchange="if(typeof updateEquipment==='function') updateEquipment()">
+            <option value="0" selected>0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+        </select>
+    </div>
+</div>
+
+                <div class="daily-input-row"><label class="daily-label">Helmet:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-helmet-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option><option value="Heroic">Heroic</option><option value="Infinite">Infinite</option><option value="Eternal">Eternal</option></select>
+                        <input type="text" inputmode="numeric" id="eq-helmet-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
+                    </div>
+                </div>
+
+                <div class="daily-input-row"><label class="daily-label">Armor:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-armor-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option><option value="Heroic">Heroic</option><option value="Infinite">Infinite</option><option value="Eternal">Eternal</option></select>
+                        <input type="text" inputmode="numeric" id="eq-armor-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
+                    </div>
+                </div>
+
+                <div class="daily-input-row"><label class="daily-label">Boots:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-boots-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option><option value="Heroic">Heroic</option><option value="Infinite">Infinite</option><option value="Eternal">Eternal</option></select>
+                        <input type="text" inputmode="numeric" id="eq-boots-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
+                    </div>
+                </div>
+
+                <div class="daily-input-row"><label class="daily-label">Belt:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-belt-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option><option value="Heroic">Heroic</option><option value="Infinite">Infinite</option><option value="Eternal">Eternal</option></select>
+                        <input type="text" inputmode="numeric" id="eq-belt-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
+                    </div>
+                </div>
+
+                <div class="daily-input-row" style="padding-bottom: 2px;"><label class="daily-label" style="font-size: 1rem;">Weapon Type:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-weapon-type" class="war-select" style="width: 120px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()">
+                            <option value="Ranged" selected>Ranged</option><option value="Melee">Melee</option><option value="Melee+Shield">Melee+Shield</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="daily-input-row" style="padding-top: 2px;"><label class="daily-label">Weapon:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-weapon-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option><option value="Heroic">Heroic</option><option value="Infinite">Infinite</option><option value="Eternal">Eternal</option></select>
+                        <input type="text" inputmode="numeric" id="eq-weapon-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
+                    </div>
+                </div>
+
+                <div class="daily-input-row"><label class="daily-label">Gloves:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-gloves-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option><option value="Heroic">Heroic</option><option value="Infinite">Infinite</option><option value="Eternal">Eternal</option></select>
+                        <input type="text" inputmode="numeric" id="eq-gloves-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
+                    </div>
+                </div>
+
+                <div class="daily-input-row"><label class="daily-label">Necklace:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-neck-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option><option value="Heroic">Heroic</option><option value="Infinite">Infinite</option><option value="Eternal">Eternal</option></select>
+                        <input type="text" inputmode="numeric" id="eq-neck-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
+                    </div>
+                </div>
+
+                <div class="daily-input-row"><label class="daily-label">Ring:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-ring-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option><option value="Heroic">Heroic</option><option value="Infinite">Infinite</option><option value="Eternal">Eternal</option></select>
+                        <input type="text" inputmode="numeric" id="eq-ring-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="daily-card">
+            <div class="daily-card-header strip-green">
+                <span class="daily-header-title">HEALTH AND DAMAGE</span>
+            </div>
+            <div class="daily-card-body">
+                
+                <div class="calc-line" style="background-color: #ecf0f1; border: 2px solid #000; margin-bottom: 10px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+    <div class="eq-inline-group" id="eq-res-total-hp"></div>
+    <div class="eq-inline-group" id="eq-res-total-dmg"></div>
+</div>
+
+                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
+                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqhelmet.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Helmet</span></div>
+                    <div class="calc-val-group" id="eq-res-helmet"></div>
+                </div>
+                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
+                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqarmor.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Armor</span></div>
+                    <div class="calc-val-group" id="eq-res-armor"></div>
+                </div>
+                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
+                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqboots.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Boots</span></div>
+                    <div class="calc-val-group" id="eq-res-boots"></div>
+                </div>
+                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
+                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqbelt.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Belt</span></div>
+                    <div class="calc-val-group" id="eq-res-belt"></div>
+                </div>
+                
+                <div class="calc-line" id="eq-line-shield" style="background-color: #ecf0f1; padding-left: 10px; display: none;">
+                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqshield.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Shield</span></div>
+                    <div class="calc-val-group" id="eq-res-shield"></div>
+                </div>
+
+                <hr class="pet-hr">
+
+                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
+                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqweapon.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Weapon</span></div>
+                    <div class="calc-val-group" id="eq-res-weapon"></div>
+                </div>
+                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
+                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqgloves.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Gloves</span></div>
+                    <div class="calc-val-group" id="eq-res-gloves"></div>
+                </div>
+                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
+                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqneck.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Necklace</span></div>
+                    <div class="calc-val-group" id="eq-res-neck"></div>
+                </div>
+                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
+                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqring.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Ring</span></div>
+                    <div class="calc-val-group" id="eq-res-ring"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="daily-card">
+            <div class="daily-card-header strip-orange" style="text-align: center;">
+    <span class="daily-header-title">MAX RANGE LEVEL&nbsp;<button id="btn-eq-range-info" class="header-info-btn" style="vertical-align: middle; margin-bottom: 3px; border: none; padding: 0;">i</button></span>
+</div>
+            <div class="daily-card-body">
+                
+                <div id="eq-range-container">
+                </div>
+            </div>
+        </div>
+
+        <div class="daily-card">
+            <div class="daily-card-header strip-green" style="text-align: center;">
+                <span class="daily-header-title">AVERAGE HEALTH / DAMAGE AT MAX RANGE&nbsp;<button id="btn-eq-avg-info" class="header-info-btn" style="vertical-align: middle; margin-bottom: 3px; border: none; padding: 0;">i</button></span>
+            </div>
+            <div class="daily-card-body">
+                
+                <div class="daily-input-row" style="padding-bottom: 2px;"><label class="daily-label">Item Tier:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-avg-tier" class="war-select" style="width: 130px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()">
+                            <option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option><option value="Heroic">Heroic</option><option value="Infinite">Infinite</option><option value="Eternal">Eternal</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="daily-input-row" style="padding-bottom: 10px;"><label class="daily-label">Weapon Type:</label>
+                    <div class="war-select-group flex-center">
+                        <select id="eq-avg-weapon-type" class="war-select" style="width: 130px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()">
+                            <option value="Ranged" selected>Ranged</option><option value="Melee">Melee</option><option value="Melee+Shield">Melee+Shield</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="eq-avg-stats-container"></div>
+            </div>
+        </div>
+
+        <div class="daily-card">
+            <div class="daily-card-header strip-blue" style="text-align: center;">
+    <span class="daily-header-title">AVERAGE ITEM SELL PRICE&nbsp;<button id="btn-eq-sell-info" class="header-info-btn" style="vertical-align: middle; margin-bottom: 3px; border: none; padding: 0;">i</button></span>
+</div>
+            <div class="daily-card-body">
+                
+                <div id="eq-sell-container">
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+`;
+
 const HTML_WEEKLY = `
 <div id="panel-weekly" class="sidebar-panel" style="display: none;">
     <div class="log-container">
@@ -1155,7 +1458,7 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-skill-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="1" min="1" max="100" oninput="updateAscensionCaps('skill'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('skill'); updateWeekly()">
+                            <input type="number" id="asc-skill-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="1" min="1" max="150" oninput="updateAscensionCaps('skill'); updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, false); updateAscensionCaps('skill'); updateWeekly()">
                         </div>
                     </div>
                     <div class="calc-row-input">
@@ -1178,7 +1481,7 @@ const HTML_WEEKLY = `
                                 <option value="2">Asc 2</option>
                                 <option value="3">Asc 3</option>
                             </select>
-                            <input type="number" id="asc-skill-target-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="-" min="1" max="100" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
+                            <input type="number" id="asc-skill-target-lv" class="calc-input-chunky hide-spinners" style="width: 60px; text-align: center;" placeholder="-" min="1" max="150" oninput="updateWeekly()" onblur="if(typeof validateLevelOnBlur === 'function') validateLevelOnBlur(this, true); updateWeekly()">
                         </div>
                     </div>
                 </div>
@@ -1283,309 +1586,6 @@ const HTML_WEEKLY = `
 </div>
 `;
 
-const HTML_EQUIPMENT = `
-<style>
-    /* EQUIPMENT TYPOGRAPHY RESET */
-    #panel-equipment .eq-label {
-        font-family: 'Fredoka', sans-serif !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        color: #000000 !important;
-        -webkit-text-stroke: 0px transparent !important;
-        text-shadow: none !important;
-        letter-spacing: 0.5px;
-    }
-    #panel-equipment .eq-disclaimer {
-        font-family: 'Fredoka', sans-serif !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.5px;
-        font-size: 0.85rem !important;
-        color: #333333 !important;
-        text-align: center;
-        margin-bottom: 12px;
-        padding: 0 15px;
-        line-height: 1.3;
-        -webkit-text-stroke: 0px transparent !important;
-        text-shadow: none !important;
-    }
-    #panel-equipment .text-clean-black {
-        font-family: 'Fredoka', sans-serif !important;
-        font-weight: 600 !important;
-        color: #000000 !important;
-        -webkit-text-stroke: 0px transparent !important;
-        text-shadow: none !important;
-        letter-spacing: 0.5px;
-    }
-    #panel-equipment .text-clean-green {
-        font-family: 'Fredoka', sans-serif !important;
-        font-weight: 600 !important;
-        color: #198754 !important;
-        -webkit-text-stroke: 0px transparent !important;
-        text-shadow: none !important;
-        letter-spacing: 0.5px;
-    }
-    #panel-equipment .text-clean-arrow {
-        font-family: 'Fredoka', sans-serif !important;
-        font-weight: 700 !important;
-        color: #198754 !important;
-        margin: 0 8px;
-        -webkit-text-stroke: 0px transparent !important;
-        text-shadow: none !important;
-    }
-        /* Increase HP/DMG icon size ONLY in the Equipment Panel */
-#panel-equipment img[src*="icon_hp.png"], 
-#panel-equipment img[src*="icon_dmg.png"] {
-    width: 18px !important;  /* Adjust this number to change size */
-    height: 18px !important; /* Keep height same as width */
-}
-    
-    /* NEW: Header Button Style */
-    .header-info-btn {
-        width: 22px; 
-        height: 22px; 
-        background-color: #000; 
-        color: #fff; 
-        border-radius: 50%; 
-        display: none; /* Hidden by default, shown via JS */
-        align-items: center; 
-        justify-content: center; 
-        font-family: 'Fredoka', sans-serif; 
-        font-weight: bold; 
-        font-size: 0.9rem; 
-        cursor: pointer; 
-        user-select: none;
-        line-height: 1; 
-        padding-top: 1px; 
-        padding-left: 1px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        
-    }
-
-    #panel-equipment .eq-inline-group {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: 100% !important;
-    }
-    #panel-equipment .eq-inline-group > *,
-    #panel-equipment .eq-inline-group .calc-val-before,
-    #panel-equipment .eq-inline-group .calc-val-after {
-        display: inline-flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        width: auto !important;
-        margin: 0 3px !important;
-        white-space: nowrap !important;
-    }
-    #panel-equipment .eq-inline-group br {
-        display: none !important;
-    }
-
-    /* MOBILE FIX: Prevent single values from wrapping to the 2nd row */
-    @media (max-width: 768px) {
-        #panel-equipment .calc-val-group.single-val {
-            width: auto !important;
-            margin-left: auto !important;
-            justify-content: flex-end !important;
-        }
-        #panel-equipment .calc-val-group.single-val .calc-val-before {
-            width: auto !important; 
-        }
-    }
-</style>
-
-<div id="panel-equipment" class="sidebar-panel" style="display:none;">
-    <div class="log-container">
-
-        <div class="daily-card config-card">
-            <div class="daily-card-body">
-                
-                <div class="daily-input-row"><label class="daily-label">Ascension:</label>
-    <div class="war-select-group flex-center">
-        <select id="eq-ascension" class="war-select" style="width: 70px; font-size: 0.9rem; text-align: center;" onchange="if(typeof updateEquipment==='function') updateEquipment()">
-            <option value="0" selected>0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-        </select>
-    </div>
-</div>
-
-                <div class="daily-input-row"><label class="daily-label">Helmet:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-helmet-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option></select>
-                        <input type="text" inputmode="numeric" id="eq-helmet-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
-                    </div>
-                </div>
-
-                <div class="daily-input-row"><label class="daily-label">Armor:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-armor-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option></select>
-                        <input type="text" inputmode="numeric" id="eq-armor-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
-                    </div>
-                </div>
-
-                <div class="daily-input-row"><label class="daily-label">Boots:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-boots-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option></select>
-                        <input type="text" inputmode="numeric" id="eq-boots-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
-                    </div>
-                </div>
-
-                <div class="daily-input-row"><label class="daily-label">Belt:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-belt-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option></select>
-                        <input type="text" inputmode="numeric" id="eq-belt-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
-                    </div>
-                </div>
-
-                <div class="daily-input-row" style="padding-bottom: 2px;"><label class="daily-label" style="font-size: 1rem;">Weapon Type:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-weapon-type" class="war-select" style="width: 120px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()">
-                            <option value="Ranged" selected>Ranged</option><option value="Melee">Melee</option><option value="Melee+Shield">Melee+Shield</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="daily-input-row" style="padding-top: 2px;"><label class="daily-label">Weapon:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-weapon-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option></select>
-                        <input type="text" inputmode="numeric" id="eq-weapon-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
-                    </div>
-                </div>
-
-                <div class="daily-input-row"><label class="daily-label">Gloves:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-gloves-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option></select>
-                        <input type="text" inputmode="numeric" id="eq-gloves-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
-                    </div>
-                </div>
-
-                <div class="daily-input-row"><label class="daily-label">Necklace:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-neck-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option></select>
-                        <input type="text" inputmode="numeric" id="eq-neck-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
-                    </div>
-                </div>
-
-                <div class="daily-input-row"><label class="daily-label">Ring:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-ring-tier" class="war-select" style="width: 110px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()"><option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option></select>
-                        <input type="text" inputmode="numeric" id="eq-ring-lvl" class="daily-input" style="width: 60px;" value="Lv 1" onfocus="this.value = this.value.replace(/[^0-9]/g, '');" onblur="let v = this.value.replace(/[^0-9]/g, ''); if(!v) v = '1'; this.value = 'Lv ' + v; if(typeof updateEquipment==='function') updateEquipment();" oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 149) this.value = '149'; if(typeof updateEquipment==='function') updateEquipment();">
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="daily-card">
-            <div class="daily-card-header strip-green">
-                <span class="daily-header-title">HEALTH AND DAMAGE</span>
-            </div>
-            <div class="daily-card-body">
-                
-                <div class="calc-line" style="background-color: #ecf0f1; border: 2px solid #000; margin-bottom: 10px; padding: 10px 5px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-    <div class="eq-inline-group" id="eq-res-total-hp"></div>
-    <div class="eq-inline-group" id="eq-res-total-dmg"></div>
-</div>
-
-                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
-                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqhelmet.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Helmet</span></div>
-                    <div class="calc-val-group" id="eq-res-helmet"></div>
-                </div>
-                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
-                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqarmor.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Armor</span></div>
-                    <div class="calc-val-group" id="eq-res-armor"></div>
-                </div>
-                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
-                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqboots.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Boots</span></div>
-                    <div class="calc-val-group" id="eq-res-boots"></div>
-                </div>
-                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
-                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqbelt.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Belt</span></div>
-                    <div class="calc-val-group" id="eq-res-belt"></div>
-                </div>
-                
-                <div class="calc-line" id="eq-line-shield" style="background-color: #ecf0f1; padding-left: 10px; display: none;">
-                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqshield.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Shield</span></div>
-                    <div class="calc-val-group" id="eq-res-shield"></div>
-                </div>
-
-                <hr class="pet-hr">
-
-                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
-                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqweapon.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Weapon</span></div>
-                    <div class="calc-val-group" id="eq-res-weapon"></div>
-                </div>
-                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
-                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqgloves.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Gloves</span></div>
-                    <div class="calc-val-group" id="eq-res-gloves"></div>
-                </div>
-                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
-                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqneck.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Necklace</span></div>
-                    <div class="calc-val-group" id="eq-res-neck"></div>
-                </div>
-                <div class="calc-line" style="background-color: #ecf0f1; padding-left: 10px;">
-                    <div class="calc-label-flex" style="width: 110px; flex-shrink: 0; display: flex; align-items: center; gap: 8px;"><div style="width: 30px; height: 30px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center;"><img src="icons/eqring.png" style="width: 22px; height: 22px; object-fit: contain;"></div><span class="eq-label">Ring</span></div>
-                    <div class="calc-val-group" id="eq-res-ring"></div>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="daily-card">
-            <div class="daily-card-header strip-orange" style="text-align: center;">
-    <span class="daily-header-title">MAX RANGE LEVEL&nbsp;<button id="btn-eq-range-info" class="header-info-btn" style="vertical-align: middle; margin-bottom: 3px; border: none; padding: 0;">i</button></span>
-</div>
-            <div class="daily-card-body">
-                
-                <div id="eq-range-container">
-                </div>
-            </div>
-        </div>
-
-        <div class="daily-card">
-            <div class="daily-card-header strip-green" style="text-align: center;">
-                <span class="daily-header-title">AVERAGE HEALTH / DAMAGE AT MAX RANGE&nbsp;<button id="btn-eq-avg-info" class="header-info-btn" style="vertical-align: middle; margin-bottom: 3px; border: none; padding: 0;">i</button></span>
-            </div>
-            <div class="daily-card-body">
-                
-                <div class="daily-input-row" style="padding-bottom: 2px;"><label class="daily-label">Item Tier:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-avg-tier" class="war-select" style="width: 130px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()">
-                            <option value="Primitive">Primitive</option><option value="Medieval">Medieval</option><option value="Early-Modern">Early-Modern</option><option value="Modern">Modern</option><option value="Space">Space</option><option value="Interstellar">Interstellar</option><option value="Multiverse">Multiverse</option><option value="Quantum" selected>Quantum</option><option value="Underworld">Underworld</option><option value="Divine">Divine</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="daily-input-row" style="padding-bottom: 10px;"><label class="daily-label">Weapon Type:</label>
-                    <div class="war-select-group flex-center">
-                        <select id="eq-avg-weapon-type" class="war-select" style="width: 130px; font-size: 0.9rem;" onchange="if(typeof updateEquipment==='function') updateEquipment()">
-                            <option value="Ranged" selected>Ranged</option><option value="Melee">Melee</option><option value="Melee+Shield">Melee+Shield</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="eq-avg-stats-container"></div>
-            </div>
-        </div>
-
-        <div class="daily-card">
-            <div class="daily-card-header strip-blue" style="text-align: center;">
-    <span class="daily-header-title">AVERAGE ITEM SELL PRICE&nbsp;<button id="btn-eq-sell-info" class="header-info-btn" style="vertical-align: middle; margin-bottom: 3px; border: none; padding: 0;">i</button></span>
-</div>
-            <div class="daily-card-body">
-                
-                <div id="eq-sell-container">
-                </div>
-            </div>
-        </div>
-
-    </div>
-</div>
-`;
-
 const HTML_SUMMON = `
 <div id="panel-summon" class="sidebar-panel" style="display: none;">
     <div class="calc-container">
@@ -1611,7 +1611,7 @@ const HTML_SUMMON = `
                                     <option value="2">Asc 2</option>
                                     <option value="3">Asc 3</option>
                                 </select>
-                                <input type="number" id="sum-skill-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updateSummonCap('skill'); updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, false); updateSummonCap('skill'); updateSummonCalc('skill')">
+                                <input type="number" id="sum-skill-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="150" oninput="updateSummonCap('skill'); updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, false); updateSummonCap('skill'); updateSummonCalc('skill')">
                             </div>
                         </div>
                         <div class="calc-row-input">
@@ -1634,7 +1634,7 @@ const HTML_SUMMON = `
                                     <option value="2">Asc 2</option>
                                     <option value="3">Asc 3</option>
                                 </select>
-                                <input type="number" id="sum-skill-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="100" oninput="updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('skill')">
+                                <input type="number" id="sum-skill-target-lv" class="calc-input-chunky" style="width: 60px;" placeholder="-" min="1" max="150" oninput="updateSummonCalc('skill')" onblur="validateLevelOnBlur(this, true); updateSummonCalc('skill')">
                             </div>
                         </div>
                     </div>

@@ -106,7 +106,7 @@ function validateLevelOnBlur(el, isTarget = false) {
         const ascId = targetMode ? `${prefix}-${type}-target-asc` : `${prefix}-${type}-asc`;
         const asc = parseInt(document.getElementById(ascId)?.value) || 0;
 
-        if (asc === 3 && (type === 'pet' || type === 'mount')) {
+        if (asc === 3 && (type === 'skill' || type === 'pet' || type === 'mount')) {
             maxLv = 150;
         }
     }

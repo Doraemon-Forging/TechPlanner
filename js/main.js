@@ -645,7 +645,10 @@ function loadState(d) {
 
     try {
         if (d.equipmentData) {
-            safeSetVal('eq-ascension', d.equipmentData.ascension !== undefined ? d.equipmentData.ascension : 0);
+            const eqAsc = d.equipmentData.ascension !== undefined ? d.equipmentData.ascension : 0;
+            safeSetVal('eq-ascension', eqAsc);
+            if (typeof syncEqAscensionTiers === 'function') syncEqAscensionTiers(parseInt(eqAsc) || 0);
+
             safeSetVal('eq-helmet-tier', d.equipmentData.helmet?.tier); safeSetVal('eq-helmet-lvl', d.equipmentData.helmet?.lvl);
             safeSetVal('eq-armor-tier', d.equipmentData.armor?.tier); safeSetVal('eq-armor-lvl', d.equipmentData.armor?.lvl);
             safeSetVal('eq-boots-tier', d.equipmentData.boots?.tier); safeSetVal('eq-boots-lvl', d.equipmentData.boots?.lvl);
