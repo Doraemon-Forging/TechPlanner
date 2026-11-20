@@ -454,9 +454,9 @@ function getDynamicMilestones(type, config) {
     // Heroic, Infinity, and Eternal ONLY exist in Ascension 3
     if (maxLv3 > 100) {
         dynamicMilestones.push(
-            { name: "Heroic", index: 7, color: "#fe0000", targetLv: 0, ascension: 3 },
-            { name: "Infinite", index: 8, color: "#228bff", targetLv: 0, ascension: 3 },
-            { name: "Eternal", index: 9, color: "#a5d801", targetLv: 0, ascension: 3 }
+            { name: "Heroic", index: 7, color: "#e64330", targetLv: 0, ascension: 3 },
+            { name: "Infinite", index: 8, color: "#218cfe", targetLv: 0, ascension: 3 },
+            { name: "Eternal", index: 9, color: "#a4d700", targetLv: 0, ascension: 3 }
         );
     }
 
@@ -817,9 +817,9 @@ function calculateUniversalYieldTable(type, config, sLv, sExp, sAsc, pullsB, pul
         { bg: '#fcfe5d' }, // Legendary
         { bg: '#ff5c5d' }, // Ultimate
         { bg: '#d55cff' }, // Mythic
-        { bg: '#fe0000' }, // Heroic (Ascension 3 only)
-        { bg: '#228bff' }, // Infinite (Ascension 3 only)
-        { bg: '#a5d801' }  // Eternal (Ascension 3 only)
+        { bg: '#e64330' }, // Heroic (Ascension 3 only)
+        { bg: '#218cfe' }, // Infinite (Ascension 3 only)
+        { bg: '#a4d700' }  // Eternal (Ascension 3 only)
     ];
 
     let html = '';

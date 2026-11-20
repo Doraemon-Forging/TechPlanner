@@ -305,7 +305,8 @@ function updateStatsRefTable() {
     const TIER_MULTS = {
         "Primitive": 1, "Medieval": Math.pow(4, 1), "Early-Modern": Math.pow(4, 2), "Modern": Math.pow(4, 3),
         "Space": Math.pow(4, 4), "Interstellar": Math.pow(4, 5), "Multiverse": Math.pow(4, 6),
-        "Quantum": Math.pow(4, 7), "Underworld": Math.pow(4, 8), "Divine": Math.pow(4, 9)
+        "Quantum": Math.pow(4, 7), "Underworld": Math.pow(4, 8), "Divine": Math.pow(4, 9), 
+        "Heroic": Math.pow(4, 10), "Infinite": Math.pow(4, 11), "Eternal": Math.pow(4, 12)
     };
 
     const ASC_MULTS = [1, 50, 2500, 125000];
@@ -511,7 +512,7 @@ function showForgeTable(type, cur, proj) {
     let totalValBefore = 0;
     let totalValAfter = 0;
 
-    for (let i = 1; i <= 34; i++) {
+    for (let i = 1; i <= 49; i++) {
         if (!forgeLevelData[i]) continue;
         const [cost, hours] = forgeLevelData[i];
         let v1, v2; 
@@ -611,18 +612,56 @@ function openEqSellBreakdownModal(currentAvg, fromLevel, fromBonus, finalAvg) {
     setTimeout(updateSellRefTable, 50);
 }
 
+function syncRefStatsAscensionTiers() {
+    const ascEl = document.getElementById('ref-stats-ascension');
+    const tierEl = document.getElementById('ref-stats-tier');
+    if (!ascEl || !tierEl) return;
+
+    const isAsc3 = parseInt(ascEl.value) === 3;
+    const asc3Tiers = ['Heroic', 'Infinite', 'Eternal'];
+
+    if (isAsc3) {
+        asc3Tiers.forEach(tierName => {
+            if (!Array.from(tierEl.options).some(opt => opt.value === tierName)) {
+                const opt = document.createElement('option');
+                opt.value = tierName;
+                opt.textContent = tierName;
+                tierEl.appendChild(opt);
+            }
+        });
+    } else {
+        if (asc3Tiers.includes(tierEl.value)) {
+            tierEl.value = 'Divine';
+        }
+        Array.from(tierEl.options).forEach(opt => {
+            if (asc3Tiers.includes(opt.value)) {
+                opt.remove();
+            }
+        });
+    }
+}
+
 function openEqAvgBreakdownModal(hpB, hpM, hpA, dmgB, dmgM, dmgA) {
     const hpFromLevel = hpM - hpB; const hpFromBonus = hpA - hpM;
     const dmgFromLevel = dmgM - dmgB; const dmgFromBonus = dmgA - dmgM;
     const fmt = (val) => typeof formatCombatStat === 'function' ? formatCombatStat(val) : val.toLocaleString();
     const fontStyle = "font-family: 'Fredoka', sans-serif; -webkit-text-stroke: 0px;";
 
-    const savedTier = (window.refTablePrefs && window.refTablePrefs.statsTier) ? window.refTablePrefs.statsTier : 'Quantum';
-    const savedMastery = (window.refTablePrefs && window.refTablePrefs.statsMastery) ? window.refTablePrefs.statsMastery : 0;
     const savedAscension = (window.refTablePrefs && window.refTablePrefs.statsAscension) !== undefined ? window.refTablePrefs.statsAscension : 0;
+    let savedTier = (window.refTablePrefs && window.refTablePrefs.statsTier) ? window.refTablePrefs.statsTier : 'Quantum';
+    if (parseInt(savedAscension) !== 3 && ['Heroic', 'Infinite', 'Eternal'].includes(savedTier)) {
+        savedTier = 'Divine';
+    }
+    const savedMastery = (window.refTablePrefs && window.refTablePrefs.statsMastery) ? window.refTablePrefs.statsMastery : 0;
     
     const isSel = (val) => val === savedTier ? 'selected' : '';
     const isAscSel = (val) => val == savedAscension ? 'selected' : '';
+
+    const asc3OptionsHtml = parseInt(savedAscension) === 3 ? `
+        <option value="Heroic" ${isSel('Heroic')}>Heroic</option>
+        <option value="Infinite" ${isSel('Infinite')}>Infinite</option>
+        <option value="Eternal" ${isSel('Eternal')}>Eternal</option>
+    ` : '';
 
     const createRow = (label, val, icon, isGain, isTotal) => {
         const colorClass = (isGain && val > 0) || isTotal ? 'color: #198754;' : 'color: #000;';
@@ -651,7 +690,7 @@ function openEqAvgBreakdownModal(hpB, hpM, hpA, dmgB, dmgM, dmgA) {
         <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="${fontStyle} font-weight: 600; color: #000; font-size: 0.95rem;">Ascension:</span>
-                <select id="ref-stats-ascension" onchange="updateStatsRefTable()" style="width: 70px; height: 32px; border: 2px solid #000000; border-radius: 6px; font-family: 'Fredoka', sans-serif; font-weight: 600; outline: none; text-align: center; text-align-last: center; -webkit-text-stroke: 0px transparent !important; background-color: #ffffff;">
+                <select id="ref-stats-ascension" onchange="syncRefStatsAscensionTiers(); updateStatsRefTable()" style="width: 70px; height: 32px; border: 2px solid #000000; border-radius: 6px; font-family: 'Fredoka', sans-serif; font-weight: 600; outline: none; text-align: center; text-align-last: center; -webkit-text-stroke: 0px transparent !important; background-color: #ffffff;">
                     <option value="0" ${isAscSel(0)}>0</option>
                     <option value="1" ${isAscSel(1)}>1</option>
                     <option value="2" ${isAscSel(2)}>2</option>
@@ -671,6 +710,7 @@ function openEqAvgBreakdownModal(hpB, hpM, hpA, dmgB, dmgM, dmgA) {
                     <option value="Quantum" ${isSel('Quantum')}>Quantum</option>
                     <option value="Underworld" ${isSel('Underworld')}>Underworld</option>
                     <option value="Divine" ${isSel('Divine')}>Divine</option>
+                    ${asc3OptionsHtml}
                 </select>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -698,7 +738,10 @@ function openEqAvgBreakdownModal(hpB, hpM, hpA, dmgB, dmgM, dmgA) {
     `;
 
     renderMasterModal('eqAvgBreakdown', fullHtml);
-    setTimeout(updateStatsRefTable, 50);
+    setTimeout(() => {
+        syncRefStatsAscensionTiers();
+        updateStatsRefTable();
+    }, 50);
 }
 
 function openEqRangeModal() {
@@ -1096,7 +1139,7 @@ function openForgeProbModal(levelOverride = null) {
     }
 
     if (currentForgeProbModalLevel < 1) currentForgeProbModalLevel = 1;
-    if (currentForgeProbModalLevel > 35) currentForgeProbModalLevel = 35;
+    if (currentForgeProbModalLevel > 50) currentForgeProbModalLevel = 50;
 
     let listHtml = '';
     const rates = typeof CALC_FORGE_RATES !== 'undefined' ? CALC_FORGE_RATES[currentForgeProbModalLevel] : null;
@@ -1104,18 +1147,15 @@ function openForgeProbModal(levelOverride = null) {
     if (!rates) {
         listHtml = `<div style="text-align:center; padding: 20px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000;">Data not available for Level ${currentForgeProbModalLevel}</div>`;
     } else {
-        const TIER_NAMES = ["Primitive", "Medieval", "Early-Modern", "Modern", "Space", "Interstellar", "Multiverse", "Quantum", "Underworld", "Divine"];
-        const TIER_COLORS = ['#f1f2f6', '#5cd8fe', '#5dfe8a', '#fcfe5d', '#ff5c5d', '#d55cff', '#74feee', '#7d5eff', '#b07879', '#fe9e0c'];
-        
         const fontStyle = "font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000; -webkit-text-stroke: 0px;";
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < FORGE_TIER_NAMES.length; i++) {
             if (rates[i] > 0) { 
                 const formattedRate = rates[i] < 1 ? rates[i].toFixed(2) : rates[i].toFixed(1);
 
                 listHtml += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin-bottom: 6px; background-color: ${TIER_COLORS[i]}; border-radius: 8px;">
-                    <span style="${fontStyle}">${TIER_NAMES[i]}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin-bottom: 6px; background-color: ${FORGE_TIER_COLORS[i]}; border-radius: 8px;">
+                    <span style="${fontStyle}">${FORGE_TIER_NAMES[i]}</span>
                     <span style="${fontStyle}">${formattedRate}%</span>
                 </div>`;
             }

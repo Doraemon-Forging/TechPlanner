@@ -228,6 +228,20 @@ function renderStats() {
 // 2. FORGE CALCULATOR
 // ==========================================
 
+const FORGE_TIER_NAMES = [
+    "Primitive", "Medieval", "Early-Modern", "Modern", "Space",
+    "Interstellar", "Multiverse", "Quantum", "Underworld", "Divine",
+    "Heroic", "Infinite", "Eternal"
+];
+
+const FORGE_TIER_COLORS = [
+    '#f1f2f6', '#5cd8fe', '#5dfe8a', '#fcfe5d', '#ff5c5d',
+    '#d55cff', '#74feee', '#7d5eff', '#b07879', '#fe9e0c',
+    '#e64330', '#218cfe', '#a4d700'
+];
+
+const getMaxForgeLevel = (asc) => (parseInt(asc) === 3 ? 50 : 35);
+
 function populateForgeDropdown() {
     const ascEl = document.getElementById('calc-forge-asc');
     const lvEl = document.getElementById('calc-forge-lv'); 
@@ -255,6 +269,14 @@ function syncTargetForgeDropdown() {
     
     let curAsc = parseInt(curAscEl.value) || 0;
     let curLv = parseInt(curLvEl.value) || 1;
+    const maxCurLv = getMaxForgeLevel(curAsc);
+
+    if (curLv > maxCurLv) curLv = maxCurLv;
+    curLvEl.innerHTML = "";
+    for (let i = 1; i <= maxCurLv; i++) {
+        curLvEl.add(new Option(i, i));
+    }
+    curLvEl.value = curLv;
     
     let oldTargetAsc = targetAscEl.value;
     let oldTargetLv = targetLvEl.value;
@@ -263,12 +285,12 @@ function syncTargetForgeDropdown() {
     targetAscEl.disabled = false;
     targetAscEl.style.opacity = "1";
     
-    if (curAsc === 3 && curLv === 35) {
+    if (curAsc === 3 && curLv === 50) {
         targetAscEl.add(new Option("Asc 3", 3));
         targetAscEl.value = 3;
         targetLvEl.innerHTML = "";
-        targetLvEl.add(new Option("MAX", 35));
-        targetLvEl.value = 35;
+        targetLvEl.add(new Option("MAX", 50));
+        targetLvEl.value = 50;
         targetLvEl.disabled = true;
         targetLvEl.style.opacity = "0.5";
         return;
@@ -285,6 +307,7 @@ function syncTargetForgeDropdown() {
     }
     
     let selTargetAsc = parseInt(targetAscEl.value);
+    const maxTargetLv = getMaxForgeLevel(selTargetAsc);
 
     targetLvEl.innerHTML = "";
     targetLvEl.disabled = false;
@@ -292,7 +315,7 @@ function syncTargetForgeDropdown() {
 
     let startLv = (selTargetAsc === curAsc) ? curLv + 1 : 1;
     
-    for (let i = startLv; i <= 35; i++) {
+    for (let i = startLv; i <= maxTargetLv; i++) {
         targetLvEl.add(new Option(i, i));
     }
 
@@ -301,13 +324,13 @@ function syncTargetForgeDropdown() {
     }
 
     if (oldTargetLv === "Ascend") {
-        targetLvEl.value = (selTargetAsc < 3) ? "Ascend" : 35;
+        targetLvEl.value = (selTargetAsc < 3) ? "Ascend" : maxTargetLv;
     } else {
         let pLv = parseInt(oldTargetLv);
-        if (!isNaN(pLv) && pLv >= startLv && pLv <= 35) {
+        if (!isNaN(pLv) && pLv >= startLv && pLv <= maxTargetLv) {
             targetLvEl.value = pLv;
         } else {
-            targetLvEl.value = (startLv <= 35) ? startLv : "Ascend";
+            targetLvEl.value = (startLv <= maxTargetLv) ? startLv : "Ascend";
         }
     }
 }
@@ -391,7 +414,7 @@ function updateCalculator() {
     const gTarget = parseFloat(targetEl.value.replace(/,/g, '')) || 0;
     
     const fAsc = parseInt(document.getElementById('calc-forge-asc').value) || 0;
-    const fLv = parseInt(document.getElementById('calc-forge-lv').value) || 1; 
+    const fLv = Math.min(parseInt(document.getElementById('calc-forge-lv').value) || 1, getMaxForgeLevel(fAsc)); 
 
     if (document.activeElement !== hammerEl) hammerEl.value = hIn > 0 ? hIn.toLocaleString('en-US') : (hammerEl.value ? '0' : '');
     if (document.activeElement !== targetEl) targetEl.value = gTarget > 0 ? gTarget.toLocaleString('en-US') : (targetEl.value ? '0' : '');
@@ -479,16 +502,14 @@ function updateCalculator() {
                         <div style="font-family: 'Fredoka', sans-serif; font-weight: 600 !important; letter-spacing: 0.5px; font-size: 1rem; text-align: center; margin-bottom: 10px; color: #000000; -webkit-text-stroke: 0px #7f8c8d; paint-order: stroke fill;">Expected Item Yield</div>`;    
     
     const rates = typeof CALC_FORGE_RATES !== 'undefined' ? CALC_FORGE_RATES[fLv] || CALC_FORGE_RATES[1] : [];
-    const TIER_NAMES = ["Primitive", "Medieval", "Early-Modern", "Modern", "Space", "Interstellar", "Multiverse", "Quantum", "Underworld", "Divine"];
-    const TIER_COLORS = ['#f1f2f6', '#5cd8fe', '#5dfe8a', '#fcfe5d', '#ff5c5d', '#d55cff', '#74feee', '#7d5eff', '#b07879', '#fe9e0c'];
     
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < FORGE_TIER_NAMES.length; i++) {
         if (rates[i] > 0) {
             const amountB = effH1 * (rates[i] / 100);
             const amountA = effH2 * (rates[i] / 100);
             
-            yieldHtml += `<div class="calc-line" style="background-color: ${TIER_COLORS[i]}; border-bottom: none; color: #000;">
-                <div class="calc-label" style="color: #000;">${TIER_NAMES[i]}</div>
+            yieldHtml += `<div class="calc-line" style="background-color: ${FORGE_TIER_COLORS[i]}; border-bottom: none; color: #000;">
+                <div class="calc-label" style="color: #000;">${FORGE_TIER_NAMES[i]}</div>
                 ${renderForgeGroup(amountB, amountA, null, 'yield')}
             </div>`;
         }
@@ -513,12 +534,12 @@ function updateCalculator() {
         window.ongoingForgeSnapshot = null;
     }
 
-    if (fAsc === 3 && fLv === 35) {
+    if (fAsc === 3 && fLv === 50) {
         let h5 = genLine('Cost', '-', '-', 'fm_gold', 'standard');
         h5 += genLine('Finish', '-', '-', null, 'standard');
         h5 += genLine('Duration', '-', '-', null, 'standard');
         if (res5) res5.innerHTML = h5;
-    } else if (fLv === 35) {
+    } else if (fAsc < 3 && fLv === 35) {
         let h5 = genLine('Cost', 3000000, 3000000, 'fm_gold', 'gold');
         h5 += genLine('Finish', '-', '-', null, 'standard');
         h5 += genLine('Duration', 0, 0, null, 'time'); 
@@ -560,7 +581,7 @@ function updateCalculator() {
         if (res5) res5.innerHTML = h5;
     }
 
-    if (fAsc === 3 && fLv === 35) {
+    if (fAsc === 3 && fLv === 50) {
         let hTarget = genLine('Total Cost', '-', '-', 'fm_gold', 'standard');
         hTarget += genLine('Finish', '-', '-', null, 'standard');
         hTarget += genLine('Total Duration', '-', '-', null, 'standard');
@@ -603,7 +624,7 @@ function updateCalculator() {
         window.currentForgeSchedule = [];
 
         while (cAsc < tAsc || (cAsc === tAsc && cLv < endLv)) {
-            if (cLv === 35) {
+            if (cAsc < 3 && cLv === 35) {
                 totalCostCur += 3000000;
                 totalCostProj += 3000000;
                 
@@ -734,7 +755,7 @@ function updateCalculator() {
             }
         }
 
-        if (isAscendTarget && cAsc === tAsc && cLv === 35) {
+        if (isAscendTarget && cAsc < 3 && cAsc === tAsc && cLv === 35) {
             totalCostCur += 3000000;
             totalCostProj += 3000000;
             
@@ -784,6 +805,12 @@ function syncCalcMobileDate(isoStr) { if(!isoStr) return; const d = new Date(iso
 
 let eggPlanQueue = []; let eggInsertIdx = -1; let expandedEggIdx = -1;
 let eggHistoryStack = []; let eggRedoStack = [];
+let eggDeleteModeActive = false;
+
+const EGG_WAR_KEYS = [
+    'common', 'rare', 'epic', 'legendary',
+    'ultimate', 'mythic', 'heroic', 'infinite', 'eternal'
+];
 
 window.getClanEggLvl = function(id) {
     const memMap = { 
@@ -793,7 +820,9 @@ window.getClanEggLvl = function(id) {
         'egg4': 'eggTimerLegendary', 
         'egg5': 'eggTimerUltimate', 
         'egg6': 'eggTimerMythic',
-        'egg7': 'eggTimerHeroic'
+        'egg7': 'eggTimerHeroic',
+        'egg8': 'eggTimerInfinite',
+        'egg9': 'eggTimerEternal'
     };
     const domMap = { 
         'egg1': 'ct-egg-timer-common', 
@@ -802,7 +831,9 @@ window.getClanEggLvl = function(id) {
         'egg4': 'ct-egg-timer-legendary', 
         'egg5': 'ct-egg-timer-ultimate', 
         'egg6': 'ct-egg-timer-mythic',
-        'egg7': 'ct-egg-timer-heroic'
+        'egg7': 'ct-egg-timer-heroic',
+        'egg8': 'ct-egg-timer-infinite',
+        'egg9': 'ct-egg-timer-eternal'
     };
     
     let val = 0;
@@ -815,10 +846,120 @@ window.getClanEggLvl = function(id) {
     return val;
 };
 
-function captureEggState() { return { queue: JSON.parse(JSON.stringify(eggPlanQueue)), start: document.getElementById('egg-date-desktop').value }; }
+// Returns 3 for War Day 3 (+48h), 5 for War Day 5 (+96h), or 0 outside those windows
+function getEggWarDay(date) {
+    try {
+        if (!date || isNaN(date.getTime()) || typeof warConfig === 'undefined') return 0;
+
+        const d = date.getDay();
+        const h = date.getHours();
+        const m = date.getMinutes();
+
+        let startH = Number(warConfig.hour);
+        if (startH === 12) startH = (warConfig.ampm === 'PM') ? 12 : 0;
+        else if (warConfig.ampm === 'PM') startH += 12;
+
+        const startM = Number(warConfig.min) || 0;
+        const curH = (d * 24) + h + (m / 60);
+        const warH = Number((Number(warConfig.day) * 24) + startH + (startM / 60));
+
+        const check = (off) => {
+            let s = Number(off) % 168;
+            if (s < 0) s += 168;
+            const e = (s + 24) % 168;
+            return (e > s) ? (curH >= s && curH < e) : (curH >= s || curH < e);
+        };
+
+        if (check(warH + 48)) return 3;
+        if (check(warH + 96)) return 5;
+        return 0;
+    } catch (err) {
+        console.error("Error calculating egg war day:", err);
+        return 0;
+    }
+}
+
+function getEggWarWeekClass(finishDate) {
+    const d = new Date(finishDate);
+    const dayOfWeek = d.getDay() || 7;
+    d.setDate(d.getDate() - dayOfWeek + 1);
+    const daysSinceEpoch = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+    const absoluteWeeks = Math.floor((daysSinceEpoch - 3) / 7);
+    return (absoluteWeeks % 2 === 0) ? 'war-active-w2' : 'war-active-w1';
+}
+
+function getEggWarPoints(eggKey, warDay) {
+    if (warDay !== 3 && warDay !== 5) return 0;
+
+    const idx = EGG_WAR_KEYS.indexOf(eggKey);
+    const basePts = (idx > -1 && typeof WAR_POINTS_BASE !== 'undefined' && Array.isArray(WAR_POINTS_BASE.eggHatch))
+        ? (WAR_POINTS_BASE.eggHatch[idx] || 0)
+        : 0;
+
+    if (basePts <= 0) return 0;
+
+    const mult = typeof getClanTechMult === 'function'
+        ? getClanTechMult('cwHatch', warDay)
+        : (() => {
+            const getTechBonus = (lv) => (lv <= 10) ? (lv * 0.04) : ((10 * 0.04) + ((lv - 10) * 0.01));
+            const actionLv = parseInt(window.clanTechMemory?.cwHatch || 0);
+            const dayLv = parseInt(window.clanTechMemory?.[`cwDay${warDay}`] || 0);
+            return 1 + getTechBonus(actionLv) + getTechBonus(dayLv);
+        })();
+
+    return Math.round(basePts * mult);
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('techPlannerUpdated', () => {
+        if (typeof renderEggLog === 'function') renderEggLog();
+    });
+}
+
+function formatEggTotalTime(mins) {
+    const totalSec = Math.max(0, Math.round(mins * 60));
+    if (totalSec >= 86400) {
+        const d = Math.floor(totalSec / 86400);
+        const h = Math.floor((totalSec % 86400) / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        return `${d}d ${h}h ${m}m`;
+    }
+    return typeof formatEggTime === 'function'
+        ? formatEggTime(mins)
+        : `${Math.floor(totalSec / 3600)}h ${Math.floor((totalSec % 3600) / 60)}m ${totalSec % 60}s`;
+}
+
+function captureEggState() {
+    const dateEl = document.getElementById('egg-date-desktop');
+    return { queue: JSON.parse(JSON.stringify(eggPlanQueue)), start: dateEl ? dateEl.value : '' };
+}
 function pushEggHistory() { if (eggHistoryStack.length > 50) eggHistoryStack.shift(); eggHistoryStack.push(captureEggState()); eggRedoStack = []; updateEggUndoButtons(); }
-function undoEgg() { if (eggHistoryStack.length === 0) return; eggRedoStack.push(captureEggState()); const state = eggHistoryStack.pop(); eggPlanQueue = state.queue; if (state.start) syncEggDate(state.start, false); renderEggLog(); updateEggUndoButtons(); if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); }
-function redoEgg() { if (eggRedoStack.length === 0) return; eggHistoryStack.push(captureEggState()); const state = eggRedoStack.pop(); eggPlanQueue = state.queue; if (state.start) syncEggDate(state.start, false); renderEggLog(); updateEggUndoButtons(); if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); }
+function undoEgg() {
+    if (eggHistoryStack.length === 0) return;
+    if (eggInsertIdx > -1) cancelEggInsert();
+    if (eggDeleteModeActive) cancelEggDeleteMode();
+    expandedEggIdx = -1;
+    eggRedoStack.push(captureEggState());
+    const state = eggHistoryStack.pop();
+    eggPlanQueue = state.queue;
+    if (state.start) syncEggDate(state.start, false);
+    renderEggLog();
+    updateEggUndoButtons();
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+}
+function redoEgg() {
+    if (eggRedoStack.length === 0) return;
+    if (eggInsertIdx > -1) cancelEggInsert();
+    if (eggDeleteModeActive) cancelEggDeleteMode();
+    expandedEggIdx = -1;
+    eggHistoryStack.push(captureEggState());
+    const state = eggRedoStack.pop();
+    eggPlanQueue = state.queue;
+    if (state.start) syncEggDate(state.start, false);
+    renderEggLog();
+    updateEggUndoButtons();
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+}
 function updateEggUndoButtons() {
     const hasH = eggHistoryStack.length > 0; const hasR = eggRedoStack.length > 0;
     const upd = (id, on) => { const el = document.getElementById(id); if (el) { el.disabled = !on; el.style.opacity = !on ? "0.3" : "1"; el.style.pointerEvents = !on ? "none" : "auto"; } };
@@ -830,27 +971,77 @@ function populateEggDropdowns() { populateDateDropdowns(); }
 function getEggSpeedAtTime(techIdSuffix, targetTimeMs) {
     let personalLvl = 0; 
     for (let t = 1; t <= 6; t++) { personalLvl += (setupLevels[`spt_T${t}_${techIdSuffix}`] || 0); }
-    let mainStartTime = new Date(document.getElementById('start-date').value).getTime();
+
+    const startEl = document.getElementById('start-date');
+    const mainStartTime = (startEl && startEl.value) ? new Date(startEl.value).getTime() : Date.now();
     
     let techState = calcState(); 
     let runningTimeOffset = 0;
     techState.history.forEach(h => { 
         let stepDuration = (h.type === 'delay' ? h.mins : h.added); 
         runningTimeOffset += stepDuration; 
-        if (h.id && h.id.endsWith(techIdSuffix)) { 
+        if (h.tree === 'spt' && h.id && h.id.split('_')[2] === techIdSuffix) { 
             let techFinishTime = mainStartTime + (runningTimeOffset * 60000); 
             if (techFinishTime <= targetTimeMs) personalLvl++; 
         } 
     });
     
+    const highSpeedIds = ['egg7', 'egg8', 'egg9'];
+    const fallbackRate = highSpeedIds.includes(techIdSuffix) ? 0.60 : 0.10;
     const ratePerLvl = (typeof TREES !== 'undefined' && TREES.spt?.meta?.[techIdSuffix]?.rate)
         ? TREES.spt.meta[techIdSuffix].rate / 100
-        : 0.10;
+        : fallbackRate;
     let clanLvl = window.getClanEggLvl(techIdSuffix);
     return 1 + (personalLvl * ratePerLvl) + (clanLvl * 0.05);
 }
 
+function editEggGem(idx) {
+    if (eggDeleteModeActive) return;
+    const item = eggPlanQueue[idx];
+    if (!item || item.type !== 'egg') return;
+
+    const currentGems = item.gems || 0;
+    openPromptModal(`Edit Gem amount for this egg (currently ${currentGems}):\nEnter 0 to remove.`, (val) => {
+        if (val === null) return;
+        const parsed = parseInt(val);
+        const newGems = (isNaN(parsed) || parsed < 0) ? 0 : parsed;
+
+        if (newGems !== currentGems) {
+            pushEggHistory();
+            eggPlanQueue[idx].gems = newGems;
+            renderEggLog();
+            if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+        }
+    });
+}
+
+function attachEggCapsuleCancelBtn(onCancel) {
+    document.querySelectorAll('#capsule-egg .floating-cancel-btn, #float-egg .floating-cancel-btn').forEach(btn => btn.remove());
+
+    const capEgg = document.getElementById('capsule-egg');
+    if (capEgg) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn-move-action floating-cancel-btn';
+        cancelBtn.onclick = (e) => { e.stopPropagation(); onCancel(); };
+        cancelBtn.innerHTML = '<img src="icons/icon_cancel.png" class="btn-icon" style="width:16px; height:16px; margin-right:6px; display:block; filter:none;"> CANCEL';
+        capEgg.appendChild(cancelBtn);
+    }
+
+    const floatEgg = document.getElementById('float-egg');
+    if (floatEgg) {
+        const floatCap = floatEgg.querySelector('.control-capsule');
+        if (floatCap) {
+            const cancelBtnMobile = document.createElement('button');
+            cancelBtnMobile.className = 'btn-move-action floating-cancel-btn';
+            cancelBtnMobile.onclick = (e) => { e.stopPropagation(); onCancel(); };
+            cancelBtnMobile.innerHTML = '<img src="icons/icon_cancel.png" class="btn-icon" style="width:16px; height:16px; margin-right:6px; display:block; filter:none;"> CANCEL';
+            floatCap.appendChild(cancelBtnMobile);
+        }
+    }
+}
+
 function activateEggInsert(idx) { 
+    if (eggDeleteModeActive) cancelEggDeleteMode();
     eggInsertIdx = idx + 1; 
     expandedEggIdx = -1; 
     
@@ -858,29 +1049,12 @@ function activateEggInsert(idx) {
     if (eggBox) eggBox.classList.add('egg-insert-active'); 
     
     const capEgg = document.getElementById('capsule-egg');
-    if (capEgg) {
-        capEgg.classList.add('is-inserting');
-        if (!capEgg.querySelector('.floating-cancel-btn')) {
-            const cancelBtn = document.createElement('button');
-            cancelBtn.className = 'btn-move-action floating-cancel-btn';
-            cancelBtn.onclick = (e) => { e.stopPropagation(); cancelEggInsert(); };
-            cancelBtn.innerHTML = '<img src="icons/icon_cancel.png" class="btn-icon" style="width:16px; height:16px; margin-right:6px; display:block; filter:none;"> CANCEL';
-            capEgg.appendChild(cancelBtn);
-        }
-    }
+    if (capEgg) capEgg.classList.add('is-inserting');
 
     const floatEgg = document.getElementById('float-egg');
-    if (floatEgg) {
-        floatEgg.classList.add('is-inserting');
-        const floatCap = floatEgg.querySelector('.control-capsule');
-        if (floatCap && !floatCap.querySelector('.floating-cancel-btn')) {
-            const cancelBtnMobile = document.createElement('button');
-            cancelBtnMobile.className = 'btn-move-action floating-cancel-btn';
-            cancelBtnMobile.onclick = (e) => { e.stopPropagation(); cancelEggInsert(); };
-            cancelBtnMobile.innerHTML = '<img src="icons/icon_cancel.png" class="btn-icon" style="width:16px; height:16px; margin-right:6px; display:block; filter:none;"> CANCEL';
-            floatCap.appendChild(cancelBtnMobile);
-        }
-    }
+    if (floatEgg) floatEgg.classList.add('is-inserting');
+
+    attachEggCapsuleCancelBtn(cancelEggInsert);
 
     const wrappers = [
         document.querySelector('.sidebar-scroll-wrapper'),
@@ -905,11 +1079,17 @@ function cancelEggInsert() {
 
     const floatEgg = document.getElementById('float-egg');
     if (floatEgg) floatEgg.classList.remove('is-inserting');
+
+    document.querySelectorAll('#capsule-egg .floating-cancel-btn, #float-egg .floating-cancel-btn').forEach(btn => btn.remove());
     
     renderEggLog();
 }
 
-function toggleEggExp(i) { expandedEggIdx = expandedEggIdx === i ? -1 : i; renderEggLog(); }
+function toggleEggExp(i) {
+    if (eggDeleteModeActive) return;
+    expandedEggIdx = expandedEggIdx === i ? -1 : i;
+    renderEggLog();
+}
 
 function renderEggLog() {
     try {
@@ -921,15 +1101,36 @@ function renderEggLog() {
 
         const fragment = document.createDocumentFragment();
         let curTime = new Date(dateInput.value).getTime(); 
-        let totalQueueMins = 0; let totalPoints = 0;
+        let totalQueueMins = 0; 
+        let totalPoints = 0;
         
         eggPlanQueue.forEach((item, idx) => {
             const div = document.createElement('div');
+            const deleteModeClasses = eggDeleteModeActive ? ' drop-valid delete-mode-row' : '';
+            const actionButtons = eggDeleteModeActive ? `
+                <button class="btn-move-action btn-move-cancel" onclick="event.stopPropagation(); executeEggCut(${idx})" style="background-color: #e74c3c;">
+                    <img src="icons/icon_cancel.png" class="btn-icon" style="width:16px; height:16px; margin-right:6px; display:block; filter:none;"> CUT HERE
+                </button>
+            ` : '';
+            const rowClickAttr = eggDeleteModeActive ? '' : ` onclick="toggleEggExp(${idx})"`;
+
             if (item.type === 'delay') {
                 totalQueueMins += item.mins; curTime += item.mins * 60000;
-                const finishDate = new Date(curTime); const timeStr = finishDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-                div.className = `log-row ${expandedEggIdx === idx ? 'expanded' : ''}`;
-                div.innerHTML = `<div class="log-entry delay" onclick="toggleEggExp(${idx})"><div class="log-left-group"><div class="log-icon-wrapper desktop-only" style="align-items: center; justify-content: center; height: 44px;"><span style="font-size:1.8em; line-height:1;">💤</span></div><div class="log-name">Delay (+${item.mins}m)</div></div><div class="log-right-group"><div class="log-time" style="color:#ccc">${timeStr}</div></div></div><div class="log-controls"><button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); deleteEggStep(${idx})">DEL</button></div>`;
+                const finishDate = new Date(curTime);
+                const finishTs = finishDate.getTime();
+                const timeStr = finishDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+                const hours = Math.floor(item.mins / 60);
+                const mins = Math.floor(item.mins % 60);
+                let formattedDelay = [];
+                if (hours > 0) formattedDelay.push(`${hours}h`);
+                if (mins > 0 || hours === 0) formattedDelay.push(`${mins}m`);
+
+                const warDay = getEggWarDay(finishDate);
+                const warClass = warDay > 0 ? ` ${getEggWarWeekClass(finishDate)}` : '';
+
+                div.className = `log-row${warClass}${deleteModeClasses}${(!eggDeleteModeActive && expandedEggIdx === idx) ? ' expanded' : ''}`;
+                div.innerHTML = `<div class="log-entry delay"${rowClickAttr}><div class="log-left-group"><div class="log-icon-wrapper desktop-only" style="align-items: center; justify-content: center; height: 44px;"><span style="font-size:1.8em; line-height:1;">💤</span></div><div class="log-name">Delay (${formattedDelay.join(' ')})</div></div><div class="log-right-group"><div class="log-time" style="color:#ccc">${timeStr}</div></div><div class="move-actions-container">${actionButtons}</div></div>${!eggDeleteModeActive ? `<div class="log-controls"><button class="btn-game-ctrl btn-done" onclick="event.stopPropagation(); markEggDone(${idx}, ${finishTs})">DONE</button><button class="btn-game-ctrl btn-insert" onclick="event.stopPropagation(); activateEggInsert(${idx})">INSERT</button><button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); deleteEggStep(${idx})">DELETE</button></div>` : ''}`;
             } else {
                 const data = EGG_DATA[item.key]; 
                 
@@ -937,21 +1138,47 @@ function renderEggLog() {
                     console.warn(`Egg Data missing for key: ${item.key}. Skipping row.`);
                     return; 
                 }
-
-                const pts = EGG_POINTS[item.key] || 0; 
-                totalPoints += pts;
                 
                 const speedMult = getEggSpeedAtTime(data.id, curTime); 
-                const finalMins = data.t / speedMult;
+                let finalMins = data.t / speedMult;
+
+                // Apply Gem Time Skip (1 gem = 1,000s, rounded at .49 -> (gems + 0.5) * 1000s)
+                let totalSec = finalMins * 60;
+                let effectiveGems = 0;
+                if (item.gems && item.gems > 0 && totalSec > 0) {
+                    const maxGemsNeeded = Math.max(1, Math.ceil((totalSec / 1000) - 0.5));
+                    effectiveGems = Math.min(item.gems, maxGemsNeeded);
+                    const gemReductionSec = (effectiveGems + 0.5) * 1000;
+                    totalSec = Math.max(0, totalSec - gemReductionSec);
+                    finalMins = totalSec / 60;
+                }
                 
                 totalQueueMins += finalMins; curTime += finalMins * 60000;
                 const finishDate = new Date(curTime); const finishTs = finishDate.getTime(); 
                 const timeStr = finishDate.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) + ', ' + finishDate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-                
-                div.className = `log-row ${expandedEggIdx === idx ? 'expanded' : ''}`;
-                const detailsHtml = `<div class="log-details"><div class="ld-part pot"><img src="icons/warpoint.png" class="ld-icon"><span>${pts.toLocaleString('en-US')}</span></div><div class="ld-part time" style="width: auto;"><img src="icons/icon_time.png" class="ld-icon"><span>${formatEggTime(finalMins)}</span></div></div>`;
 
-                div.innerHTML = `<div class="log-entry ${data.c}" onclick="toggleEggExp(${idx})"><div class="log-left-group"><div class="log-icon-wrapper"><img src="${data.img}" style="width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));" onerror="this.style.display='none'"></div><div class="log-name">${data.n}</div> </div><div class="log-right-group"><div class="log-time">${timeStr}</div>${detailsHtml}</div></div><div class="log-controls"><button class="btn-game-ctrl btn-done" onclick="event.stopPropagation(); markEggDone(${idx}, ${finishTs})">DONE</button><button class="btn-game-ctrl btn-delay" onclick="event.stopPropagation(); addEggDelay(${idx})">DELAY</button><button class="btn-game-ctrl btn-insert" onclick="event.stopPropagation(); activateEggInsert(${idx})">INSERT</button><button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); deleteEggStep(${idx})">DELETE</button></div>`;
+                const warDay = getEggWarDay(finishDate);
+                const warClass = warDay > 0 ? ` ${getEggWarWeekClass(finishDate)}` : '';
+                const pts = getEggWarPoints(item.key, warDay);
+                totalPoints += pts;
+                
+                div.className = `log-row${warClass}${deleteModeClasses}${(!eggDeleteModeActive && expandedEggIdx === idx) ? ' expanded' : ''}`;
+
+                const ptsHtml = warDay > 0
+                    ? `<div class="ld-part pot"><img src="icons/warpoint.png" class="ld-icon"><span>${pts.toLocaleString('en-US')}</span></div>`
+                    : '';
+
+                const gemHtml = `
+                    <div class="ld-part gem" onclick="event.stopPropagation(); editEggGem(${idx})" style="cursor: pointer; transition: transform 0.1s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Click to edit Gem amount">
+                        <img src="icons/Gem.png" class="ld-icon">
+                        <span>${effectiveGems.toLocaleString('en-US')}</span>
+                    </div>
+                `;
+
+                const timeHtml = `<div class="ld-part time" style="width: auto;"><img src="icons/icon_time.png" class="ld-icon"><span>${formatEggTime(finalMins)}</span></div>`;
+                const detailsHtml = `<div class="log-details">${ptsHtml}${gemHtml}${timeHtml}</div>`;
+
+                div.innerHTML = `<div class="log-entry ${data.c}"${rowClickAttr}><div class="log-left-group"><div class="log-icon-wrapper"><img src="${data.img}" style="height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));" onerror="this.style.display='none'"></div><div class="log-name">${data.n}</div> </div><div class="log-right-group"><div class="log-time">${timeStr}</div>${detailsHtml}</div><div class="move-actions-container">${actionButtons}</div></div>${!eggDeleteModeActive ? `<div class="log-controls"><button class="btn-game-ctrl btn-done" onclick="event.stopPropagation(); markEggDone(${idx}, ${finishTs})">DONE</button><button class="btn-game-ctrl btn-delay" onclick="event.stopPropagation(); addEggDelay(${idx})">DELAY</button><button class="btn-game-ctrl btn-insert" onclick="event.stopPropagation(); activateEggInsert(${idx})">INSERT</button><button class="btn-game-ctrl btn-del" onclick="event.stopPropagation(); deleteEggStep(${idx})">DELETE</button></div>` : ''}`;
             }
             fragment.appendChild(div);
         });
@@ -962,7 +1189,10 @@ function renderEggLog() {
         const summaryBox = document.getElementById('egg-total-summary');
         if (summaryBox) {
             summaryBox.className = 'egg-stats-row'; 
-            summaryBox.innerHTML = `<div class="es-item type-points"><span class="es-value points">${totalPoints.toLocaleString('en-US')}</span></div><div class="es-item type-time"><span class="es-value time">${formatEggTime(totalQueueMins)}</span></div>`;
+            summaryBox.innerHTML = `
+                <div class="es-item type-points"><span class="es-value points">${totalPoints.toLocaleString('en-US')}</span></div>
+                <div class="es-item type-time"><span class="es-value time">${formatEggTotalTime(totalQueueMins)}</span></div>
+            `;
         }
     } catch (err) {
         console.error("CRITICAL: Egg Planner crashed during rendering. The UI was protected.", err);
@@ -970,27 +1200,19 @@ function renderEggLog() {
 }
 
 function addEggToQueue(type) { 
+    if (eggDeleteModeActive) cancelEggDeleteMode();
     pushEggHistory(); 
-    const item = { type: 'egg', key: type }; 
+    const item = { type: 'egg', key: type, gems: 0 }; 
     
     if (eggInsertIdx > -1) { 
-        eggPlanQueue.splice(eggInsertIdx, 0, item); 
-        eggInsertIdx = -1; 
-        
-        const eggBox = document.getElementById('egg-selector-box');
-        if (eggBox) eggBox.classList.remove('egg-insert-active'); 
-        
-        const capEgg = document.getElementById('capsule-egg');
-        if (capEgg) capEgg.classList.remove('is-inserting');
-        
-        const floatEgg = document.getElementById('float-egg');
-        if (floatEgg) floatEgg.classList.remove('is-inserting');
-        
+        const safeIdx = Math.min(eggInsertIdx, eggPlanQueue.length);
+        eggPlanQueue.splice(safeIdx, 0, item); 
+        cancelEggInsert();
     } else { 
         eggPlanQueue.push(item); 
+        renderEggLog(); 
     } 
     
-    renderEggLog(); 
     if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); 
 }
 
@@ -998,6 +1220,7 @@ function markEggDone(idx, timestamp) {
     try { 
         pushEggHistory(); 
         eggPlanQueue.splice(0, idx + 1); 
+        if (eggInsertIdx > -1) cancelEggInsert();
         
         const d = new Date(timestamp); 
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); 
@@ -1031,28 +1254,136 @@ function markEggDone(idx, timestamp) {
 }
 
 function addEggDelay(idx) { 
-    openPromptModal("Enter delay in MINUTES:", (m) => {
-        if (m && !isNaN(parseFloat(m))) { 
-            pushEggHistory(); 
-            eggPlanQueue.splice(idx + 1, 0, { type: 'delay', mins: parseFloat(m) }); 
-            expandedEggIdx = -1; 
-            renderEggLog(); 
-            if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); 
-        } 
-    });
+    if (typeof openDelayModal === 'function') {
+        openDelayModal("Enter Delay:", (totalMins) => {
+            if (totalMins > 0) { 
+                pushEggHistory(); 
+                eggPlanQueue.splice(idx + 1, 0, { type: 'delay', mins: parseFloat(totalMins) }); 
+                expandedEggIdx = -1; 
+                if (eggInsertIdx > -1) cancelEggInsert();
+                else renderEggLog(); 
+                if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); 
+            } 
+        });
+    }
 }
+
 function deleteEggStep(idx) { 
     pushEggHistory(); 
     eggPlanQueue.splice(idx, 1); 
-    renderEggLog(); 
+    expandedEggIdx = -1;
+    if (eggInsertIdx > -1) cancelEggInsert();
+    else renderEggLog(); 
     if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); 
 }
 
 function clearEggPlan() { 
-    openConfirmModal("Clear Egg list?", () => {
-        pushEggHistory(); 
-        eggPlanQueue = []; 
-        renderEggLog(); 
-        if (typeof saveToLocalStorage === 'function') saveToLocalStorage(); 
+    if (document.getElementById('custom-clear-overlay')) return; 
+
+    const overlay = document.createElement('div');
+    overlay.id = 'custom-clear-overlay';
+    overlay.className = 'modal'; 
+    overlay.style.display = 'block';
+
+    overlay.onclick = function(e) {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    };
+
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content confirm-mode';
+    modalContent.style.cssText = 'padding-bottom: 20px;'; 
+
+    modalContent.innerHTML = `
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; text-align: center; color: #ffffff; margin-bottom: 15px; line-height: 1.3;">
+            Clear Entire Schedule?
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 20px;">
+            <button class="btn-confirm-cancel" onclick="document.body.removeChild(document.getElementById('custom-clear-overlay'))" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #ff4757; box-shadow: inset 0 -4px 0 0 #c0392b; transition: transform 0.1s;">
+                <img src="icons/icon_cancel.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+            
+            <button class="btn-confirm-ok" onclick="executeEggFullClear(); document.body.removeChild(document.getElementById('custom-clear-overlay'))" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #00b0ff; box-shadow: inset 0 -4px 0 0 #005680; transition: transform 0.1s;">
+                <img src="icons/button_ok.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+        </div>
+
+        <hr style="border: none; border-bottom: 2px dashed rgba(255,255,255,0.2); margin: 0 15px 20px 15px;">
+
+        <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; text-align: center; color: #ffffff; margin-bottom: 15px; line-height: 1.3;">
+            Choose Cut-Off Point?
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button class="btn-confirm-cancel" onclick="document.body.removeChild(document.getElementById('custom-clear-overlay'))" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #ff4757; box-shadow: inset 0 -4px 0 0 #c0392b; transition: transform 0.1s;">
+                <img src="icons/icon_cancel.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+
+            <button class="btn-confirm-ok" onclick="activateEggDeleteMode(); document.body.removeChild(document.getElementById('custom-clear-overlay'))" style="flex: 1; max-width: 100px; height: 42px; border: 2px solid #000000; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; background-color: #00b0ff; box-shadow: inset 0 -4px 0 0 #005680; transition: transform 0.1s;">
+                <img src="icons/button_ok.png" style="width: 22px; height: 22px; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.2)); transform: translateY(-2px);">
+            </button>
+        </div>
+        
+        <style>
+            #custom-clear-overlay .btn-confirm-ok:active { transform: translateY(3px); box-shadow: inset 0 -1px 0 0 #005680 !important; }
+            #custom-clear-overlay .btn-confirm-cancel:active { transform: translateY(3px); box-shadow: inset 0 -1px 0 0 #c0392b !important; }
+        </style>
+    `;
+
+    overlay.appendChild(modalContent);
+    document.body.appendChild(overlay);
+}
+
+function executeEggFullClear() {
+    pushEggHistory(); 
+    eggPlanQueue = []; 
+    expandedEggIdx = -1;
+    if (eggInsertIdx > -1) cancelEggInsert();
+    if (eggDeleteModeActive) cancelEggDeleteMode();
+    renderEggLog(); 
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
+}
+
+function activateEggDeleteMode() {
+    if (eggInsertIdx > -1) cancelEggInsert();
+    eggDeleteModeActive = true;
+    expandedEggIdx = -1;
+
+    ['capsule-egg', 'float-egg'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('is-moving');
     });
+
+    attachEggCapsuleCancelBtn(cancelEggDeleteMode);
+
+    if (!document.getElementById('delete-mode-styles')) {
+        const style = document.createElement('style');
+        style.id = 'delete-mode-styles';
+        style.innerHTML = `
+            .log-row.delete-mode-row { border: 2px dashed #e74c3c !important; background-color: rgba(231, 76, 60, 0.05) !important; }
+        `;
+        document.head.appendChild(style);
+    }
+
+    renderEggLog();
+}
+
+function cancelEggDeleteMode() {
+    eggDeleteModeActive = false;
+
+    ['capsule-egg', 'float-egg'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('is-moving');
+    });
+
+    document.querySelectorAll('#capsule-egg .floating-cancel-btn, #float-egg .floating-cancel-btn').forEach(btn => btn.remove());
+
+    renderEggLog();
+}
+
+function executeEggCut(idx) {
+    pushEggHistory();
+    eggPlanQueue = eggPlanQueue.slice(0, idx);
+    cancelEggDeleteMode();
+    if (typeof saveToLocalStorage === 'function') saveToLocalStorage();
 }

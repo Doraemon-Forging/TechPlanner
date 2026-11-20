@@ -1,6 +1,6 @@
 /* js/templates.js */
 
-const HTML_CALC = `
+const HTML_FORGE = `
 <div id="panel-calc" class="sidebar-panel" style="display: none;">
     <div class="calc-container">
         <div class="calc-tool-card">
@@ -114,7 +114,10 @@ const HTML_WAR = `
                         
                         <div class="wc-row">
                             <div class="wc-label">Current Forge Lv:</div>
-                            <select id="wc-d1-forge-lv" style="width:80px;" onchange="updateWarCalc()"></select>
+                            <div style="display: flex; gap: 6px; align-items: stretch;">
+                                <select id="wc-d1-forge-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="syncWarForgeDropdown(1); updateWarCalc()"></select>
+                                <select id="wc-d1-forge-lv" style="width: 64px; box-sizing: border-box; margin: 0;" onchange="updateWarCalc()"></select>
+                            </div>
                         </div>
                         <div class="wc-row">
                             <div class="wc-label">Hammer:</div>
@@ -160,7 +163,10 @@ const HTML_WAR = `
                         
                         <div class="wc-row">
                             <div class="wc-label">Current Forge Lv:</div>
-                            <select id="wc-d2-forge-lv" style="width:80px;" onchange="updateWarForgeNodesCap(); updateWarCalc()"></select>
+                            <div style="display: flex; gap: 6px; align-items: stretch;">
+                                <select id="wc-d2-forge-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="syncWarForgeDropdown(2); updateWarForgeNodesCap(); updateWarCalc()"></select>
+                                <select id="wc-d2-forge-lv" style="width: 64px; box-sizing: border-box; margin: 0;" onchange="updateWarForgeNodesCap(); updateWarCalc()"></select>
+                            </div>
                         </div>
                         <div class="wc-row">
                             <div class="wc-label">Forge Upgrade Nodes:</div>
@@ -205,7 +211,10 @@ const HTML_WAR = `
                         
                         <div class="wc-row">
                             <div class="wc-label">Current Forge Lv:</div>
-                            <select id="wc-d3-forge-lv" style="width:80px;" onchange="updateWarCalc()"></select>
+                            <div style="display: flex; gap: 6px; align-items: stretch;">
+                                <select id="wc-d3-forge-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="syncWarForgeDropdown(3); updateWarCalc()"></select>
+                                <select id="wc-d3-forge-lv" style="width: 64px; box-sizing: border-box; margin: 0;" onchange="updateWarCalc()"></select>
+                            </div>
                         </div>
                         <div class="wc-row">
                             <div class="wc-label">Hammer:</div>
@@ -262,7 +271,10 @@ const HTML_WAR = `
                         
                         <div class="wc-row">
                             <div class="wc-label">Current Forge Lv:</div>
-                            <select id="wc-d4-forge-lv" style="width:80px;" onchange="updateWarForgeNodesCap(); updateWarCalc()"></select>
+                            <div style="display: flex; gap: 6px; align-items: stretch;">
+                                <select id="wc-d4-forge-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="syncWarForgeDropdown(4); updateWarForgeNodesCap(); updateWarCalc()"></select>
+                                <select id="wc-d4-forge-lv" style="width: 64px; box-sizing: border-box; margin: 0;" onchange="updateWarForgeNodesCap(); updateWarCalc()"></select>
+                            </div>
                         </div>
                         <div class="wc-row">
                             <div class="wc-label">Forge Upgrade Nodes:</div>
@@ -305,7 +317,10 @@ const HTML_WAR = `
                         
                         <div class="wc-row">
                             <div class="wc-label">Current Forge Lv:</div>
-                            <select id="wc-d5-forge-lv" style="width:80px;" onchange="updateWarCalc()"></select>
+                            <div style="display: flex; gap: 6px; align-items: stretch;">
+                                <select id="wc-d5-forge-asc" style="width: 70px; padding: 0 5px; box-sizing: border-box; margin: 0;" onchange="syncWarForgeDropdown(5); updateWarCalc()"></select>
+                                <select id="wc-d5-forge-lv" style="width: 64px; box-sizing: border-box; margin: 0;" onchange="updateWarCalc()"></select>
+                            </div>
                         </div>
                         <div class="wc-row">
                             <div class="wc-label">Hammer:</div>
@@ -897,6 +912,8 @@ const HTML_EGG = `
                 <button class="egg-btn" onclick="addEggToQueue('ultimate')"><img src="icons/EggUltimate.png"></button>
                 <button class="egg-btn" onclick="addEggToQueue('mythic')"><img src="icons/EggMythic.png"></button>
                 <button class="egg-btn" onclick="addEggToQueue('heroic')"><img src="icons/EggHeroic.png"></button>
+                <button class="egg-btn" onclick="addEggToQueue('infinite')"><img src="icons/EggInfinite.png"></button>
+                <button class="egg-btn" onclick="addEggToQueue('eternal')"><img src="icons/EggEternal.png"></button>
             </div>
         </div>
         <div id="egg-total-summary"></div>
@@ -2229,7 +2246,7 @@ const HTML_HELP = `
 // Helper function to inject the HTML into the placeholders
 function loadAllTemplates() {
     const cCalc = document.getElementById('container-calc');
-    if (cCalc) cCalc.innerHTML = HTML_CALC;
+    if (cCalc) cCalc.innerHTML = HTML_FORGE;
 
     const cWar = document.getElementById('container-war');
     if (cWar) cWar.innerHTML = HTML_WAR;

@@ -1,32 +1,47 @@
 /**
- * WARCALC.JS
- * Logic for War Point Calculator.
+- WARCALC.JS
+- Logic for War Point Calculator.
  */
+
+function syncWarForgeDropdown(day) {
+    const ascEl = document.getElementById(`wc-d${day}-forge-asc`);
+    const lvEl = document.getElementById(`wc-d${day}-forge-lv`);
+    if (!ascEl || !lvEl) return;
+
+    const asc = parseInt(ascEl.value) || 0;
+    const maxLv = (typeof getMaxForgeLevel === 'function') ? getMaxForgeLevel(asc) : (asc === 3 ? 50 : 35);
+    let curLv = parseInt(lvEl.value) || 20;
+    if (curLv > maxLv) curLv = maxLv;
+
+    if (lvEl.options.length !== maxLv) {
+        lvEl.innerHTML = "";
+        for (let i = 1; i <= maxLv; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.text = i;
+            lvEl.appendChild(opt);
+        }
+    }
+    lvEl.value = curLv;
+}
 
 function initWarCalc() {
     const container = document.getElementById('war-calc-inputs');
     if (!container) return;
 
-    const forgeSelects = [
-        'wc-d1-forge-lv', 
-        'wc-d2-forge-lv', 
-        'wc-d3-forge-lv', 
-        'wc-d4-forge-lv', 
-        'wc-d5-forge-lv'
-    ];
-
-    forgeSelects.forEach(id => {
-        const forgeSelect = document.getElementById(id);
-        if (forgeSelect && forgeSelect.options.length === 0) {
-            for (let i = 1; i <= 35; i++) { 
+    for (let day = 1; day <= 5; day++) {
+        const ascSelect = document.getElementById(`wc-d${day}-forge-asc`);
+        if (ascSelect && ascSelect.options.length === 0) {
+            for (let a = 0; a <= 3; a++) {
                 const opt = document.createElement('option');
-                opt.value = i;
-                opt.text = i;
-                if (i === 20) opt.selected = true; 
-                forgeSelect.appendChild(opt);
+                opt.value = a;
+                opt.text = `Asc ${a}`;
+                ascSelect.appendChild(opt);
             }
+            ascSelect.value = 0;
         }
-    });
+        syncWarForgeDropdown(day);
+    }
 
     updateWarForgeNodesCap();
     updateWarMountExpCap();
@@ -34,17 +49,19 @@ function initWarCalc() {
 }
 
 function updateWarForgeNodesCap() {
-
-    ['wc-d2-forge-lv', 'wc-d4-forge-lv'].forEach((lvId, idx) => {
-        const prefix = idx === 0 ? 'wc' : 'wc-d4'; 
-        const nodesEl = document.getElementById(idx === 0 ? 'wc-forge-nodes' : 'wc-d4-forge-nodes');
-        const maxEl = document.getElementById(idx === 0 ? 'wc-forge-nodes-max' : 'wc-d4-forge-nodes-max');
-        const lvEl = document.getElementById(lvId);
+    [2, 4].forEach(day => {
+        const isD2 = day === 2;
+        const ascEl = document.getElementById(`wc-d${day}-forge-asc`);
+        const lvEl = document.getElementById(`wc-d${day}-forge-lv`);
+        const nodesEl = document.getElementById(isD2 ? 'wc-forge-nodes' : 'wc-d4-forge-nodes');
+        const maxEl = document.getElementById(isD2 ? 'wc-forge-nodes-max' : 'wc-d4-forge-nodes-max');
         
         if (lvEl && nodesEl && maxEl) {
+            const asc = ascEl ? (parseInt(ascEl.value) || 0) : 0;
+            const maxLv = (typeof getMaxForgeLevel === 'function') ? getMaxForgeLevel(asc) : (asc === 3 ? 50 : 35);
             let lv = parseInt(lvEl.value) || 1;
 
-            if (lv === 35) {
+            if (lv >= maxLv) {
                 maxEl.innerText = "MAX";
                 nodesEl.value = "";
                 nodesEl.disabled = true;
@@ -217,7 +234,6 @@ const getTechVal = (tree, nodeId) => {
 };
 
 const getClanTechMult = (actionKey, dayNum) => {
-
     const getTechBonus = (lv) => {
         if (lv <= 10) return lv * 0.04;
         return (10 * 0.04) + ((lv - 10) * 0.01);
@@ -236,12 +252,12 @@ function calcForgeDay(forgeLv, hammerAmt, pointsMult) {
     const effHammerA = hammerAmt / (1 - (techFreeForge.after / 100));
 
     const ratesSource = typeof CALC_FORGE_RATES !== 'undefined' ? CALC_FORGE_RATES : {};
-    const fRates = ratesSource[forgeLv] || ratesSource[1] || [100,0,0,0,0,0,0,0,0,0];
+    const fRates = ratesSource[forgeLv] || ratesSource[1] || [100,0,0,0,0,0,0,0,0,0,0,0,0];
 
     let wB = 0, wA = 0;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < fRates.length; i++) {
         if (fRates[i] > 0) {
-            const basePts = WAR_POINTS_BASE.forgeEquip[i];
+            const basePts = WAR_POINTS_BASE.forgeEquip[i] || 0;
             const finalPts = Math.round(basePts * pointsMult);
             wB += (effHammerB * (fRates[i] / 100)) * finalPts;
             wA += (effHammerA * (fRates[i] / 100)) * finalPts;
@@ -250,7 +266,7 @@ function calcForgeDay(forgeLv, hammerAmt, pointsMult) {
     return { b: wB, a: wA };
 }
 
-function calcForgeUpgradeDay(forgeLv, nodesAmt, gemAmt, pointsMultNodes, pointsMultGems) {
+function calcForgeUpgradeDay(forgeAsc, forgeLv, nodesAmt, gemAmt, pointsMultNodes, pointsMultGems) {
     let nodesB = 0, nodesA = 0;
     let gemsB = 0, gemsA = 0;
     
@@ -258,7 +274,9 @@ function calcForgeUpgradeDay(forgeLv, nodesAmt, gemAmt, pointsMultNodes, pointsM
     gemsB = gemAmt * gemPts;
     gemsA = gemAmt * gemPts;
 
-    if (nodesAmt > 0) {
+    const maxLv = (typeof getMaxForgeLevel === 'function') ? getMaxForgeLevel(forgeAsc) : (forgeAsc === 3 ? 50 : 35);
+
+    if (nodesAmt > 0 && forgeLv < maxLv) {
         const techForgeDisc = getTechVal('forge', 'disc');
         const fData = (typeof forgeLevelData !== 'undefined' && forgeLevelData[forgeLv]) ? forgeLevelData[forgeLv] : [0,0,1];
         const baseCost = fData[0];
@@ -410,6 +428,7 @@ function calcTechDay(techAmts, multTech) {
 }
 
 function updateWarCalc() {
+    for (let day = 1; day <= 5; day++) syncWarForgeDropdown(day);
     updateWarForgeNodesCap();
     updateWarMountExpCap();
     updateWarSkillExpCap();
@@ -451,6 +470,7 @@ function updateWarCalc() {
     // ==========================================
     // DAY 2
     // ==========================================
+    const d2ForgeAsc = getVInt('wc-d2-forge-asc', 0);
     const d2ForgeLv = getVInt('wc-d2-forge-lv', 20);
     const d2ForgeNodes = getV('wc-forge-nodes');
     const d2ForgeGem = getV('wc-forge-gem');
@@ -463,7 +483,7 @@ function updateWarCalc() {
     const m2MountSum = getClanTechMult('cwSummonMount', 2);
     const m2MountMerge = getClanTechMult('cwMergeMount', 2);
 
-    const c2ForgeUp = calcForgeUpgradeDay(d2ForgeLv, d2ForgeNodes, d2ForgeGem, m2ForgeUp, m2ForgeUp);
+    const c2ForgeUp = calcForgeUpgradeDay(d2ForgeAsc, d2ForgeLv, d2ForgeNodes, d2ForgeGem, m2ForgeUp, m2ForgeUp);
     const c2Tech = calcTechDay(d2TechAmts, m2Tech);
     const c2Mount = calcMountDay(d2MountKey, d2MountMerge, m2MountSum, m2MountMerge);
 
@@ -525,6 +545,7 @@ function updateWarCalc() {
     // ==========================================
     // DAY 4
     // ==========================================
+    const d4ForgeAsc = getVInt('wc-d4-forge-asc', 0);
     const d4ForgeLv = getVInt('wc-d4-forge-lv', 20);
     const d4ForgeNodes = getV('wc-d4-forge-nodes');
     const d4ForgeGem = getV('wc-d4-forge-gem');
@@ -537,7 +558,7 @@ function updateWarCalc() {
     const m4MountSum = getClanTechMult('cwSummonMount', 4);
     const m4MountMerge = getClanTechMult('cwMergeMount', 4);
 
-    const c4ForgeUp = calcForgeUpgradeDay(d4ForgeLv, d4ForgeNodes, d4ForgeGem, m4ForgeUp, m4ForgeUp);
+    const c4ForgeUp = calcForgeUpgradeDay(d4ForgeAsc, d4ForgeLv, d4ForgeNodes, d4ForgeGem, m4ForgeUp, m4ForgeUp);
     const c4DungeonPts = Math.round(WAR_POINTS_BASE.dungeonKey * m4Dungeon);
     const c4Mount = calcMountDay(d4MountKey, d4MountMerge, m4MountSum, m4MountMerge);
 
@@ -785,7 +806,8 @@ function updateWarCalc() {
                 const fNames = [
                     "Primitive", "Medieval", "Early Modern",
                     "Modern", "Space", "Interstellar", 
-                    "Multiverse", "Quantum", "Underworld", "Divine"
+                    "Multiverse", "Quantum", "Underworld", "Divine",
+                    "Heroic", "Infinite", "Eternal"
                 ];
 
                 let forgeGroups = [];

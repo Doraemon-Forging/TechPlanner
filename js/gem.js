@@ -1,71 +1,148 @@
-// Gem Calc
-function updateGemToTime() {
-    let g = parseInt(document.getElementById('calc-gem-input').value);
-    let res = document.getElementById('calc-gem-time-res');
-    
-    if (isNaN(g) || g <= 0) { 
-        res.innerText = '0s'; 
-        return; 
+// --- SHARED CONSTANTS & HELPERS ---
+const EGG_TIER_KEYS = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic', 'heroic', 'infinite', 'eternal'];
+const HIGH_SPEED_EGG_TIERS = ['heroic', 'infinite', 'eternal'];
+
+const GEM_COMP_STYLES = `
+<style>
+    .gem-comp-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        box-sizing: border-box;
+        font-family: 'Fredoka', sans-serif;
+        font-weight: 700;
+    }
+    .gem-stack-inner {
+        display: flex;
+        align-items: center;
+    }
+    .gem-before-wrapper, .gem-after-val, .gem-after-wrapper {
+        display: flex;
+        align-items: center;
+    }
+    .gem-comp-arrow {
+        color: #198754 !important;
+        font-weight: 900;
+        margin: 0 6px;
+        -webkit-text-stroke: 0px !important;
+    }
+    @media (max-width: 768px) {
+        .gem-stack-inner {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            padding: 4px 0;
+        }
+        .gem-after-wrapper {
+            position: relative;
+        }
+        .gem-comp-arrow {
+            position: absolute;
+            right: 100%;
+            margin: 0 4px 0 0;
+        }
+    }
+</style>`;
+
+function formatDurationDHMS(ts) {
+    if (ts <= 0) return '0s';
+    const d = Math.floor(ts / 86400);
+    const h = Math.floor((ts % 86400) / 3600);
+    const m = Math.floor((ts % 3600) / 60);
+    const s = ts % 60;
+
+    const arr = [];
+    if (d > 0) arr.push(d + 'd');
+    if (h > 0) arr.push(h + 'h');
+    if (m > 0) arr.push(m + 'm');
+    if (s > 0 || arr.length === 0) arr.push(s + 's');
+    return arr.join(' ');
+}
+
+function buildGemComparisonCell(curData, projData, isUpgrade) {
+    if (!isUpgrade) {
+        return `
+        <div class="gem-comp-container">
+            <div class="gem-stack-inner">
+                <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
+            </div>
+        </div>`;
+    }
+    return `
+    <div class="gem-comp-container"> 
+        <div class="gem-stack-inner">
+            <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
+            <div class="gem-after-wrapper">
+                <span class="gem-comp-arrow">➜</span>
+                <div class="gem-after-val">${window.renderGemCell(projData, '#198754')}</div>
+            </div>
+        </div>
+    </div>`;
+}
+
+// Single source of truth for Egg Hatch Speed & Gem Cost (+60%/lvl for Heroic/Infinite/Eternal, +10%/lvl otherwise)
+window.getEggCalcStats = function(tierKey) {
+    if (typeof EGG_DATA === 'undefined' || !EGG_DATA[tierKey]) return null;
+    const data = EGG_DATA[tierKey];
+    const speedPerLvl = HIGH_SPEED_EGG_TIERS.includes(tierKey) ? 60 : 10;
+
+    let curLvl = 0, projLvl = 0;
+    const state = typeof calcState === 'function' ? calcState() : null;
+
+    if (typeof setupLevels !== 'undefined') {
+        for (let t = 1; t <= 6; t++) {
+            const key = `spt_T${t}_${data.id}`;
+            curLvl += (setupLevels[key] || 0);
+            projLvl += state ? (state.levels[key] || 0) : (setupLevels[key] || 0);
+        }
     }
 
-    let ts = Math.floor((g + 0.5) * 7.24643 * 60);
-    
-    let d = Math.floor(ts / 86400);
-    let h = Math.floor((ts % 86400) / 3600);
-    let m = Math.floor((ts % 3600) / 60);
-    let s = ts % 60;
-    
-    let arr = [];
-    if(d > 0) arr.push(d + 'd');
-    if(h > 0) arr.push(h + 'h');
-    if(m > 0) arr.push(m + 'm');
-    if(s > 0 || arr.length === 0) arr.push(s + 's');
-    
-    res.innerText = arr.join(' ');
+    const clanLvl = typeof window.getClanEggLvl === 'function' ? window.getClanEggLvl(data.id) : 0;
+    const curSpeed = (curLvl * speedPerLvl) + (clanLvl * 5);
+    const projSpeed = (projLvl * speedPerLvl) + (clanLvl * 5);
+
+    const curMins = data.t / (1 + curSpeed / 100);
+    const projMins = data.t / (1 + projSpeed / 100);
+
+    return {
+        data,
+        curSpeed,
+        projSpeed,
+        isUpgrade: projSpeed > curSpeed,
+        curGem: window.getEggGemData(curMins),
+        projGem: window.getEggGemData(projMins)
+    };
+};
+
+// --- GEM CALC ---
+function updateGemToTime() {
+    const g = parseInt(document.getElementById('calc-gem-input').value);
+    const res = document.getElementById('calc-gem-time-res');
+    if (isNaN(g) || g <= 0) { res.innerText = '0s'; return; }
+
+    res.innerText = formatDurationDHMS(Math.floor((g + 0.5) * 7.24643 * 60));
 }
 
 function updateTimeToGem() {
-    let d = parseInt(document.getElementById('calc-time-d').value) || 0;
-    let h = parseInt(document.getElementById('calc-time-h').value) || 0;
-    let m = parseInt(document.getElementById('calc-time-m').value) || 0;
-    let s = parseInt(document.getElementById('calc-time-s').value) || 0;
-    
-    let totalSeconds = (d * 86400) + (h * 3600) + (m * 60) + s;
-    let res = document.getElementById('calc-time-gem-res');
-    
-    if (totalSeconds <= 0) {
-        res.innerText = '0';
-        return;
-    }
+    const d = parseInt(document.getElementById('calc-time-d').value) || 0;
+    const h = parseInt(document.getElementById('calc-time-h').value) || 0;
+    const m = parseInt(document.getElementById('calc-time-m').value) || 0;
+    const s = parseInt(document.getElementById('calc-time-s').value) || 0;
 
-    let gems = Math.max(1, Math.ceil((totalSeconds / 434.7858) - 0.5));
-    
+    const totalSeconds = (d * 86400) + (h * 3600) + (m * 60) + s;
+    const res = document.getElementById('calc-time-gem-res');
+    if (totalSeconds <= 0) { res.innerText = '0'; return; }
+
+    const gems = Math.max(1, Math.ceil((totalSeconds / 434.7858) - 0.5));
     res.innerText = gems.toLocaleString();
 }
 
 window.updateEggGemToTime = function() {
-    let g = parseInt(document.getElementById('calc-egg-gem-time-input').value);
-    let res = document.getElementById('calc-egg-gem-time-res');
-    
-    if (isNaN(g) || g <= 0) { 
-        res.innerText = '0s'; 
-        return; 
-    }
+    const g = parseInt(document.getElementById('calc-egg-gem-time-input').value);
+    const res = document.getElementById('calc-egg-gem-time-res');
+    if (isNaN(g) || g <= 0) { res.innerText = '0s'; return; }
 
-    let ts = Math.floor((g + 0.5) * 1000);
-    
-    let d = Math.floor(ts / 86400);
-    let h = Math.floor((ts % 86400) / 3600);
-    let m = Math.floor((ts % 3600) / 60);
-    let s = ts % 60;
-    
-    let arr = [];
-    if(d > 0) arr.push(d + 'd');
-    if(h > 0) arr.push(h + 'h');
-    if(m > 0) arr.push(m + 'm');
-    if(s > 0 || arr.length === 0) arr.push(s + 's');
-    
-    res.innerText = arr.join(' ');
+    res.innerText = formatDurationDHMS(Math.floor((g + 0.5) * 1000));
 };
 
 // --- TAB SWITCHER ---
@@ -81,45 +158,26 @@ window.switchGemTab = function(tab) {
 
 // --- EGG GEM CALC ---
 window.updateGemsToEggs = function() {
-    let g = parseInt(document.getElementById('calc-egg-gem-input').value);
-    let tableBody = document.getElementById('calc-egg-gem-table-body');
-    
-    if (isNaN(g) || g <= 0) { 
+    const g = parseInt(document.getElementById('calc-egg-gem-input').value);
+    const tableBody = document.getElementById('calc-egg-gem-table-body');
+
+    if (isNaN(g) || g <= 0) {
         if (tableBody) tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 10px; font-family: \'Fredoka\', sans-serif; font-weight: 500; color: #777;">Enter gems to calculate</td></tr>';
-        return; 
+        return;
     }
 
-    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic', 'heroic', 'infinite', 'eternal'];
     let html = '';
+    EGG_TIER_KEYS.forEach(k => {
+        const stats = window.getEggCalcStats(k);
+        if (!stats) return;
 
-    keys.forEach(k => {
-        if (typeof EGG_DATA === 'undefined' || !EGG_DATA[k]) return;
-        const data = EGG_DATA[k];
-        const baseMins = data.t;
-        
-        let curLvl = 0;
-        if (typeof setupLevels !== 'undefined') {
-            for (let t = 1; t <= 6; t++) {
-                curLvl += (setupLevels[`spt_T${t}_${data.id}`] || 0);
-            }
-        }
-        let clanLvl = typeof window.getClanEggLvl === 'function' ? window.getClanEggLvl(data.id) : 0;
-        
-        let curSpeed = (curLvl * 10) + (clanLvl * 5);
-        let curMins = baseMins / (1 + curSpeed / 100);
-        
-        let stdCost = window.getEggGemData(curMins).std;
-        
-        let amount = 0;
-        let leftover = g;
-        if (stdCost > 0) {
-            amount = Math.floor(g / stdCost);
-            leftover = g % stdCost;
-        }
-        
+        const stdCost = stats.curGem.std;
+        const amount = stdCost > 0 ? Math.floor(g / stdCost) : 0;
+        const leftover = stdCost > 0 ? (g % stdCost) : g;
+
         html += `<tr>
             <td style="text-align: center; padding: 6px 0;">
-                <img src="${data.img}" style="width: 24px; height: 24px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">
+                <img src="${stats.data.img}" style="width: 24px; height: 24px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));">
             </td>
             <td style="text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; color: #000;">${amount.toLocaleString()}</td>
             <td style="text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; color: #555;">
@@ -136,10 +194,10 @@ window.updateGemsToEggs = function() {
 // --- GEM COST HELPERS ---
 window.formatFrugalWait = function(s) {
     if (s <= 0) return '0s';
-    let h = Math.floor(s / 3600);
-    let m = Math.floor((s % 3600) / 60);
-    let sec = s % 60;
-    let arr = [];
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const arr = [];
     if (h > 0) arr.push(h + 'h');
     if (m > 0) arr.push(m + 'm');
     if (sec > 0 || arr.length === 0) arr.push(sec + 's');
@@ -148,11 +206,11 @@ window.formatFrugalWait = function(s) {
 
 window.getGemData = function(mins) {
     if (mins <= 0) return { std: 0, frg: 0, rawWait: 0, wait: '0s' };
-    let totalSeconds = mins * 60;
-    let stdGems = Math.max(1, Math.ceil((totalSeconds / 434.7858) - 0.5));
-    let frgGems = stdGems - 1;
-    let targetSeconds = frgGems > 0 ? (frgGems + 0.5) * 434.7858 : 0;
-    let waitSeconds = Math.max(0, Math.ceil(totalSeconds - targetSeconds));
+    const totalSeconds = mins * 60;
+    const stdGems = Math.max(1, Math.ceil((totalSeconds / 434.7858) - 0.5));
+    const frgGems = stdGems - 1;
+    const targetSeconds = frgGems > 0 ? (frgGems + 0.5) * 434.7858 : 0;
+    const waitSeconds = Math.max(0, Math.ceil(totalSeconds - targetSeconds));
     return { std: stdGems, frg: frgGems, rawWait: waitSeconds, wait: window.formatFrugalWait(waitSeconds) };
 };
 
@@ -161,7 +219,6 @@ window.renderGemCell = function(data, customColor) {
     const iconHtml = `<img src="icons/Gem.png" style="width: 14px; height: 14px; object-fit: contain; vertical-align: -2px; margin-right: 4px;">`;
     const stdHtml = `<span class="gem-val-standard" style="display: inline-flex; align-items: center; color: ${color} !important;">${iconHtml}${data.std.toLocaleString()}</span>`;
     const frgHtml = `<span class="gem-val-frugal" style="display: none; align-items: center; color: ${color} !important;">${iconHtml}${data.frg.toLocaleString()} + ${data.wait}</span>`;
-    
     return `${stdHtml}${frgHtml}`;
 };
 
@@ -186,20 +243,17 @@ window.toggleGemFrugalMode = function(isFrugal) {
 
 window.getEggGemData = function(mins) {
     if (mins <= 0) return { std: 0, frg: 0, rawWait: 0, wait: '0s' };
+    const totalSeconds = mins * 60;
+    const stdGems = Math.max(1, Math.ceil((totalSeconds / 1000) - 0.5));
+    const frgGems = stdGems - 1;
+    const targetSeconds = frgGems > 0 ? (frgGems + 0.5) * 1000 : 0;
+    const waitSeconds = Math.max(0, Math.ceil(totalSeconds - targetSeconds));
 
-    let totalSeconds = mins * 60;
-    
-    let stdGems = Math.max(1, Math.ceil((totalSeconds / 1000) - 0.5));
-    let frgGems = stdGems - 1;
-
-    let targetSeconds = frgGems > 0 ? (frgGems + 0.5) * 1000 : 0;
-    let waitSeconds = Math.max(0, Math.ceil(totalSeconds - targetSeconds));
-    
-    return { 
-        std: stdGems, 
-        frg: frgGems, 
-        rawWait: waitSeconds, 
-        wait: window.formatFrugalWait(waitSeconds) 
+    return {
+        std: stdGems,
+        frg: frgGems,
+        rawWait: waitSeconds,
+        wait: window.formatFrugalWait(waitSeconds)
     };
 };
 
@@ -215,117 +269,32 @@ function showForgeGemTable() {
     let totalStdAfter = 0, totalFrgAfter = 0, totalWaitAfter = 0;
 
     let rowsHtml = '';
-    for (let i = 1; i <= 34; i++) {
+    for (let i = 1; i <= 49; i++) {
         if (!forgeLevelData[i]) continue;
         const mins = forgeLevelData[i][1] * 60;
-        
+
         const curData = window.getGemData(mins / (1 + cur / 100));
         const projData = window.getGemData(mins / (1 + proj / 100));
 
         totalStdBefore += curData.std; totalFrgBefore += curData.frg; totalWaitBefore += curData.rawWait;
         totalStdAfter += projData.std; totalFrgAfter += projData.frg; totalWaitAfter += projData.rawWait;
-        
-        let rightCol = `
-        <div class="gem-comp-container">
-            <div class="gem-stack-inner">
-                <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
-            </div>
-        </div>`;
-        if (isUpgrade) {
-            rightCol = `
-            <div class="gem-comp-container"> 
-                <div class="gem-stack-inner">
-                    <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
-                    <div class="gem-after-wrapper">
-                        <span class="gem-comp-arrow">➜</span>
-                        <div class="gem-after-val">${window.renderGemCell(projData, '#198754')}</div>
-                    </div>
-                </div>
-            </div>`;
-        }
 
         rowsHtml += `<tr>
             <td><div style="text-align: left; padding-left: 20px; display: block; width: 100%; box-sizing: border-box; color: #000; font-family: 'Fredoka', sans-serif; font-weight: 700;">${i} ➜ ${i + 1}</div></td>
-            <td>${rightCol}</td>
+            <td>${buildGemComparisonCell(curData, projData, isUpgrade)}</td>
         </tr>`;
     }
-    
+
     const totalCurData = { std: totalStdBefore, frg: totalFrgBefore, wait: window.formatFrugalWait(totalWaitBefore) };
     const totalProjData = { std: totalStdAfter, frg: totalFrgAfter, wait: window.formatFrugalWait(totalWaitAfter) };
 
-    let totalRightCol = `
-    <div class="gem-comp-container">
-        <div class="gem-stack-inner">
-            <div class="gem-before-wrapper">${window.renderGemCell(totalCurData)}</div>
-        </div>
-    </div>`;
-    if (isUpgrade) {
-        totalRightCol = `
-        <div class="gem-comp-container"> 
-            <div class="gem-stack-inner">
-                <div class="gem-before-wrapper">${window.renderGemCell(totalCurData)}</div>
-                <div class="gem-after-wrapper">
-                    <span class="gem-comp-arrow">➜</span>
-                    <div class="gem-after-val">${window.renderGemCell(totalProjData, '#198754')}</div>
-                </div>
-            </div>
-        </div>`;
-    }
-
     rowsHtml += `<tr>
         <td><div style="text-align: left; padding-left: 20px; display: block; width: 100%; box-sizing: border-box; color: #000; font-family: 'Fredoka', sans-serif; font-weight: 700;">Total</div></td>
-        <td>${totalRightCol}</td>
+        <td>${buildGemComparisonCell(totalCurData, totalProjData, isUpgrade)}</td>
     </tr>`;
 
-    const dynamicStyles = `
-    <style>
-        .gem-comp-container {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            box-sizing: border-box;
-            font-family: 'Fredoka', sans-serif;
-            font-weight: 700;
-        }
-        .gem-stack-inner {
-            display: flex;
-            align-items: center;
-        }
-        .gem-before-wrapper, .gem-after-val {
-            display: flex;
-            align-items: center;
-        }
-        .gem-after-wrapper {
-            display: flex;
-            align-items: center;
-        }
-        .gem-comp-arrow {
-            color: #198754 !important;
-            font-weight: 900;
-            margin: 0 6px;
-            -webkit-text-stroke: 0px !important;
-        }
-        @media (max-width: 768px) {
-            .gem-stack-inner {
-                flex-direction: column;
-                align-items: flex-start; /* Aligns the left edges of Before/After perfectly */
-                gap: 4px;
-                padding: 4px 0;
-            }
-            .gem-after-wrapper {
-                position: relative; /* Anchor for the absolute arrow */
-            }
-            .gem-comp-arrow {
-                position: absolute;
-                right: 100%; /* Pushes the arrow outside to the left */
-                margin: 0 4px 0 0;
-            }
-        }
-    </style>
-    `;
-
     const subHtml = `
-    ${dynamicStyles}
+    ${GEM_COMP_STYLES}
     <div style="text-align: center; margin-bottom: 12px; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">
         Speed +${cur}% ${isUpgrade ? `<span style="color: #198754; margin: 0 4px; font-weight: 800;">➜</span> <span style="color: #198754;">+${proj}%</span>` : ''}
     </div>
@@ -336,7 +305,7 @@ function showForgeGemTable() {
         </div>
     </div>`;
 
-    let html = `
+    const html = `
         ${subHtml}
         <table class="clean-table" style="width: 100%;">
             <thead>
@@ -372,74 +341,35 @@ function showTechGemTable() {
     tabsHtml += `</div>`;
 
     let contentHtml = '';
-
     for (let t = 1; t <= 6; t++) {
         let totalStdBefore = 0, totalFrgBefore = 0, totalWaitBefore = 0;
         let totalStdAfter = 0, totalFrgAfter = 0, totalWaitAfter = 0;
         let rowsHtml = '';
-        
+
         for (let i = 0; i < 5; i++) {
-            const baseMins = (typeof tierTimes !== 'undefined' && tierTimes[t]) ? (tierTimes[t][i] || 0) : 0; 
+            const baseMins = (typeof tierTimes !== 'undefined' && tierTimes[t]) ? (tierTimes[t][i] || 0) : 0;
             const curData = window.getGemData(baseMins / (1 + cur / 100));
             const projData = window.getGemData(baseMins / (1 + proj / 100));
 
             totalStdBefore += curData.std; totalFrgBefore += curData.frg; totalWaitBefore += curData.rawWait;
             totalStdAfter += projData.std; totalFrgAfter += projData.frg; totalWaitAfter += projData.rawWait;
 
-            let rightCol = `
-            <div class="gem-comp-container">
-                <div class="gem-stack-inner">
-                    <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
-                </div>
-            </div>`;
-            if (isUpgrade) {
-                rightCol = `
-                <div class="gem-comp-container"> 
-                    <div class="gem-stack-inner">
-                        <div class="gem-before-wrapper">${window.renderGemCell(curData)}</div>
-                        <div class="gem-after-wrapper">
-                            <span class="gem-comp-arrow">➜</span>
-                            <div class="gem-after-val">${window.renderGemCell(projData, '#198754')}</div>
-                        </div>
-                    </div>
-                </div>`;
-            }
-
             rowsHtml += `<tr>
                 <td><div style="text-align: left; padding-left: 20px; display: block; width: 100%; box-sizing: border-box; color: #000; font-family: 'Fredoka', sans-serif; font-weight: 700;">${i + 1}</div></td>
-                <td>${rightCol}</td>
+                <td>${buildGemComparisonCell(curData, projData, isUpgrade)}</td>
             </tr>`;
         }
 
         const totalCurData = { std: totalStdBefore, frg: totalFrgBefore, wait: window.formatFrugalWait(totalWaitBefore) };
         const totalProjData = { std: totalStdAfter, frg: totalFrgAfter, wait: window.formatFrugalWait(totalWaitAfter) };
 
-        let totalRightCol = `
-        <div class="gem-comp-container">
-            <div class="gem-stack-inner">
-                <div class="gem-before-wrapper">${window.renderGemCell(totalCurData)}</div>
-            </div>
-        </div>`;
-        if (isUpgrade) {
-            totalRightCol = `
-            <div class="gem-comp-container"> 
-                <div class="gem-stack-inner">
-                    <div class="gem-before-wrapper">${window.renderGemCell(totalCurData)}</div>
-                    <div class="gem-after-wrapper">
-                        <span class="gem-comp-arrow">➜</span>
-                        <div class="gem-after-val">${window.renderGemCell(totalProjData, '#198754')}</div>
-                    </div>
-                </div>
-            </div>`;
-        }
-
         rowsHtml += `<tr>
             <td><div style="text-align: left; padding-left: 20px; display: block; width: 100%; box-sizing: border-box; color: #000; font-family: 'Fredoka', sans-serif; font-weight: 700;">Total</div></td>
-            <td>${totalRightCol}</td>
+            <td>${buildGemComparisonCell(totalCurData, totalProjData, isUpgrade)}</td>
         </tr>`;
 
         contentHtml += `
-        <div id="tech-gem-tab-${t-1}" class="tech-gem-tab" style="display: ${t === 1 ? 'block' : 'none'};">
+        <div id="tech-gem-tab-${t - 1}" class="tech-gem-tab" style="display: ${t === 1 ? 'block' : 'none'};">
             <table class="clean-table" style="width: 100%;">
                 <thead>
                     <tr>
@@ -451,56 +381,9 @@ function showTechGemTable() {
             </table>
         </div>`;
     }
-    
-    const dynamicStyles = `
-    <style>
-        .gem-comp-container {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            box-sizing: border-box;
-            font-family: 'Fredoka', sans-serif;
-            font-weight: 700;
-        }
-        .gem-stack-inner {
-            display: flex;
-            align-items: center;
-        }
-        .gem-before-wrapper, .gem-after-val {
-            display: flex;
-            align-items: center;
-        }
-        .gem-after-wrapper {
-            display: flex;
-            align-items: center;
-        }
-        .gem-comp-arrow {
-            color: #198754 !important;
-            font-weight: 900;
-            margin: 0 6px;
-            -webkit-text-stroke: 0px !important;
-        }
-        @media (max-width: 768px) {
-            .gem-stack-inner {
-                flex-direction: column;
-                align-items: flex-start; /* Aligns the left edges of Before/After perfectly */
-                gap: 4px;
-                padding: 4px 0;
-            }
-            .gem-after-wrapper {
-                position: relative; /* Anchor for the absolute arrow */
-            }
-            .gem-comp-arrow {
-                position: absolute;
-                right: 100%; /* Pushes the arrow outside to the left */
-                margin: 0 4px 0 0;
-            }
-        }
-    </style>
-    `;
 
     const subHtml = `
-    ${dynamicStyles}
+    ${GEM_COMP_STYLES}
     <div style="text-align: center; margin-bottom: 12px; font-family: 'Fredoka', sans-serif; font-size: 1.05rem; font-weight: 600; color: #000; -webkit-text-stroke: 0px;">
         Speed Bonus +${cur}% ${isUpgrade ? `<span style="color: #198754; margin: 0 4px; font-weight: 800;">➜</span> <span style="color: #198754;">+${proj}%</span>` : ''}
     </div>
@@ -511,46 +394,20 @@ function showTechGemTable() {
         </div>
     </div>`;
 
-    let html = `
-        ${subHtml}
-        ${tabsHtml}
-        ${contentHtml}
-    `;
-    
+    const html = `${subHtml}${tabsHtml}${contentHtml}`;
     if (typeof MODAL_SETTINGS !== 'undefined') MODAL_SETTINGS['techGemCost'] = { title: "TECH GEM COST", headerColor: "#ebf8fa", titleColor: "#000000", disclaimer: "" };
     renderMasterModal('techGemCost', html);
 }
 
 function showEggGemTable() {
-    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic', 'heroic', 'infinite', 'eternal'];
-    
     let rowsHtml = '';
-    
-    keys.forEach(k => {
-        if (typeof EGG_DATA === 'undefined' || !EGG_DATA[k]) return;
-        const data = EGG_DATA[k];
-        const baseMins = data.t;
-        
-        let curLvl = 0, projLvl = 0;
-        if (typeof setupLevels !== 'undefined' && typeof calcState === 'function') {
-            const state = calcState();
-            for (let t = 1; t <= 6; t++) {
-                curLvl += (setupLevels[`spt_T${t}_${data.id}`] || 0);
-                projLvl += (state.levels[`spt_T${t}_${data.id}`] || 0);
-            }
-        }
-        let clanLvl = typeof window.getClanEggLvl === 'function' ? window.getClanEggLvl(data.id) : 0;
-        
-        let curSpeed = (curLvl * 10) + (clanLvl * 5);
-        let projSpeed = (projLvl * 10) + (clanLvl * 5);
-        let isUpgrade = projSpeed > curSpeed;
 
-        let curMins = baseMins / (1 + curSpeed / 100);
-        let projMins = baseMins / (1 + projSpeed / 100);
-        
-        const curGem = window.getEggGemData(curMins);
-        const projGem = window.getEggGemData(projMins);
-        
+    EGG_TIER_KEYS.forEach(k => {
+        const stats = window.getEggCalcStats(k);
+        if (!stats) return;
+
+        const { data, curSpeed, projSpeed, isUpgrade, curGem, projGem } = stats;
+
         let speedCol = `<div style="text-align: center; color: #000; font-weight: 600;">+${curSpeed}%</div>`;
         if (isUpgrade) {
             speedCol = `
@@ -561,12 +418,12 @@ function showEggGemTable() {
                 </div>
             </div>`;
         }
-        
+
         let rightCol = `
         <div style="display: flex; justify-content: center; width: 100%;">
             <div>${window.renderGemCell(curGem)}</div>
         </div>`;
-        
+
         if (isUpgrade && (curGem.std !== projGem.std || curGem.rawWait !== projGem.rawWait)) {
             rightCol = `
             <div style="display: flex; flex-direction: column; align-items: center; width: 100%; line-height: 1.2;"> 
@@ -589,19 +446,14 @@ function showEggGemTable() {
         </tr>`;
     });
 
-    const dynamicStyles = `
+    const subHtml = `
     <style>
-        /* Matches the gem text formatting perfectly to the speed column */
         #modal-egg-gem-table .gem-val-standard, 
         #modal-egg-gem-table .gem-val-frugal {
             font-family: 'Fredoka', sans-serif;
-            font-weight: 600; /* Dropped from 700 to 600 */
+            font-weight: 600;
         }
     </style>
-    `;
-
-    const subHtml = `
-    ${dynamicStyles}
     <div style="display: flex; justify-content: center; width: 100%; margin: 5px 0 15px 0;">
         <div class="segmented-control" style="display: inline-flex; width: 240px; height: 35px; margin: 0 auto; z-index: 10;">
             <button id="btn-gem-standard" class="seg-btn active" onclick="toggleGemFrugalMode(false)" style="width: 50%;">Standard</button>
@@ -609,7 +461,7 @@ function showEggGemTable() {
         </div>
     </div>`;
 
-    let html = `
+    const html = `
         ${subHtml}
         <table id="modal-egg-gem-table" class="clean-table" style="width: 100%;">
             <thead>
@@ -628,10 +480,10 @@ function showEggGemTable() {
 }
 
 window.showGemsToEggsModal = function() {
-    let g = parseInt(document.getElementById('calc-egg-gem-input').value);
-    
+    const g = parseInt(document.getElementById('calc-egg-gem-input').value);
+
     if (isNaN(g) || g <= 0) {
-        let emptyHtml = `
+        const emptyHtml = `
             <table class="clean-table" style="width: 100%; border-collapse: separate; border-spacing: 0 6px;">
                 <thead>
                     <tr>
@@ -654,14 +506,9 @@ window.showGemsToEggsModal = function() {
         return;
     }
 
-    const keys = ['common', 'rare', 'epic', 'legendary', 'ultimate', 'mythic', 'heroic', 'infinite', 'eternal'];
-    
     const getCwMult = (actionKey, dayNum) => {
         if (typeof getClanTechMult === 'function') return getClanTechMult(actionKey, dayNum);
-        const getTechBonus = (lv) => {
-            if (lv <= 10) return lv * 0.04;
-            return (10 * 0.04) + ((lv - 10) * 0.01);
-        };
+        const getTechBonus = (lv) => lv <= 10 ? lv * 0.04 : (10 * 0.04) + ((lv - 10) * 0.01);
         const actionLv = parseInt(window.clanTechMemory?.[actionKey] || 0);
         const dayLv = parseInt(window.clanTechMemory?.[`cwDay${dayNum}`] || 0);
         return 1 + getTechBonus(actionLv) + getTechBonus(dayLv);
@@ -671,6 +518,7 @@ window.showGemsToEggsModal = function() {
     const m5Hatch = getCwMult('cwHatch', 5);
 
     const formatNumberShort = (v) => {
+        if (typeof formatCombatStat === 'function') return formatCombatStat(v);
         if (!v || v === 0) return "0";
         if (v < 10000) return Math.round(v).toLocaleString('en-US');
         if (v < 1000000) return parseFloat((v / 1000).toFixed(1)) + 'k';
@@ -680,7 +528,7 @@ window.showGemsToEggsModal = function() {
     const formatCell = (valB, valA, showProj, baseColor = '#000', projColor = '#198754') => {
         const vBStr = formatNumberShort(valB);
         const vAStr = formatNumberShort(valA);
-        
+
         if (showProj && valB !== valA) {
             return `
             <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.2; width: 100%;">
@@ -698,7 +546,7 @@ window.showGemsToEggsModal = function() {
         const vBStr = formatNumberShort(valB);
         const vAStr = formatNumberShort(valA);
         const gemIcon = `<img src="icons/Gem.png" style="width: 12px; height: 12px; object-fit: contain; margin-right: 3px; vertical-align: -1px;">`;
-        
+
         if (showProj && valB !== valA) {
             return `
             <div style="display: flex; flex-direction: column; align-items: center; line-height: 1.2; width: 100%;">
@@ -714,42 +562,19 @@ window.showGemsToEggsModal = function() {
 
     let rowsHtml = '';
 
-    keys.forEach((k, idx) => {
-        if (typeof EGG_DATA === 'undefined' || !EGG_DATA[k]) return;
-        const data = EGG_DATA[k];
-        const baseMins = data.t;
-        
-        let curLvl = 0, projLvl = 0;
-        if (typeof setupLevels !== 'undefined' && typeof calcState === 'function') {
-            const state = calcState();
-            for (let t = 1; t <= 6; t++) {
-                curLvl += (setupLevels[`spt_T${t}_${data.id}`] || 0);
-                projLvl += (state.levels[`spt_T${t}_${data.id}`] || 0);
-            }
-        }
-        let clanLvl = typeof window.getClanEggLvl === 'function' ? window.getClanEggLvl(data.id) : 0;
-        
-        let curSpeed = (curLvl * 10) + (clanLvl * 5);
-        let projSpeed = (projLvl * 10) + (clanLvl * 5);
-        let isUpgrade = projSpeed > curSpeed;
+    EGG_TIER_KEYS.forEach((k, idx) => {
+        const stats = window.getEggCalcStats(k);
+        if (!stats) return;
 
-        let curMins = baseMins / (1 + curSpeed / 100);
-        let projMins = baseMins / (1 + projSpeed / 100);
-        
-        let curStdCost = window.getEggGemData(curMins).std;
-        let projStdCost = window.getEggGemData(projMins).std;
+        const { data, isUpgrade, curGem, projGem } = stats;
+        const curStdCost = curGem.std;
+        const projStdCost = projGem.std;
 
-        let curAmount = 0, curLeftover = g;
-        if (curStdCost > 0) {
-            curAmount = Math.floor(g / curStdCost);
-            curLeftover = g % curStdCost;
-        }
+        const curAmount = curStdCost > 0 ? Math.floor(g / curStdCost) : 0;
+        const curLeftover = curStdCost > 0 ? (g % curStdCost) : g;
 
-        let projAmount = 0, projLeftover = g;
-        if (projStdCost > 0) {
-            projAmount = Math.floor(g / projStdCost);
-            projLeftover = g % projStdCost;
-        }
+        const projAmount = projStdCost > 0 ? Math.floor(g / projStdCost) : 0;
+        const projLeftover = projStdCost > 0 ? (g % projStdCost) : g;
 
         let basePts = 0;
         if (typeof WAR_POINTS_BASE !== 'undefined' && WAR_POINTS_BASE.eggHatch && WAR_POINTS_BASE.eggHatch[idx]) {
@@ -774,7 +599,7 @@ window.showGemsToEggsModal = function() {
         </tr>`;
     });
 
-    let contentHtml = `
+    const contentHtml = `
         <table class="clean-table" style="width: 100%; border-collapse: separate; border-spacing: 0 6px;">
             <thead>
                 <tr>
@@ -796,7 +621,7 @@ window.showGemsToEggsModal = function() {
 };
 
 function showGemInfoModal() {
-    let html = `
+    const html = `
         <div style="font-family: 'Fredoka', sans-serif; font-size: 0.95rem; color: #3f3f3f; -webkit-text-stroke: 0px; font-weight: 600; line-height: 1.5; text-align: left; padding: 10px 15px;">
             <p style="margin-bottom: 15px;">
                 In this game, 1 gem skips roughly 7 minutes and 15 seconds of wait time for Forge and Tech upgrades. However, the game actually rounds the gem costs, so if you need 1.49 gems to skip it, the game immediately rounds it to 1 gem. As a result, when there are 10 minutes and 52 seconds left on the timer, the cost drops to just 1 gem. This means by spending your gems one at a time right at the end, you get 50% more value from every single gem. This trick works for both tech and forge upgrades.
