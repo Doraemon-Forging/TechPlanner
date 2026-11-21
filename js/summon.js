@@ -170,7 +170,7 @@ function getLevelFromCumulative(totalPulls, dataTable) {
         return { level: maxLv3, exp: 0, maxExp: "MAX", ascension: 3 };
     }
 
-    // Ascension 3 (extends to Lv 150 for Pets & Mounts)
+    // Ascension 3 (extends to Lv 150)
     if (totalPulls >= 3 * expPerBaseAsc) {
         let exp = totalPulls - (3 * expPerBaseAsc);
         let lvl = 1;
@@ -887,3 +887,278 @@ document.addEventListener('input', (e) => {
         updateSummonCalc('pet');
     }
 });
+
+// ==========================================
+// 7. SUMMON MODALS
+// ==========================================
+let currentProbModalType = 'skill';
+let currentProbModalLevel = 1;
+let currentProbModalAsc = 0;
+
+function openSummonProbModal(type, levelOverride = null, ascOverride = null) {
+    currentProbModalType = type;
+
+    const targetLvVal = document.getElementById(`sum-${type}-target-lv`)?.value;
+    const targetAscVal = document.getElementById(`sum-${type}-target-asc`)?.value;
+    const currentLvVal = document.getElementById(`sum-${type}-lvl`)?.value;
+    const currentAscVal = document.getElementById(`sum-${type}-asc`)?.value;
+
+    if (ascOverride !== null) {
+        currentProbModalAsc = parseInt(ascOverride) || 0;
+    } else if (targetLvVal && targetLvVal.trim() !== '') {
+        currentProbModalAsc = parseInt(targetAscVal) || 0;
+    } else {
+        currentProbModalAsc = parseInt(currentAscVal) || 0;
+    }
+
+    const maxLevel = (currentProbModalAsc === 3 && (type === 'skill' || type === 'pet' || type === 'mount')) ? 150 : 100;
+
+    if (levelOverride !== null) {
+        currentProbModalLevel = parseInt(levelOverride);
+    } else {
+        currentProbModalLevel = parseInt(targetLvVal) || parseInt(currentLvVal) || 1;
+    }
+
+    if (currentProbModalLevel < 1) currentProbModalLevel = 1;
+    if (currentProbModalLevel > maxLevel) currentProbModalLevel = maxLevel;
+
+    const config = typeof SUMMON_CONFIG !== 'undefined' ? SUMMON_CONFIG[type] : null;
+    let listHtml = '';
+
+    if (!config || !config.db || !config.db[currentProbModalLevel]) {
+        listHtml = `<div style="text-align:center; padding: 20px; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000;">Data not available for Level ${currentProbModalLevel}</div>`;
+    } else {
+        const rates = config.db[currentProbModalLevel];
+        const tiers = [
+            { name: 'Common',    rate: rates[1] || 0, color: '#f1f2f6' },
+            { name: 'Rare',      rate: rates[2] || 0, color: '#5cd8fe' },
+            { name: 'Epic',      rate: rates[3] || 0, color: '#5dfe8a' },
+            { name: 'Legendary', rate: rates[4] || 0, color: '#fcfe5d' },
+            { name: 'Ultimate',  rate: rates[5] || 0, color: '#ff5c5d' },
+            { name: 'Mythic',    rate: rates[6] || 0, color: '#d55cff' },
+            { name: 'Heroic',    rate: rates[7] || 0, color: '#fe0000' },
+            { name: 'Infinite',  rate: rates[8] || 0, color: '#228bff' },
+            { name: 'Eternal',   rate: rates[9] || 0, color: '#a5d801' }
+        ];
+
+        const fontStyle = "font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000; -webkit-text-stroke: 0px;";
+
+        tiers.forEach(t => {
+            if (t.rate > 0 || t.name === 'Common') { 
+                listHtml += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin-bottom: 6px; background-color: ${t.color}; border-radius: 8px;">
+                    <span style="${fontStyle}">${t.name}</span>
+                    <span style="${fontStyle}">${(t.rate).toFixed(2)}%</span>
+                </div>`;
+            }
+        });
+    }
+
+    const leftArrowSvg = `
+    <svg width="32" height="32" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 0px #000);">
+        <polygon points="18,4 4.14,12 18,20" fill="#00a3ff" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></polygon>
+    </svg>`;
+
+    const rightArrowSvg = `
+    <svg width="32" height="32" viewBox="0 0 24 24" style="filter: drop-shadow(0px 2px 0px #000);">
+        <polygon points="6,4 19.86,12 6,20" fill="#00a3ff" stroke="#000000" stroke-width="2.5" stroke-linejoin="round"></polygon>
+    </svg>`;
+
+    const levelTextStyle = `
+        font-family: 'Fredoka', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #ffffff;
+        -webkit-text-stroke: 3px #000000;
+        paint-order: stroke fill;                 
+        line-height: 1;
+        letter-spacing: 1px;
+    `;
+
+    const subTextStyle = `
+        font-family: 'Fredoka', sans-serif; 
+        font-size: 0.95rem; 
+        font-weight: 600; 
+        color: #000; 
+        margin-top: 4px;
+        -webkit-text-stroke: 0px;
+    `;
+
+    const displayType = type.charAt(0).toUpperCase() + type.slice(1);
+
+    const navHtml = `
+    <style>
+        .modal-header-fixed { display: none !important; }
+        .modal-body-scroll { padding-top: 25px !important; padding-bottom: 25px !important; border-radius: 16px !important; }
+        
+        #tableModal .modal-content { overflow: visible !important; margin-bottom: 30px !important; }
+
+        .btn-close-floating { 
+            position: absolute !important;
+            top: auto !important; 
+            bottom: -24px !important; 
+            left: 50% !important; 
+            right: auto !important; 
+            transform: translateX(-50%) !important; 
+        }
+    </style>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
+        
+        <button onclick="openSummonProbModal('${type}', ${currentProbModalLevel - 1}, ${currentProbModalAsc})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center; visibility: ${currentProbModalLevel > 1 ? 'visible' : 'hidden'};">
+            ${leftArrowSvg}
+        </button>
+        
+        <div style="text-align: center;">
+            <div style="${levelTextStyle}">Level ${currentProbModalLevel}</div>
+            <div style="${subTextStyle}">${displayType} probabilities</div>
+        </div>
+        
+        <button onclick="openSummonProbModal('${type}', ${currentProbModalLevel + 1}, ${currentProbModalAsc})" style="background: transparent; border: none; padding: 0; cursor: pointer; outline: none; display: flex; align-items: center; visibility: ${currentProbModalLevel < maxLevel ? 'visible' : 'hidden'};">
+            ${rightArrowSvg}
+        </button>
+        
+    </div>
+    `;
+
+    renderMasterModal('summonProb', navHtml + listHtml);
+}
+
+function openSummonYieldModal(type) {
+    if (!window.currentSummonYields || !window.currentSummonYields[type]) return;
+    
+    const data = window.currentSummonYields[type];
+    
+    const phasesB = (data.phasesB || []).filter(p => p.pullsUsed > 0.1);
+    const phasesA = (data.phasesA || []).filter(p => p.pullsUsed > 0.1);
+    
+    const targetProb = data.targetProb || 90;
+    const config = data.config;
+    const keyIcon = `<img src="icons/${config.icon}" style="width: 1rem; height: 1rem; object-fit: contain; vertical-align: -2px;">`;
+
+    let maxAsc = 0, minAsc = 3;
+    phasesB.forEach(p => { if (p.asc > maxAsc) maxAsc = p.asc; if (p.asc < minAsc) minAsc = p.asc; });
+    phasesA.forEach(p => { if (p.asc > maxAsc) maxAsc = p.asc; if (p.asc < minAsc) minAsc = p.asc; });
+
+    if (phasesB.length === 0 && phasesA.length === 0) return;
+
+    if (minAsc > maxAsc) { minAsc = 0; maxAsc = 0; }
+    
+    let tabsHtml = `
+    <style>
+        .modal-header-fixed { background: #ebf8fa !important; }
+    </style>
+    <div style="display: flex; justify-content: center; width: 100%;">
+    <div id="modal-tabs-container" style="display: flex; flex-wrap: nowrap; margin: 12px 0 15px 0 !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box;">`;
+    let contentHtml = ``;
+
+    const colors = ['#f1f2f6', '#5cd8fe', '#5dfe8a', '#fcfe5d', '#ff5c5d', '#d55cff', '#e64330', '#218cfe', '#a4d700'];
+    const fontStyle = "font-family: 'Fredoka', sans-serif; font-size: 0.95rem; font-weight: 600; color: #000000; -webkit-text-stroke: 0px;";
+    const arrowHtml = `<span style="font-family: 'Fredoka', sans-serif; font-weight: 800; color: #198754; font-size: 1.05rem; margin: 0 4px; -webkit-text-stroke: 0px !important;">➜</span>`;
+
+    const formatYieldRow = (val) => {
+        if (!val || val < 0.01) return "0";
+        if (val < 10) return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    };
+
+    const isMobile = window.innerWidth <= 768;
+    const itemNamePlural = config.itemName;
+
+    const btnClass = `seg-btn-yield-${type}`;
+    const contentClass = `tab-content-yield-${type}`;
+
+    for (let asc = minAsc; asc <= maxAsc; asc++) {
+        const tabRarities = getRarityCount(config.db, asc);
+        const emptyArr = new Array(tabRarities).fill(0);
+        const fallbackB = { yields: [...emptyArr], pityCost: [...emptyArr], pityItems: [...emptyArr], pullsUsed: 0, cost: phasesB[0]?.cost || 0, extra: phasesB[0]?.extra || 0 };
+        const fallbackA = { yields: [...emptyArr], pityCost: [...emptyArr], pityItems: [...emptyArr], pullsUsed: 0, cost: phasesA[0]?.cost || 0, extra: phasesA[0]?.extra || 0 };
+
+        const phaseB = phasesB.find(p => p.asc === asc) || fallbackB;
+        const phaseA = phasesA.find(p => p.asc === asc) || fallbackA;
+
+        const tabId = `sum-yield-tab-${type}-${asc}`;
+        const isActive = (asc === minAsc) ? 'active' : '';
+        const tabLabel = asc === 0 ? 'No Asc' : `<img src="icons/asc${asc}.png" style="height: 1.1em; vertical-align: -2px;">`;
+
+        const switchJs = `document.querySelectorAll('.${contentClass}').forEach(el => el.style.display='none'); document.getElementById('${tabId}').style.display='block'; document.querySelectorAll('.${btnClass}').forEach(el => el.classList.remove('active')); this.classList.add('active');`;
+
+        tabsHtml += `<button class="${btnClass} seg-btn ${isActive}" onclick="${switchJs}" style="flex: 1 1 0 !important; min-width: 0 !important; padding: 0 2px !important; display: flex !important; justify-content: center !important; align-items: center !important;">${tabLabel}</button>`;
+
+        let totalYieldB = phaseB.yields.reduce((sum, val) => sum + val, 0);
+        let totalYieldA = phaseA.yields.reduce((sum, val) => sum + val, 0);
+        
+        let resB = Math.ceil((type === 'skill' ? phaseB.pullsUsed / 5 : phaseB.pullsUsed) / (1 + phaseB.extra)) * phaseB.cost;
+        let resA = Math.ceil((type === 'skill' ? phaseA.pullsUsed / 5 : phaseA.pullsUsed) / (1 + phaseA.extra)) * phaseA.cost;
+
+        const formatTotal = (val) => type === 'skill' ? Math.round(val).toLocaleString('en-US') : val.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const formatRes = (val) => typeof formatSummonKeys !== 'undefined' ? formatSummonKeys(val) : val.toLocaleString('en-US');
+        
+        let summaryB = `<div style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;"><span style="${fontStyle}">${formatTotal(totalYieldB)}</span> <span style="${fontStyle} font-weight: 500; font-size: 0.8rem; color: #000;">(${keyIcon} ${formatRes(resB)})</span></div>`;
+        let summaryA = `<div style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;"><span style="${fontStyle} color:#000;">${formatTotal(totalYieldA)}</span> <span style="${fontStyle} font-weight: 500; font-size: 0.8rem; color: #000;">(${keyIcon} ${formatRes(resA)})</span></div>`;
+        
+        let summaryHtml = `<div style="text-align: right;">${summaryB}</div>`;
+        if (formatTotal(totalYieldB) !== formatTotal(totalYieldA) || resB !== resA) {
+            summaryHtml = isMobile 
+                ? `<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div>${summaryB}</div><div style="display: flex; align-items: center;">${arrowHtml}${summaryA}</div></div>`
+                : `<div style="display: flex; align-items: center; justify-content: flex-end; gap: 4px; white-space: nowrap;">${summaryB} ${arrowHtml} ${summaryA}</div>`;
+        }
+
+        let rowsHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px 15px; background: #e6e9ed; border-radius: 8px; border: 1px solid rgba(0,0,0,0.05); gap: 10px;">
+                <div style="flex: 0 0 45%; max-width: 45%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.95rem; color: #000; -webkit-text-stroke: 0px; text-align: left; line-height: 1.2;">${itemNamePlural} Summoned</div>
+                <div style="flex: 1 1 auto; max-width: 55%; display: flex; justify-content: flex-end;">${summaryHtml}</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding: 0 4px; align-items: center;">
+                <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: left; -webkit-text-stroke: 0px; line-height: 1.3;">Yield</div>
+                <div style="width: 50%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; color: #000000; text-align: right; -webkit-text-stroke: 0px; line-height: 1.3;">How Many More ${itemNamePlural} to Reach Target %</div>
+            </div>
+        `;
+
+        for (let i = 0; i < tabRarities; i++) {
+            let yB = formatYieldRow(phaseB.yields[i]);
+            let yA = formatYieldRow(phaseA.yields[i]);
+            
+            let yHtml = yB === yA 
+                ? `<span style="${fontStyle}">${yB}</span>` 
+                : (isMobile 
+                    ? `<div style="display:flex; flex-direction:column; align-items:flex-start; gap:2px;"><span style="${fontStyle}">${yB}</span><div style="display:flex; align-items:center; white-space:nowrap;">${arrowHtml} <span style="${fontStyle} color:#000;">${yA}</span></div></div>`
+                    : `<div style="display:flex; align-items:center; white-space:nowrap;"><span style="${fontStyle}">${yB}</span>${arrowHtml}<span style="${fontStyle} color:#000;">${yA}</span></div>`);
+
+            const renderPity = (items, res) => {
+                if (targetProb <= 0) return `<span style="${fontStyle} color:#000;">0</span>`;
+                return `<div style="display: inline-flex; align-items: center; gap: 4px; color: #000; white-space: nowrap;">
+                            <span style="${fontStyle} color: #000;">${items.toLocaleString()}</span>
+                            <span style="${fontStyle} font-weight:500; font-size:0.8rem; color: #000;">(${keyIcon} ${formatRes(res)})</span>
+                        </div>`;
+            }
+
+            let pB = renderPity(phaseB.pityItems[i], phaseB.pityCost[i]);
+            let pA = renderPity(phaseA.pityItems[i], phaseA.pityCost[i]);
+            
+            let pHtml = (phaseB.pityCost[i] === phaseA.pityCost[i] && phaseB.pityItems[i] === phaseA.pityItems[i]) 
+                ? pB 
+                : (isMobile 
+                    ? `<div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;"><span>${pB}</span><div style="display:flex; align-items:center; white-space:nowrap;">${arrowHtml} ${pA}</div></div>`
+                    : `<div style="display:flex; align-items:center; justify-content:flex-end; white-space:nowrap;">${pB}${arrowHtml}${pA}</div>`);
+
+            rowsHtml += `
+            <div style="background-color: ${colors[i]}; border-radius: 8px; padding: 10px 15px; margin-bottom: 6px; display: flex; align-items: center; border: 1px solid rgba(0,0,0,0.05); gap: 10px;">
+                <div style="flex: 0 0 30%; max-width: 35%; text-align: left; display: flex; justify-content: flex-start;">${yHtml}</div>
+                <div style="flex: 1 1 auto; text-align: right; display: flex; justify-content: flex-end;">${pHtml}</div>
+            </div>`;
+        }
+        
+        contentHtml += `<div id="${tabId}" class="tab-content-area ${contentClass}" style="display: ${asc === minAsc ? 'block' : 'none'};">${rowsHtml}</div>`;
+    }
+    
+    tabsHtml += `</div></div>`; 
+    
+    renderMasterModal('summonYield', tabsHtml + contentHtml);
+
+    const modalHeader = document.querySelector('#tableModal .modal-header-fixed');
+    if (modalHeader) {
+        const titleEl = modalHeader.querySelector('h1, h2, h3, h4, span, div') || modalHeader;
+        titleEl.textContent = 'Yield by Ascension';
+    }
+}

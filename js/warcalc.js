@@ -891,3 +891,180 @@ if (typeof window !== 'undefined') {
 document.addEventListener('DOMContentLoaded', () => {
     initWarCalc();
 });
+
+// --- WAR CALC MODAL ---
+window.openWarOverviewModal = function() {
+    if (typeof MODAL_SETTINGS !== 'undefined') {
+        MODAL_SETTINGS.warOverview = { 
+            title: "WAR OVERVIEW", 
+            headerColor: "#ebf8fa", 
+            titleColor: "#000000", 
+        };
+    }
+
+    if (!window.warCalcGlobalData) return;
+
+    const data = window.warCalcGlobalData;
+    const days = [data.day1, data.day2, data.day3, data.day4, data.day5];
+    const totalPtsB = data.totB || 0;
+    const totalPtsA = data.totA || 0;
+
+    const renderBA = (vB, vA, isPct, isSub = false, isTitle = false) => {
+        const fmt = (v) => {
+            if (isPct) return v.toFixed(1) + '%';
+            if (!v || v === 0) return isPct ? "0.0%" : "0";
+            if (v < 10000) return Math.round(v).toLocaleString('en-US');
+            if (v < 1000000) return parseFloat((v/1000).toFixed(1)) + 'k';
+            return parseFloat((v/1000000).toFixed(2)) + 'm';
+        };
+
+        const strB = fmt(vB); 
+        const strA = fmt(vA);
+        const fontSize = isTitle ? '1rem' : (isSub ? '0.8rem' : '0.9rem');
+        
+        if (Math.abs(vB - vA) < (isPct ? 0.1 : 1) || strB === strA) {
+            return `
+            <div style="width: 100%; display: flex; justify-content: flex-end;">
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: ${isSub ? '#555' : '#000'}; white-space: nowrap;">${strB}</div>
+            </div>`;
+        } else {
+            return `
+            <div style="width: 100%; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;">
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: ${isSub ? '#555' : '#000'}; white-space: nowrap; margin-bottom: 2px;">${strB}</div>
+                <div style="font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: ${fontSize}; -webkit-text-stroke: 0px #000000; color: #27ae60; white-space: nowrap; display: flex; align-items: center;">
+                    <span class="calc-arrow" style="margin-right: 4px; font-size: 0.85em;">➜</span>${strA}
+                </div>
+            </div>`;
+        }
+    };
+
+    // --- CARD 1: OVERVIEW HTML ---
+    let overviewHtml = `
+    <div style="background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 2px solid #000; box-shadow: 0 4px 0 rgba(0,0,0,0.1); margin-bottom: 15px;">
+        <div style="background-color: #ebf8fa; padding: 10px 12px; border-bottom: 2px solid #000; display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000;">
+                TOTAL POINTS
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <img src="icons/warpoint.png" style="width: 18px; height: 18px; object-fit: contain;">
+                ${renderBA(totalPtsB, totalPtsA, false, false, true)}
+            </div>
+        </div>
+        <div style="padding: 10px;">
+            <div style="display: flex; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000; padding: 0 12px 6px 12px; text-transform: uppercase;">
+                <div style="flex: 0 0 25%; box-sizing: border-box;">Day</div>
+                <div style="flex: 0 0 45%; text-align: right; padding-right: 8px; box-sizing: border-box; display: flex; justify-content: flex-end; align-items: center;">
+                    <img src="icons/warpoint.png" style="width: 15px; height: 15px; object-fit: contain;">
+                </div>
+                <div style="flex: 0 0 30%; text-align: right; box-sizing: border-box;">%</div>
+            </div>`;
+
+    days.forEach((dayData, index) => {
+        let vB = dayData.totalB || 0;
+        let vA = dayData.totalA || 0;
+        let pctB = totalPtsB > 0 ? (vB / totalPtsB) * 100 : 0;
+        let pctA = totalPtsA > 0 ? (vA / totalPtsA) * 100 : 0;
+
+        overviewHtml += `
+            <div style="display: flex; justify-content: space-between; align-items: center; background-color: #f2f2f2; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;">
+                <div style="flex: 0 0 25%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.9rem; -webkit-text-stroke: 0px #000000; color: #000; box-sizing: border-box;">Day ${index + 1}</div>
+                <div style="flex: 0 0 45%; padding-right: 8px; box-sizing: border-box;">
+                    ${renderBA(vB, vA, false)}
+                </div>
+                <div style="flex: 0 0 30%; box-sizing: border-box;">
+                    ${renderBA(pctB, pctA, true)}
+                </div>
+            </div>`;
+    });
+    overviewHtml += `</div></div>`;
+
+    // --- CARD 2: BREAKDOWN HTML ---
+    const categories = [
+        "Forge Equipment", "Forge Upgrade", "Forge Gems", "Dungeon Keys", 
+        "Skill Summon", "Skill Upgrade", "Tech Upgrades", "Mount Summon", 
+        "Mount Merge", "Egg Hatched", "Egg/Pet Merge"
+    ];
+
+    let breakdownHtml = `
+    <div style="background-color: #ffffff; border-radius: 10px; overflow: hidden; border: 2px solid #000; box-shadow: 0 4px 0 rgba(0,0,0,0.1);">
+        <div style="background-color: #ebf8fa; padding: 10px 12px; border-bottom: 2px solid #000; display: flex; align-items: center; justify-content: center;">
+            <div style="font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000; text-transform: uppercase;">
+                ACTION BREAKDOWN
+            </div>
+        </div>
+        <div style="padding: 10px;">
+            <div style="display: flex; font-family: 'Fredoka', sans-serif; font-size: 0.7rem; font-weight: 600; -webkit-text-stroke: 0px #000000; color: #000; padding: 0 12px 6px 12px; text-transform: uppercase;">
+                <div style="flex: 0 0 38%; box-sizing: border-box;">Action</div>
+                <div style="flex: 0 0 36%; text-align: right; padding-right: 8px; box-sizing: border-box; display: flex; justify-content: flex-end; align-items: center;">
+                    <img src="icons/warpoint.png" style="width: 15px; height: 15px; object-fit: contain;">
+                </div>
+                <div style="flex: 0 0 26%; text-align: right; box-sizing: border-box;">%</div>
+            </div>`;
+
+    categories.forEach(categoryName => {
+        let catB = 0, catA = 0;
+        let dayRows = [];
+
+        days.forEach((dayData, index) => {
+            let foundItem = dayData.items.find(i => i.label === categoryName);
+            if (foundItem && (foundItem.b > 0 || foundItem.a > 0)) {
+                catB += foundItem.b;
+                catA += foundItem.a;
+                dayRows.push({
+                    dayNum: index + 1,
+                    b: foundItem.b,
+                    a: foundItem.a
+                });
+            }
+        });
+
+        if (catB > 0 || catA > 0) {
+            let catPctB = totalPtsB > 0 ? (catB / totalPtsB) * 100 : 0;
+            let catPctA = totalPtsA > 0 ? (catA / totalPtsA) * 100 : 0;
+
+            breakdownHtml += `
+            <div style="background-color: #f2f2f2; border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;">
+                <!-- Category Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 0 0 38%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.85rem; -webkit-text-stroke: 0px #000000; color: #000; box-sizing: border-box; line-height: 1.1;">
+                        ${categoryName}
+                    </div>
+                    <div style="flex: 0 0 36%; padding-right: 8px; box-sizing: border-box;">
+                        ${renderBA(catB, catA, false)}
+                    </div>
+                    <div style="flex: 0 0 26%; box-sizing: border-box;">
+                        ${renderBA(catPctB, catPctA, true)}
+                    </div>
+                </div>`;
+
+            dayRows.forEach(row => {
+                
+                let rowPctB = totalPtsB > 0 ? (row.b / totalPtsB) * 100 : 0;
+                let rowPctA = totalPtsA > 0 ? (row.a / totalPtsA) * 100 : 0;
+
+                breakdownHtml += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0 0 10px; margin-top: 4px; border-top: 1px dashed #ccc;">
+                    <div style="flex: 0 0 38%; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 0.8rem; -webkit-text-stroke: 0px; color: #666; display: flex; align-items: center; gap: 4px;">
+                        <span style="color: #999; font-size: 0.9em;">></span> Day ${row.dayNum}
+                    </div>
+                    <div style="flex: 0 0 36%; padding-right: 8px; box-sizing: border-box;">
+                        ${renderBA(row.b, row.a, false, true)}
+                    </div>
+                    <div style="flex: 0 0 26%; box-sizing: border-box;">
+                        ${renderBA(rowPctB, rowPctA, true, true)}
+                    </div>
+                </div>`;
+            });
+
+            breakdownHtml += `</div>`;
+        }
+    });
+
+    breakdownHtml += `</div></div>`;
+
+    const finalHtml = `<div style="display: flex; flex-direction: column; gap: 5px;">${overviewHtml}${breakdownHtml}</div>`;
+    
+    if (typeof renderMasterModal === 'function') {
+        renderMasterModal('warOverview', finalHtml);
+    }
+};

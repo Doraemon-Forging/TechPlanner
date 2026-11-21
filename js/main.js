@@ -27,8 +27,7 @@ window.clanTechMemory = {
 };
 
 window.missionSlotsMemory = {
-    gold: "1", ticket: "2.5", egg: "2.5", pot: "1", key: "2.5", gp: "2.5", rally: "300",
-    w_fm_gold: "0", w_green_ticket: "1", w_eggshell: "2", w_red_potion: "0", w_mount_key: "2", w_green_potion: "10"
+    gold: "1", ticket: "2.5", egg: "2.5", pot: "1", key: "2.5", gp: "2.5", rally: "300"
 };
 
 const ALL_VIEW_CLASSES = ['view-planner', 'view-log', 'view-calc', 'view-egg', 'view-stats', 'view-war', 'view-daily', 'view-weekly', 'view-more', 'view-pet', 'view-equipment', 'view-summon', 'view-help', 'view-gem'];

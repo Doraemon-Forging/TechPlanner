@@ -405,6 +405,34 @@ const HTML_WAR = `
 
 const HTML_PET = `
 <div id="panel-pet" class="sidebar-panel" style="display: none;">
+    <style>
+        /* Match dropdown height with Level & Exp input boxes */
+        #panel-pet .calc-select-chunky,
+        #panel-pet .calc-input-chunky {
+            height: 34px !important;
+            box-sizing: border-box !important;
+        }
+        #panel-pet .calc-select-chunky {
+            padding: 0 6px !important;
+            line-height: 30px !important;
+        }
+        .mount-tier-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .mount-tier-img {
+            width: 34px;
+            height: 34px;
+            object-fit: contain;
+        }
+    </style>
+
     <div class="calc-container">
         
         <div style="display: flex; justify-content: center; width: 100%; margin: 5px 0 15px 0;">
@@ -422,7 +450,7 @@ const HTML_PET = `
                 <div class="daily-card-body" style="padding: 15px;">
                 <div class="calc-row-input">
                     <label>Ascension:</label>
-                    <select id="pet-ascension" class="calc-select-chunky" style="width: 60px; text-align: center; font-size: 0.9rem; padding: 0 4px;" onchange="if(typeof updatePetMount === 'function') updatePetMount(); if(typeof updateMergeResult === 'function') updateMergeResult();">
+                    <select id="pet-ascension" class="calc-select-chunky" style="width: 60px; text-align: center; font-size: 0.9rem;" onchange="if(typeof updatePetMount === 'function') updatePetMount(); if(typeof updateMergeResult === 'function') updateMergeResult();">
                         <option value="0" selected>0</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
@@ -434,8 +462,8 @@ const HTML_PET = `
                         <div class="calc-row-input" style="align-items: flex-start;">
                             <label style="margin-top: 6px;">Pet 1:</label>
                             <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
-                                <select id="pet-1-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updatePetNameOptions(1)"></select>
-                                <select id="pet-1-id" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updatePetMount()"></select>
+                                <select id="pet-1-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="updatePetNameOptions(1)"></select>
+                                <select id="pet-1-id" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="updatePetMount()"></select>
                             </div>
                         </div>
                         <div class="calc-row-input">
@@ -445,7 +473,7 @@ const HTML_PET = `
                         <div class="calc-row-input">
                             <label>Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="pet-1-exp" class="calc-input-chunky" style="width: 80px;" placeholder="0" min="0" oninput="updatePetMount()" onblur="validatePetInputs()">
+                                <input type="text" inputmode="numeric" id="pet-1-exp" class="calc-input-chunky" style="width: 130px;" placeholder="0" oninput="formatLiveIntInput(this); updatePetMount()" onblur="validatePetInputs()">
                                 <span class="calc-label pet-label-sub">/ <span id="pet-1-max">0</span></span>
                             </div>
                         </div>
@@ -457,8 +485,8 @@ const HTML_PET = `
                         <div class="calc-row-input" style="align-items: flex-start;">
                             <label style="margin-top: 6px;">Pet 2:</label>
                             <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
-                                <select id="pet-2-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updatePetNameOptions(2)"></select>
-                                <select id="pet-2-id" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updatePetMount()"></select>
+                                <select id="pet-2-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="updatePetNameOptions(2)"></select>
+                                <select id="pet-2-id" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="updatePetMount()"></select>
                             </div>
                         </div>
                         <div class="calc-row-input">
@@ -468,7 +496,7 @@ const HTML_PET = `
                         <div class="calc-row-input">
                             <label>Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="pet-2-exp" class="calc-input-chunky" style="width: 80px;" placeholder="0" min="0" oninput="updatePetMount()" onblur="validatePetInputs()">
+                                <input type="text" inputmode="numeric" id="pet-2-exp" class="calc-input-chunky" style="width: 130px;" placeholder="0" oninput="formatLiveIntInput(this); updatePetMount()" onblur="validatePetInputs()">
                                 <span class="calc-label pet-label-sub">/ <span id="pet-2-max">0</span></span>
                             </div>
                         </div>
@@ -480,8 +508,8 @@ const HTML_PET = `
                         <div class="calc-row-input" style="align-items: flex-start;">
                             <label style="margin-top: 6px;">Pet 3:</label>
                             <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
-                                <select id="pet-3-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updatePetNameOptions(3)"></select>
-                                <select id="pet-3-id" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updatePetMount()"></select>
+                                <select id="pet-3-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="updatePetNameOptions(3)"></select>
+                                <select id="pet-3-id" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="updatePetMount()"></select>
                             </div>
                         </div>
                         <div class="calc-row-input">
@@ -491,7 +519,7 @@ const HTML_PET = `
                         <div class="calc-row-input">
                             <label>Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="pet-3-exp" class="calc-input-chunky" style="width: 80px;" placeholder="0" min="0" oninput="updatePetMount()" onblur="validatePetInputs()">
+                                <input type="text" inputmode="numeric" id="pet-3-exp" class="calc-input-chunky" style="width: 130px;" placeholder="0" oninput="formatLiveIntInput(this); updatePetMount()" onblur="validatePetInputs()">
                                 <span class="calc-label pet-label-sub">/ <span id="pet-3-max">0</span></span>
                             </div>
                         </div>
@@ -500,7 +528,7 @@ const HTML_PET = `
                     <hr class="pet-hr" style="margin: 20px 0; border-top: 2px solid #bdc3c7;">
 
                     <div class="pet-stat-header">
-                    <div class="pet-stat-header-col"><img src="icons/icon_dmg.png" class="pet-stat-icon"></div>
+                        <div class="pet-stat-header-col"><img src="icons/icon_dmg.png" class="pet-stat-icon"></div>
                         <div class="pet-stat-header-col"><img src="icons/icon_hp.png" class="pet-stat-icon"></div>                        
                     </div>
                     <div class="pet-stat-row">
@@ -562,8 +590,8 @@ const HTML_PET = `
                         <div class="calc-row-input" style="align-items: flex-start;">
                             <label class="merge-label-long" style="margin-top: 6px;">Main Pet:</label>
                             <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
-                                <select id="merge-target-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updateMergeNameOptions('target')"></select>
-                                <select id="merge-target-id" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updateMergeResult()"></select>
+                                <select id="merge-target-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="updateMergeNameOptions('target')"></select>
+                                <select id="merge-target-id" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="updateMergeResult()"></select>
                             </div>
                         </div>
                         <div class="calc-row-input">
@@ -573,7 +601,7 @@ const HTML_PET = `
                         <div class="calc-row-input">
                             <label>Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="merge-target-exp" class="calc-input-chunky" style="width: 80px;" placeholder="0" min="0" oninput="updateMergeResult()" onblur="validateMergeInputs()">
+                                <input type="text" inputmode="numeric" id="merge-target-exp" class="calc-input-chunky" style="width: 130px;" placeholder="0" oninput="formatLiveIntInput(this); updateMergeResult()" onblur="validateMergeInputs()">
                                 <span class="calc-label pet-label-sub">/ <span id="merge-target-max">0</span></span>
                             </div>
                         </div>
@@ -584,7 +612,7 @@ const HTML_PET = `
                     <div class="pet-block">
                         <div class="calc-row-input" style="align-items: flex-start;">
                             <label class="merge-label-long" style="margin-top: 6px;">Fodder Pet:</label>
-                            <select id="merge-fodder-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updateMergeResult()"></select>
+                            <select id="merge-fodder-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="validateMergeInputs()"></select>
                         </div>
                         <div class="calc-row-input">
                             <label>Level:</label>
@@ -593,7 +621,7 @@ const HTML_PET = `
                         <div class="calc-row-input">
                             <label>Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="merge-fodder-exp" class="calc-input-chunky" style="width: 80px;" placeholder="0" min="0" oninput="updateMergeResult()" onblur="validateMergeInputs()">
+                                <input type="text" inputmode="numeric" id="merge-fodder-exp" class="calc-input-chunky" style="width: 130px;" placeholder="0" oninput="formatLiveIntInput(this); updateMergeResult()" onblur="validateMergeInputs()">
                                 <span class="calc-label pet-label-sub">/ <span id="merge-fodder-max">0</span></span>
                             </div>
                         </div>
@@ -626,6 +654,10 @@ const HTML_PET = `
                         <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
                             <img src="icons/EggMythic.png" style="width: 28px; height: 28px; object-fit: contain;">
                             <input type="number" id="bulk-mythic" class="calc-input-chunky" placeholder="0" min="0" oninput="updateMergeResult()" style="width: 60px !important; max-width: 60px !important; min-width: 0 !important; padding: 4px !important; text-align: center; flex-shrink: 0;">
+                        </div>
+                        <div id="bulk-heroic-wrapper" style="display: none; align-items: center; justify-content: center; gap: 6px;">
+                            <img src="icons/EggHeroic.png" style="width: 28px; height: 28px; object-fit: contain;">
+                            <input type="number" id="bulk-heroic" class="calc-input-chunky" placeholder="0" min="0" oninput="updateMergeResult()" style="width: 60px !important; max-width: 60px !important; min-width: 0 !important; padding: 4px !important; text-align: center; flex-shrink: 0;">
                         </div>
                     </div>
                     
@@ -669,7 +701,7 @@ const HTML_PET = `
                     <div class="pet-block" style="border: none; padding: 0;">
                     <div class="calc-row-input">
                         <label>Ascension:</label>
-                        <select id="mount-ascension" class="calc-select-chunky" style="width: 60px; text-align: center; font-size: 0.9rem; padding: 0 4px;" onchange="if(typeof updateMountMergeResult === 'function') updateMountMergeResult();">
+                        <select id="mount-ascension" class="calc-select-chunky" style="width: 60px; text-align: center; font-size: 0.9rem;" onchange="if(typeof updateMountMergeResult === 'function') updateMountMergeResult();">
                             <option value="0" selected>0</option>
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -679,7 +711,7 @@ const HTML_PET = `
                         <div class="calc-row-input" style="align-items: flex-start;">
                             <label class="merge-label-long" style="margin-top: 6px;">Main Mount:</label>
                             <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
-                                <select id="mount-target-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updateMountMergeResult()">
+                                <select id="mount-target-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="updateMountMergeResult()">
                                     <option value="Common">Common</option>
                                     <option value="Rare">Rare</option>
                                     <option value="Epic">Epic</option>
@@ -696,7 +728,7 @@ const HTML_PET = `
                         <div class="calc-row-input">
                             <label>Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="mount-target-exp" class="calc-input-chunky" style="width: 80px;" placeholder="0" min="0" oninput="updateMountMergeResult()" onblur="validateMountInputs()">
+                                <input type="text" inputmode="numeric" id="mount-target-exp" class="calc-input-chunky" style="width: 130px;" placeholder="0" oninput="formatLiveIntInput(this); updateMountMergeResult()" onblur="validateMountInputs()">
                                 <span class="calc-label pet-label-sub">/ <span id="mount-target-max">0</span></span>
                             </div>
                         </div>
@@ -708,7 +740,7 @@ const HTML_PET = `
                         <div class="calc-row-input" style="align-items: flex-start;">
                             <label class="merge-label-long" style="margin-top: 6px;">Fodder Mount:</label>
                             <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
-                                <select id="mount-fodder-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem; padding: 0 4px;" onchange="updateMountMergeResult()">
+                                <select id="mount-fodder-rarity" class="calc-select-chunky" style="width: 150px; font-size: 0.9rem;" onchange="validateMountInputs()">
                                     <option value="None">None</option>
                                     <option value="Common">Common</option>
                                     <option value="Rare">Rare</option>
@@ -726,7 +758,7 @@ const HTML_PET = `
                         <div class="calc-row-input">
                             <label>Exp:</label>
                             <div class="pet-flex-center">
-                                <input type="number" id="mount-fodder-exp" class="calc-input-chunky" style="width: 80px;" placeholder="0" min="0" oninput="updateMountMergeResult()" onblur="validateMountInputs()">
+                                <input type="text" inputmode="numeric" id="mount-fodder-exp" class="calc-input-chunky" style="width: 130px;" placeholder="0" oninput="formatLiveIntInput(this); updateMountMergeResult()" onblur="validateMountInputs()">
                                 <span class="calc-label pet-label-sub">/ <span id="mount-fodder-max">0</span></span>
                             </div>
                         </div>
@@ -737,13 +769,13 @@ const HTML_PET = `
                     <div class="pet-block">
                         <div class="calc-row-input">
                             <label>Summon Lv:</label>
-                            <input type="number" id="pet-mount-summon-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="100" oninput="updatePetMountExpCap(); updateMountMergeResult()">
+                            <input type="number" id="pet-mount-summon-lvl" class="calc-input-chunky" style="width: 60px;" placeholder="1" min="1" max="150" oninput="updatePetMountExpCap(); updateMountMergeResult()">
                         </div>
                         <div class="calc-row-input">
                             <label>Summon Exp:</label>
                             <div class="pet-flex-center">
                                 <input type="number" id="pet-mount-summon-exp" class="calc-input-chunky" style="width: 60px;" placeholder="0" min="0" oninput="updatePetMountExpCap(); updateMountMergeResult()">
-                                <span class="calc-label pet-label-sub">/ <span id="pet-mount-summon-max">2</span></span>
+                                <span class="calc-label pet-label-sub">/ <span id="pet-mount-summon-max">20</span></span>
                             </div>
                         </div>
                         <div class="calc-row-input">
@@ -755,24 +787,6 @@ const HTML_PET = `
                     <hr class="pet-hr" style="margin: 15px 0;">
                     
                     <div class="merge-section-title">Enter quantity to merge for each tier:</div>
-                    <style>
-                        /* Change the sizes here to instantly update all 6 circles! */
-                        .mount-tier-circle {
-                            width: 36px;
-                            height: 36px;
-                            border-radius: 50%;
-                            border: 2px solid #000000;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            flex-shrink: 0;
-                        }
-                        .mount-tier-img {
-                            width: 34px;
-                            height: 34px;
-                            object-fit: contain;
-                        }
-                    </style>
                     <div class="bulk-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 15px;">
                         <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
                             <div class="mount-tier-circle" style="background-color: #f1f1f1;">
@@ -1898,7 +1912,7 @@ const HTML_GEM = `
                     
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 2px dashed #bdc3c7; display: flex; flex-direction: column; gap: 15px; align-items: center;">
                         <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <img src="icons/Gem.png" style="width:20px; height:20px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
+                            <img src="icons/Gem.png" style="width:24px; height:24px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
                             <input type="number" id="calc-gem-input" placeholder="0" min="0" style="width: 80px; height: 36px; text-align: center; font-size: 1rem; font-weight: 600; border: 2px solid #bdc3c7; border-radius: 6px; outline: none; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;" oninput="updateGemToTime()">
                         </div>
 
@@ -1936,7 +1950,7 @@ const HTML_GEM = `
 
                         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; border-top: 1px solid #ecf0f1; padding-top: 12px;">
                             <span style="font-weight: 600; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">=</span>
-                            <img src="icons/Gem.png" style="width:20px; height:20px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
+                            <img src="icons/Gem.png" style="width:24px; height:24px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
                             <span id="calc-time-gem-res" style="font-size: 1.05rem; font-weight: 600; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;">0</span>
                         </div>
                         
@@ -1977,7 +1991,7 @@ const HTML_GEM = `
                     
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 2px dashed #bdc3c7; display: flex; flex-direction: column; gap: 15px; align-items: center;">
                         <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <img src="icons/Gem.png" style="width:20px; height:20px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
+                            <img src="icons/Gem.png" style="width:24px; height:24px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
                             <input type="number" id="calc-egg-gem-time-input" placeholder="0" min="0" style="width: 80px; height: 36px; text-align: center; font-size: 1rem; font-weight: 600; border: 2px solid #bdc3c7; border-radius: 6px; outline: none; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;" oninput="updateEggGemToTime()">
                         </div>
 
@@ -2004,7 +2018,7 @@ const HTML_GEM = `
                     
                     <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border: 2px dashed #bdc3c7; display: flex; flex-direction: column; gap: 15px; align-items: center;">
                         <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <img src="icons/Gem.png" style="width:20px; height:20px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
+                            <img src="icons/Gem.png" style="width:24px; height:24px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.1));">
                             <input type="number" id="calc-egg-gem-input" placeholder="0" min="0" style="width: 80px; height: 36px; text-align: center; font-size: 1rem; font-weight: 600; border: 2px solid #bdc3c7; border-radius: 6px; outline: none; font-family: 'Fredoka', sans-serif !important; color: #000000 !important; -webkit-text-stroke: 0px transparent !important; text-shadow: none !important;" oninput="window.updateGemsToEggs()">
                         </div>
 

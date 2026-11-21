@@ -72,6 +72,33 @@ function formatSummonKeys(val) {
     return (val / 1000000).toFixed(1) + 'm';                        
 }
 
+function formatLiveIntInput(el) {
+    if (!el) return;
+    const rawVal = el.value;
+    const selStart = el.selectionStart || 0;
+
+    const digitsBeforeCursor = rawVal.slice(0, selStart).replace(/\D/g, '').length;
+
+    const digitsOnly = rawVal.replace(/\D/g, '');
+    if (!digitsOnly) {
+        el.value = '';
+        return;
+    }
+
+    const formatted = parseInt(digitsOnly, 10).toLocaleString('en-US');
+    el.value = formatted;
+
+    if (document.activeElement === el && typeof el.setSelectionRange === 'function') {
+        let newPos = 0;
+        let digitsSeen = 0;
+        while (newPos < formatted.length && digitsSeen < digitsBeforeCursor) {
+            if (/\d/.test(formatted[newPos])) digitsSeen++;
+            newPos++;
+        }
+        el.setSelectionRange(newPos, newPos);
+    }
+}
+
 // --- INPUT HELPERS ---
 
 function cleanInput(el) {

@@ -452,3 +452,211 @@ document.addEventListener('DOMContentLoaded', () => {
     updateEquipment(); 
     window.addEventListener('resize', updateEquipment); 
 });
+
+// --- EQUIPMENT MODALS ---
+function openEqSellBreakdownModal(currentAvg, fromLevel, fromBonus, finalAvg) {
+    const fontStr = "font-family: 'Fredoka', sans-serif; -webkit-text-stroke: 0px;";
+    const safeFormat = (val) => typeof formatEqValue === 'function' ? formatEqValue(val) : val.toLocaleString();
+
+    const savedBonus = (window.refTablePrefs && window.refTablePrefs.sellBonus) ? window.refTablePrefs.sellBonus : 0;
+
+    let breakdownHtml = `
+    <div style="display: flex; flex-direction: column; gap: 6px; padding-top: 5px;">
+        <div style="background-color: #f2f2f2; border-radius: 8px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="${fontStr} font-weight: 600; color: #000; font-size: 0.9rem;">Current Overall Average</span>
+            <span style="${fontStr} font-weight: 600; color: #000; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;"><img src="icons/fm_gold.png" style="width:16px; height:16px; object-fit:contain;"> ${safeFormat(currentAvg)}</span>
+        </div>
+        <div style="background-color: #ecf0f1; border-radius: 8px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="${fontStr} font-weight: 600; color: #000; font-size: 0.9rem;">From New Level Brackets</span>
+            <span style="${fontStr} font-weight: 600; color: #198754; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;"><img src="icons/fm_gold.png" style="width:16px; height:16px; object-fit:contain;"> ${safeFormat(fromLevel)}</span>
+        </div>
+        <div style="background-color: #ecf0f1; border-radius: 8px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="${fontStr} font-weight: 600; color: #000; font-size: 0.9rem;">From Eq. Sell Price Tech</span>
+            <span style="${fontStr} font-weight: 600; color: #198754; font-size: 0.9rem; display: flex; align-items: center; gap: 5px;"><img src="icons/fm_gold.png" style="width:16px; height:16px; object-fit:contain;"> ${safeFormat(fromBonus)}</span>
+        </div>
+        <div style="background-color: #d1f2eb; border: 2px solid #198754; border-radius: 8px; padding: 12px 15px; margin-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="${fontStr} font-weight: 700; color: #000; font-size: 0.95rem;">Planned Overall Average</span>
+            <span style="${fontStr} font-weight: 700; color: #198754; font-size: 0.95rem; display: flex; align-items: center; gap: 5px;"><img src="icons/fm_gold.png" style="width:18px; height:18px; object-fit:contain;"> ${safeFormat(finalAvg)}</span>
+        </div>
+    </div>`;
+
+    let refTableHtml = `
+    <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 5px;">
+        <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="${fontStr} font-weight: 600; color: #000; font-size: 0.95rem;">Sell Price Bonus %:</span>
+            <input type="number" id="ref-sell-bonus" value="${savedBonus}" oninput="updateSellRefTable()" style="width: 80px; height: 32px; border: 2px solid #000000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; outline: none; -webkit-text-stroke: 0px transparent !important; background-color: #ffffff;">
+        </div>
+        <table class="clean-table" style="width: 100%;">
+            <thead><tr><th style="text-align: center; width: 50%;">Level Bracket</th><th style="text-align: center; width: 50%;">Avg Sell Price</th></tr></thead>
+            <tbody id="sell-ref-body"></tbody>
+        </table>
+    </div>`;
+
+    const fullHtml = `
+        <div id="modal-tabs-container" style="margin-bottom: 12px;">
+            <button class="seg-btn active" onclick="switchContentTab('tab-breakdown', this)">Breakdown</button>
+            <button class="seg-btn" onclick="switchContentTab('tab-ref', this)">Ref. Table</button>
+        </div>
+        <div id="tab-breakdown" class="tab-content-area">${breakdownHtml}</div>
+        <div id="tab-ref" class="tab-content-area" style="display: none;">${refTableHtml}</div>
+    `;
+
+    renderMasterModal('eqSellBreakdown', fullHtml);
+    setTimeout(updateSellRefTable, 50);
+}
+
+function syncRefStatsAscensionTiers() {
+    const ascEl = document.getElementById('ref-stats-ascension');
+    const tierEl = document.getElementById('ref-stats-tier');
+    if (!ascEl || !tierEl) return;
+
+    const isAsc3 = parseInt(ascEl.value) === 3;
+    const asc3Tiers = ['Heroic', 'Infinite', 'Eternal'];
+
+    if (isAsc3) {
+        asc3Tiers.forEach(tierName => {
+            if (!Array.from(tierEl.options).some(opt => opt.value === tierName)) {
+                const opt = document.createElement('option');
+                opt.value = tierName;
+                opt.textContent = tierName;
+                tierEl.appendChild(opt);
+            }
+        });
+    } else {
+        if (asc3Tiers.includes(tierEl.value)) {
+            tierEl.value = 'Divine';
+        }
+        Array.from(tierEl.options).forEach(opt => {
+            if (asc3Tiers.includes(opt.value)) {
+                opt.remove();
+            }
+        });
+    }
+}
+
+function openEqAvgBreakdownModal(hpB, hpM, hpA, dmgB, dmgM, dmgA) {
+    const hpFromLevel = hpM - hpB; const hpFromBonus = hpA - hpM;
+    const dmgFromLevel = dmgM - dmgB; const dmgFromBonus = dmgA - dmgM;
+    const fmt = (val) => typeof formatCombatStat === 'function' ? formatCombatStat(val) : val.toLocaleString();
+    const fontStyle = "font-family: 'Fredoka', sans-serif; -webkit-text-stroke: 0px;";
+
+    const savedAscension = (window.refTablePrefs && window.refTablePrefs.statsAscension) !== undefined ? window.refTablePrefs.statsAscension : 0;
+    let savedTier = (window.refTablePrefs && window.refTablePrefs.statsTier) ? window.refTablePrefs.statsTier : 'Quantum';
+    if (parseInt(savedAscension) !== 3 && ['Heroic', 'Infinite', 'Eternal'].includes(savedTier)) {
+        savedTier = 'Divine';
+    }
+    const savedMastery = (window.refTablePrefs && window.refTablePrefs.statsMastery) ? window.refTablePrefs.statsMastery : 0;
+    
+    const isSel = (val) => val === savedTier ? 'selected' : '';
+    const isAscSel = (val) => val == savedAscension ? 'selected' : '';
+
+    const asc3OptionsHtml = parseInt(savedAscension) === 3 ? `
+        <option value="Heroic" ${isSel('Heroic')}>Heroic</option>
+        <option value="Infinite" ${isSel('Infinite')}>Infinite</option>
+        <option value="Eternal" ${isSel('Eternal')}>Eternal</option>
+    ` : '';
+
+    const createRow = (label, val, icon, isGain, isTotal) => {
+        const colorClass = (isGain && val > 0) || isTotal ? 'color: #198754;' : 'color: #000;';
+        const bgClass = isTotal ? 'background-color: #d1f2eb; border: 2px solid #198754; margin-top: 6px;' : 'background-color: #ecf0f1; margin-bottom: 6px;';
+        return `
+        <div style="${bgClass} border-radius: 8px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="${fontStyle} font-weight: 600; color: #000; font-size: 0.9rem;">${label}</span>
+            <span style="${fontStyle} font-weight: 600; ${colorClass} font-size: 0.9rem; display: flex; align-items: center; gap: 5px;"><img src="icons/${icon}" style="width:16px; height:16px; object-fit:contain;"> ${fmt(val)}</span>
+        </div>`;
+    };
+
+    let breakdownHtml = `<div style="padding-top: 5px; display: flex; flex-direction: column;">`;
+    breakdownHtml += createRow("Current Average", hpB, "icon_hp.png", false, false);
+    breakdownHtml += createRow("From Item Lv", hpFromLevel, "icon_hp.png", true, false);
+    breakdownHtml += createRow("From Mastery", hpFromBonus, "icon_hp.png", true, false);
+    breakdownHtml += createRow("New Average", hpA, "icon_hp.png", false, true);
+    breakdownHtml += `<hr style="border: 0; height: 1px; background: #bdc3c7; margin: 20px 0;">`;
+    breakdownHtml += createRow("Current Average", dmgB, "icon_dmg.png", false, false);
+    breakdownHtml += createRow("From Item Lv", dmgFromLevel, "icon_dmg.png", true, false);
+    breakdownHtml += createRow("From Mastery", dmgFromBonus, "icon_dmg.png", true, false);
+    breakdownHtml += createRow("New Average", dmgA, "icon_dmg.png", false, true);
+    breakdownHtml += `</div>`;
+
+    let refTableHtml = `
+    <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 5px;">
+        <div style="background-color: #f2f2f2; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="${fontStyle} font-weight: 600; color: #000; font-size: 0.95rem;">Ascension:</span>
+                <select id="ref-stats-ascension" onchange="syncRefStatsAscensionTiers(); updateStatsRefTable()" style="width: 70px; height: 32px; border: 2px solid #000000; border-radius: 6px; font-family: 'Fredoka', sans-serif; font-weight: 600; outline: none; text-align: center; text-align-last: center; -webkit-text-stroke: 0px transparent !important; background-color: #ffffff;">
+                    <option value="0" ${isAscSel(0)}>0</option>
+                    <option value="1" ${isAscSel(1)}>1</option>
+                    <option value="2" ${isAscSel(2)}>2</option>
+                    <option value="3" ${isAscSel(3)}>3</option>
+                </select>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="${fontStyle} font-weight: 600; color: #000; font-size: 0.95rem;">Item Tier:</span>
+                <select id="ref-stats-tier" onchange="updateStatsRefTable()" style="width: 130px; height: 32px; border: 2px solid #000000; border-radius: 6px; font-family: 'Fredoka', sans-serif; font-weight: 600; outline: none; text-align: center; text-align-last: center; -webkit-text-stroke: 0px transparent !important; background-color: #ffffff;">
+                    <option value="Primitive" ${isSel('Primitive')}>Primitive</option>
+                    <option value="Medieval" ${isSel('Medieval')}>Medieval</option>
+                    <option value="Early-Modern" ${isSel('Early-Modern')}>Early-Modern</option>
+                    <option value="Modern" ${isSel('Modern')}>Modern</option>
+                    <option value="Space" ${isSel('Space')}>Space</option>
+                    <option value="Interstellar" ${isSel('Interstellar')}>Interstellar</option>
+                    <option value="Multiverse" ${isSel('Multiverse')}>Multiverse</option>
+                    <option value="Quantum" ${isSel('Quantum')}>Quantum</option>
+                    <option value="Underworld" ${isSel('Underworld')}>Underworld</option>
+                    <option value="Divine" ${isSel('Divine')}>Divine</option>
+                    ${asc3OptionsHtml}
+                </select>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="${fontStyle} font-weight: 600; color: #000; font-size: 0.95rem;">Mastery %:</span>
+                <input type="number" id="ref-stats-mastery" value="${savedMastery}" oninput="updateStatsRefTable()" style="width: 70px; height: 32px; border: 2px solid #000000; border-radius: 6px; text-align: center; font-family: 'Fredoka', sans-serif; font-weight: 600; outline: none; -webkit-text-stroke: 0px transparent !important; background-color: #ffffff;">
+            </div>
+        </div>
+        <table class="clean-table" style="width: 100%;">
+            <thead><tr>
+                <th style="text-align: left; padding-left: 10px;">Lv. Bracket</th>
+                <th style="text-align: right; width: 35%;">Avg <img src="icons/icon_hp.png" style="width: 14px; height: 14px; object-fit: contain; vertical-align: -2px;"></th>
+                <th style="text-align: right; padding-right: 10px; width: 35%;">Avg <img src="icons/icon_dmg.png" style="width: 14px; height: 14px; object-fit: contain; vertical-align: -2px;"></th>
+            </tr></thead>
+            <tbody id="stats-ref-body"></tbody>
+        </table>
+    </div>`;
+
+    const fullHtml = `
+        <div id="modal-tabs-container" style="margin-bottom: 12px;">
+            <button class="seg-btn active" onclick="switchContentTab('tab-breakdown', this)">Breakdown</button>
+            <button class="seg-btn" onclick="switchContentTab('tab-ref', this)">Ref. Table</button>
+        </div>
+        <div id="tab-breakdown" class="tab-content-area">${breakdownHtml}</div>
+        <div id="tab-ref" class="tab-content-area" style="display: none;">${refTableHtml}</div>
+    `;
+
+    renderMasterModal('eqAvgBreakdown', fullHtml);
+    setTimeout(() => {
+        syncRefStatsAscensionTiers();
+        updateStatsRefTable();
+    }, 50);
+}
+
+function openEqRangeModal() {
+    if (typeof MODAL_SETTINGS !== 'undefined' && !MODAL_SETTINGS.eqRange) {
+        MODAL_SETTINGS.eqRange = { title: "LEVEL RANGE PROGRESSION", headerColor: "#ebf8fa", titleColor: "#ffffff", disclaimer: "Repeatedly forging an item slot increases your level bracket for that specific tier." };
+    }
+
+    const bracketFloors =[1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61, 66, 71, 76, 81, 86, 91, 96, 101, 106, 111, 116, 121, 126, 131, 136, 141];
+    let rowsHtml = '';
+    bracketFloors.forEach((floor, index) => {
+        let max = floor + 9; if (max > 149) max = 149; 
+        rowsHtml += `<tr>
+            <td><div style="display: flex; justify-content: center; align-items: center; width: 100%; color: #000000; font-family: 'Fredoka', sans-serif;">${index + 1}</div></td>
+            <td><div style="display: flex; justify-content: center; align-items: center; width: 100%; color: #000000; font-family: 'Fredoka', sans-serif;">Lv ${floor} - ${max}</div></td>
+        </tr>`;
+    });
+
+    const html = `
+        <table class="clean-table" style="margin-top: 0px; width: 100%;">
+            <thead><tr><th style="text-align: center; width: 40%;">Item #</th><th style="text-align: center; width: 60%;">Level Range</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+        </table>`;
+
+    if (typeof renderMasterModal === 'function') renderMasterModal('eqRange', html);
+}

@@ -376,8 +376,6 @@ const EGG_DATA = {
     eternal:    { n: "Eternal",    t: 5000, id: "egg9", img: "icons/EggEternal.png",    c: "eternal" }
 };
 
-const bracketFloors = [1, 6, 11, 16, 21, 26, 31, 36, 41, 46, 51, 56, 61, 66, 71, 76, 81, 86, 91, 96, 101, 106, 111, 116, 121, 126, 131, 136, 141, 146];
-
 // Format: [ExpNeeded, Common%, Rare%, Epic%, Leg%, Ult%, Mythic%, Heroic%, Infinite%, Eternal%]
 const MOUNT_LEVEL_DATA = {
     1: [20, 100.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00], 2: [20, 99.99, 0.01, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00], 3: [20, 99.98, 0.02, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00], 4: [20, 99.97, 0.03, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00], 5: [20, 99.95, 0.05, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00],
@@ -622,12 +620,13 @@ const INDIV_REWARDS = {
 // PET & MOUNT CONSTANTS 
 // ==========================================
 const PET_DATA = {
-    "Common": { "HP": ["Snail", "Turtle"], "Hybrid": ["Mouse", "Chicken"], "Damage": ["Dog"] },
-    "Rare": { "HP": ["Hedgehog", "Bear"], "Hybrid": ["Ostrich"], "Damage": ["Scorpion", "Spider"] },
-    "Epic": { "HP": ["Panda", "Griffin"], "Hybrid": ["Unicorn"], "Damage": ["Saber Tooth", "Tiger"] },
-    "Legendary": { "Hybrid": ["Cerberus"], "Damage": ["Kitsune", "Serpent"] },
-    "Ultimate": { "HP": ["Treant"], "Hybrid": ["Enchanted Elk"], "Damage": ["Electry"] },
-    "Mythic": { "HP": ["Genie"], "Hybrid": ["Baby Dragon"], "Damage": ["Spectral Tiger"] }
+    "Common":    { "HP": ["Snail", "Turtle"],       "Hybrid": ["Mouse", "Chicken"],  "Damage": ["Dog"] },
+    "Rare":      { "HP": ["Hedgehog", "Bear"],      "Hybrid": ["Ostrich"],           "Damage": ["Scorpion", "Spider"] },
+    "Epic":      { "HP": ["Panda", "Griffin"],      "Hybrid": ["Unicorn"],           "Damage": ["Saber Tooth", "Tiger"] },
+    "Legendary": {                                  "Hybrid": ["Cerberus"],          "Damage": ["Kitsune", "Serpent"] },
+    "Ultimate":  { "HP": ["Treant"],                "Hybrid": ["Enchanted Elk"],     "Damage": ["Electry"] },
+    "Mythic":    { "HP": ["Genie"],                 "Hybrid": ["Baby Dragon"],       "Damage": ["Spectral Tiger"] },
+    "Heroic":    { "HP": ["Crystal Golem"],         "Hybrid": ["Hover Bot"],         "Damage": ["White Lion Cub"] }
 };
 
 const PET_TYPE_MAP = {
@@ -636,7 +635,8 @@ const PET_TYPE_MAP = {
     "Panda": "HP", "Griffin": "HP", "Unicorn": "Hybrid", "Saber Tooth": "Damage", "Tiger": "Damage",
     "Cerberus": "Hybrid", "Kitsune": "Damage", "Serpent": "Damage",
     "Treant": "HP", "Enchanted Elk": "Hybrid", "Electry": "Damage",
-    "Genie": "HP", "Baby Dragon": "Hybrid", "Spectral Tiger": "Damage"
+    "Genie": "HP", "Baby Dragon": "Hybrid", "Spectral Tiger": "Damage",
+    "Crystal Golem": "HP", "Hover Bot": "Hybrid", "White Lion Cub": "Damage"
 };
 
 const FODDER_XP = {
@@ -645,72 +645,43 @@ const FODDER_XP = {
     "Epic": 7000,
     "Legendary": 150000,
     "Ultimate": 750000,
-    "Mythic": 1600000
-};
-
-const MOUNT_FODDER_XP = { "Common": 100, "Rare": 300, "Epic": 900, "Legendary": 2700, "Ultimate": 8100, "Mythic": 24300 };
-
-const MOUNT_BASE_STATS = {
-    "Common": { dmg: 300, hp: 2400 },
-    "Rare": { dmg: 10000, hp: 80000 },
-    "Epic": { dmg: 200000, hp: 1600000 },
-    "Legendary": { dmg: 1000000, hp: 8000000 },
-    "Ultimate": { dmg: 3500000, hp: 28000000 },
-    "Mythic": { dmg: 8000000, hp: 64000000 }
+    "Mythic": 1600000,
+    "Heroic": 4000000
 };
 
 const PET_BASE_STATS = {
-    "Common": { dmg: 100, hp: 800 },
-    "Rare": { dmg: 500, hp: 4000 },
-    "Epic": { dmg: 15000, hp: 120000 },
-    "Legendary": { dmg: 150000, hp: 1200000 },
-    "Ultimate": { dmg: 750000, hp: 6000000 },
-    "Mythic": { dmg: 1600000, hp: 12800000 }
+    "Common":    { dmg: 100,     hp: 800 },
+    "Rare":      { dmg: 500,     hp: 4000 },
+    "Epic":      { dmg: 15000,   hp: 120000 },
+    "Legendary": { dmg: 150000,  hp: 1200000 },
+    "Ultimate":  { dmg: 750000,  hp: 6000000 },
+    "Mythic":    { dmg: 1600000, hp: 12800000 },
+    "Heroic":    { dmg: 6400000, hp: 51200000 } 
 };
 
 const PET_TYPE_MULT = {
     "Hybrid": { dmg: 1.0, hp: 1.0 },
-    "HP": { dmg: 0.5, hp: 1.5 },     
-    "Damage": { dmg: 1.5, hp: 0.5 }  
+    "HP":     { dmg: 0.5, hp: 1.5 },
+    "Damage": { dmg: 1.5, hp: 0.5 }
 };
 
-const PET_EXP_TABLE = (function() {
-    const table = {};
-    const rarities = ["Common", "Rare", "Epic", "Legendary", "Ultimate", "Mythic"];
-    
-    rarities.forEach(rarity => {
-        let expArray = [0]; 
-        const baseExp = FODDER_XP[rarity];
-        
-        for (let lvl = 1; lvl < 100; lvl++) {
-            expArray.push(Math.round(baseExp * Math.pow(1.01, lvl)));
-        }
+const MOUNT_FODDER_XP = {
+    "Common": 100,
+    "Rare": 300,
+    "Epic": 900,
+    "Legendary": 2700,
+    "Ultimate": 8100,
+    "Mythic": 24300
+};
 
-        expArray.push("MAX"); 
-        
-        table[rarity] = expArray;
-    });
-    
-    return table;
-})();
-
-const MOUNT_EXP_TABLE = (function() {
-    const table = {};
-    const rarities = ["Common", "Rare", "Epic", "Legendary", "Ultimate", "Mythic"];
-    
-    rarities.forEach(rarity => {
-        let expArray = [0];
-        const baseExp = MOUNT_FODDER_XP[rarity];
-
-        for (let lvl = 1; lvl < 100; lvl++) {
-            expArray.push(Math.round(baseExp * Math.pow(1.033, lvl)));
-        }
-        
-        table[rarity] = expArray;
-    });
-    
-    return table;
-})();
+const MOUNT_BASE_STATS = {
+    "Common":    { dmg: 300,     hp: 2400 },
+    "Rare":      { dmg: 10000,   hp: 80000 },
+    "Epic":      { dmg: 200000,  hp: 1600000 },
+    "Legendary": { dmg: 1000000, hp: 8000000 },
+    "Ultimate":  { dmg: 3500000, hp: 28000000 },
+    "Mythic":    { dmg: 8000000, hp: 64000000 }
+};
 
 // ==========================================
 // MISSION 
