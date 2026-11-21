@@ -846,7 +846,6 @@ window.getClanEggLvl = function(id) {
     return val;
 };
 
-// Returns 3 for War Day 3 (+48h), 5 for War Day 5 (+96h), or 0 outside those windows
 function getEggWarDay(date) {
     try {
         if (!date || isNaN(date.getTime()) || typeof warConfig === 'undefined') return 0;

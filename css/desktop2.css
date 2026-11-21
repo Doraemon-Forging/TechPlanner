@@ -292,6 +292,7 @@ span.stat-arrow {
 .egg-prompt-text { color: #ffffff; font-family: 'Fredoka', sans-serif; font-size: 1rem; font-weight: 800; -webkit-text-stroke: 3px #000000; paint-order: stroke fill; text-align: left; margin: 15px 0 8px 0; display: block; }
 #panel-egg .log-left-group { gap: 2px !important; }
 #panel-egg .log-icon-wrapper img { filter: none !important; }
+#panel-egg .log-icon-wrapper img[src*="EggInfinite"] { height: 36px !important; }
 
 /* ==========================================================================
    10. INTERACTIVE MODES (Move, Insert, Drag & Drop)
