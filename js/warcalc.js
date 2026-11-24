@@ -138,17 +138,26 @@ function updateWarMountExpCap() {
 
 function updateWarSkillExpCap() {
     ['', 'd3-'].forEach(prefix => {
+        const ascEl = document.getElementById(`wc-${prefix}skill-asc`);
         const lvEl = document.getElementById(`wc-${prefix}skill-lv`);
         const expEl = document.getElementById(`wc-${prefix}skill-exp`);
         const maxEl = document.getElementById(`wc-${prefix}skill-max`);
         
         if (lvEl && maxEl && expEl) {
-            if (parseInt(lvEl.value) > 100) lvEl.value = 100;
+            const asc = ascEl ? (parseInt(ascEl.value) || 0) : 0;
+            const maxLv = (typeof getMaxLevelForAsc === 'function' && typeof SKILL_LEVEL_DATA !== 'undefined')
+                ? getMaxLevelForAsc(SKILL_LEVEL_DATA, asc)
+                : (asc === 3 ? 150 : 100);
+
+            lvEl.max = maxLv;
+            if (parseInt(lvEl.value) > maxLv) lvEl.value = maxLv;
             let lv = parseInt(lvEl.value) || 1;
             if (lv < 1) lv = 1;
             
             let maxExp = 10;
-            if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[lv]) {
+            if (lv >= maxLv) {
+                maxExp = "MAX";
+            } else if (typeof SKILL_LEVEL_DATA !== 'undefined' && SKILL_LEVEL_DATA[lv]) {
                 maxExp = SKILL_LEVEL_DATA[lv][0];
             }
             
@@ -168,15 +177,21 @@ function updateWarSkillExpCap() {
 }
 
 function calcWarSummonYields(startLv, startExp, startAsc, totalPulls, dataTable) {
-    let results = [0, 0, 0, 0, 0, 0];
+    const numRarities = (typeof getRarityCount === 'function')
+        ? getRarityCount(dataTable, 3)
+        : (dataTable && dataTable[1] ? Math.max(6, dataTable[1].length - 1) : 9);
+    let results = new Array(numRarities).fill(0);
     let cLv = parseInt(startLv) || 1;
     let cExp = parseFloat(startExp) || 0;
     let cAsc = parseInt(startAsc) || 0;
     let rem = parseFloat(totalPulls) || 0;
 
     while (rem > 0) {
-        let levelData = dataTable[cLv] || dataTable[100] || [0, 100, 0, 0, 0, 0, 0];
-        let maxExp = levelData[0];
+        let maxAscLv = (typeof getMaxLevelForAsc === 'function')
+            ? getMaxLevelForAsc(dataTable, cAsc)
+            : (cAsc === 3 ? 150 : 100);
+        let levelData = dataTable[cLv] || dataTable[maxAscLv] || [0, 100, 0, 0, 0, 0, 0, 0, 0, 0];
+        let maxExp = (cLv >= maxAscLv) ? "MAX" : levelData[0];
 
         if (maxExp === "MAX" || maxExp === 0 || maxExp === undefined) {
             if (cAsc < 3) {
@@ -185,7 +200,7 @@ function calcWarSummonYields(startLv, startExp, startAsc, totalPulls, dataTable)
                 cExp = 0;
                 continue; 
             } else {
-                for (let i = 0; i < 6; i++) {
+                for (let i = 0; i < numRarities; i++) {
                     results[i] += rem * ((levelData[i + 1] || 0) / 100);
                 }
                 break;
@@ -196,7 +211,7 @@ function calcWarSummonYields(startLv, startExp, startAsc, totalPulls, dataTable)
         let applied = Math.min(rem, expNeeded);
 
         if (applied > 0) {
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < numRarities; i++) {
                 results[i] += applied * ((levelData[i + 1] || 0) / 100);
             }
             rem -= applied;
@@ -204,7 +219,7 @@ function calcWarSummonYields(startLv, startExp, startAsc, totalPulls, dataTable)
         }
 
         if (cExp >= maxExp) {
-            if (cLv < 100) {
+            if (cLv < maxAscLv) {
                 cLv++;
                 cExp = 0;
             } else if (cAsc < 3) {
@@ -294,7 +309,18 @@ function calcForgeUpgradeDay(forgeAsc, forgeLv, nodesAmt, gemAmt, pointsMultNode
 }
 
 function calcSkillDay(skillLv, skillExp, skillAsc, tickets, multSummon, multUpgrade) {
-    if (!tickets && skillLv === 1 && skillExp === 0) return { sumB: 0, sumA: 0, upB: 0, upA: 0, yieldsB: [0,0,0,0,0,0], yieldsA: [0,0,0,0,0,0] };
+    const db = typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : {};
+    const numRarities = (typeof getRarityCount === 'function')
+        ? getRarityCount(db, 3)
+        : (db[1] ? Math.max(6, db[1].length - 1) : 9);
+
+    if (!tickets && skillLv === 1 && skillExp === 0) {
+        return {
+            sumB: 0, sumA: 0, upB: 0, upA: 0,
+            yieldsB: new Array(numRarities).fill(0),
+            yieldsA: new Array(numRarities).fill(0)
+        };
+    }
     
     const techTicket = getTechVal('spt', 'ticket');
     const costB = 200 * (1 - (techTicket.before * 1) / 100);
@@ -303,15 +329,14 @@ function calcSkillDay(skillLv, skillExp, skillAsc, tickets, multSummon, multUpgr
     const totalSkillsB = tickets > 0 ? Math.floor(tickets / (costB || 200)) * 5 : 0;
     const totalSkillsA = tickets > 0 ? Math.floor(tickets / (costA || 200)) * 5 : 0;
 
-    const db = typeof SKILL_LEVEL_DATA !== 'undefined' ? SKILL_LEVEL_DATA : {};
     const yieldsB = calcWarSummonYields(skillLv, skillExp, skillAsc, totalSkillsB, db);
     const yieldsA = calcWarSummonYields(skillLv, skillExp, skillAsc, totalSkillsA, db);
 
     const ptsPerSummon = Math.round(WAR_POINTS_BASE.skillSummon[0] * multSummon); 
     let sumB = 0, sumA = 0;
-    for (let i = 0; i < 6; i++) {
-        sumB += yieldsB[i] * ptsPerSummon;
-        sumA += yieldsA[i] * ptsPerSummon;
+    for (let i = 0; i < numRarities; i++) {
+        sumB += (yieldsB[i] || 0) * ptsPerSummon;
+        sumA += (yieldsA[i] || 0) * ptsPerSummon;
     }
 
     let upB = 0, upA = 0;
@@ -321,7 +346,7 @@ function calcSkillDay(skillLv, skillExp, skillAsc, tickets, multSummon, multUpgr
             historicalPulls += db[i][0];
         }
     }
-    const baseYields = calcWarSummonYields(1, 0, 0, historicalPulls, db);
+    const baseYields = calcWarSummonYields(1, 0, skillAsc, historicalPulls, db);
 
     const config = { db: db };
     let phasesB = typeof simulatePhaseFlow === 'function' ? simulatePhaseFlow('skill', config, skillLv, skillExp, skillAsc, totalSkillsB, costB, 0, 0, 1) : [{ asc: skillAsc, yields: yieldsB }];
@@ -333,7 +358,7 @@ function calcSkillDay(skillLv, skillExp, skillAsc, tickets, multSummon, multUpgr
     const ptsPerUp = Math.round(WAR_POINTS_BASE.skillUpgrade[0] * multUpgrade);
     const getFracLvl = (amt) => {
         let cur = 1, rem = amt;
-        while (cur < 1000) { 
+        while (cur < 100) { 
             let cost = 8;
             if (typeof SKILL_UPGRADE_COSTS !== 'undefined' && SKILL_UPGRADE_COSTS[cur]) cost = SKILL_UPGRADE_COSTS[cur];
             else {
@@ -341,20 +366,20 @@ function calcSkillDay(skillLv, skillExp, skillAsc, tickets, multSummon, multUpgr
             }
             if (rem >= cost) { rem -= cost; cur++; } else return cur + (rem / cost);
         }
-        return 1000.0; 
+        return 100.0; 
     };
 
     const ascMap = new Set();
     phasesB.forEach(p => ascMap.add(p.asc)); phasesA.forEach(p => ascMap.add(p.asc));
     Array.from(ascMap).forEach(asc => {
-        let pB = phasesB.find(p => p.asc === asc) || { yields: [0,0,0,0,0,0] };
-        let pA = phasesA.find(p => p.asc === asc) || { yields: [0,0,0,0,0,0] };
+        let pB = phasesB.find(p => p.asc === asc) || { yields: new Array(numRarities).fill(0) };
+        let pA = phasesA.find(p => p.asc === asc) || { yields: new Array(numRarities).fill(0) };
         const isBasePhase = (asc === skillAsc);
 
-        for (let i = 0; i < 6; i++) {
-            let cBase = isBasePhase ? (baseYields[i] / 3) : 0;
-            let cB = cBase + (pB.yields[i] / 3);
-            let cA = cBase + (pA.yields[i] / 3);
+        for (let i = 0; i < numRarities; i++) {
+            let cBase = isBasePhase ? ((baseYields[i] || 0) / 3) : 0;
+            let cB = cBase + ((pB.yields[i] || 0) / 3);
+            let cA = cBase + ((pA.yields[i] || 0) / 3);
             let gainedB = Math.max(0, getFracLvl(cB) - getFracLvl(cBase));
             let gainedA = Math.max(0, getFracLvl(cA) - getFracLvl(cBase));
             

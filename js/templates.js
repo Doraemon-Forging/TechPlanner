@@ -142,7 +142,7 @@ const HTML_WAR = `
                                     <option value="2">Asc 2</option>
                                     <option value="3">Asc 3</option>
                                 </select>
-                                <input type="number" id="wc-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarSkillExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
+                                <input type="number" id="wc-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="if (this.value !== '' && parseInt(this.value) < 1) this.value = 1; updateWarSkillExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
                             </div>
                         </div>
                         <div class="wc-row">
@@ -232,7 +232,7 @@ const HTML_WAR = `
                                     <option value="2">Asc 2</option>
                                     <option value="3">Asc 3</option>
                                 </select>
-                                <input type="number" id="wc-d3-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="validateLevelOnBlur(this, false); updateWarSkillExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
+                                <input type="number" id="wc-d3-skill-lv" placeholder="1" min="1" max="100" oninput="updateWarSkillExpCap(); updateWarCalc()" onblur="if (this.value !== '' && parseInt(this.value) < 1) this.value = 1; updateWarSkillExpCap(); updateWarCalc()" style="width: 64px; box-sizing: border-box; margin: 0;">
                             </div>
                         </div>
                         <div class="wc-row">
