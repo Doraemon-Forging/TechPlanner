@@ -929,6 +929,14 @@ const HTML_EGG = `
                 <button class="egg-btn" onclick="addEggToQueue('infinite')"><img src="icons/EggInfinite.png"></button>
                 <button class="egg-btn" onclick="addEggToQueue('eternal')"><img src="icons/EggEternal.png"></button>
             </div>
+            <div style="padding: 12px 0 4px 0; display: flex; justify-content: center;">
+                <button class="btn-clan-tech" onclick="openCombinedClanTechModal('egg')" style="padding: 0 24px 5px 24px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; height: 42px; background-color: #02a2ff; border: 2px solid #000; border-radius: 12px; cursor: pointer; box-shadow: inset 0 -5px 0 0 #005d96; transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.2s ease;">
+                    <img src="icons/warcalc.png" style="width: 20px; height: 20px; object-fit: contain; filter: drop-shadow(0px 1.5px 0px rgba(0,0,0,0.8));">
+                    <span style="font-family: 'Fredoka One', 'Fredoka', sans-serif; font-size: 0.95rem; font-weight: 500; color: #fff; text-transform: uppercase; letter-spacing: 0px; -webkit-text-stroke: 2px #000;">
+                        Clan Tech
+                    </span>
+                </button>
+            </div>
         </div>
         <div id="egg-total-summary"></div>
         <div class="egg-log-container" id="egg-log-list"></div>
